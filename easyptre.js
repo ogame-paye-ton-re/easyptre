@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.11.2
+// @version      0.11.3
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -115,11 +115,13 @@ if (modeEasyPTRE == "ingame") {
         // Setup Mneu Button
         var ptreMenuName = toolName;
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
+        var updateClass = '';
         if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
             ptreMenuName = "CLICK ME";
+            updateClass = " error_status";
         }
         var aff_option = '<span class="menu_icon"><a id="iconeUpdate" href="https://ptre.chez.gg" target="blank_" ><img id="imgPTREmenu" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
-        aff_option += '<a id="affOptionsPTRE" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel" id="ptreMenuName">' + ptreMenuName + '</span></a>';
+        aff_option += '<a id="affOptionsPTRE" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
 
         var tab = document.createElement("li");
         tab.innerHTML = aff_option;
@@ -359,7 +361,6 @@ GM_addStyle(`
     right: 10px;
     z-index: 1001;
     padding:10px;
-    
     border: solid black 2px;
     background-color: #171d22;
 }
@@ -1169,7 +1170,22 @@ function displayPTREMenu(mode = 'AGR') {
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><span id="ptreUpdateVersionMessage">';
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
-            divPTRE += '<span class="error_status">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
+            var updateMessageShort = '<span class="error_status">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
+            divPTRE += updateMessageShort;
+            // Add Message Box
+            setupInfoBox();
+            var content = '<span class="ptre_maintitle">EasyPTRE update</span><br><br><br>' + updateMessageShort;
+            content += '<br><br><br><span class="ptre_tab_title">Automatic updates</span><br><br>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
+            content += '<br><br><br></b><span class="ptre_tab_title">Manual update</span><br><br>If you want to proceed to a manual update here is how to:<br>';
+            content += '<br>- Click on Tampermonkey Extension';
+            content += '<br>- Click on "Dashboard"';
+            content += '<br>- Click on "Installed Userscripts" tab';
+            content += '<br>- Select "EasyPTRE" checkbox';
+            content += '<br>- From the dropdown menu called "Please choose an option", select "Trigger Update"';
+            content += '<br>- Press "Start"';
+            content += '<br>- (optionnal) If TamperMonkey proposes "Overwrite", validate it';
+            content += '<br>- Update should be done';
+            document.getElementById('infoBoxContent').innerHTML = content;
         }
         divPTRE += '</span></td></tr>';
         // Check last script version
@@ -1435,7 +1451,7 @@ function addPTREStuffsToMessagesPage() {
                         spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Send to PTRE"><img id="sendRE-' + apiKeyRE + '" apikey="' + apiKeyRE + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a>';
                         spanBtnPTRE.id = 'PTREspan';
                         current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE);
-                        document.getElementById('sendRE-' + apiKeyRE).addEventListener("click", function (event) { 
+                        document.getElementById('sendRE-' + apiKeyRE).addEventListener("click", function (event) {
                             var urlPTRESpy = urlPTREImportSR + '&team_key=' + TKey + '&sr_id=' + apiKeyRE;
                             $.ajax({
                                 dataType: "json",
@@ -1600,7 +1616,9 @@ function displayHelp() {
 
 function displayChangelog() {
     setupInfoBox();
-    var content = '<div style="overflow-y: scroll; max-height: 900px"><span class="ptre_maintitle">EasyPTRE Changelog</span>';
+    var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Changelog</span><br>(scroll for old versions)';
+    content+= '<br><br><span class="ptre_tab_title">0.11.3</span><br><br>- Improve update visibility<br>- Add manual update procedure';
+    content+= '<br><br><span class="ptre_tab_title">0.11.2</span><br><br>- Fix Galaxy pushs';
     content+= '<br><br><span class="ptre_tab_title">0.11.1</span><br><br>- Add buddies to Friends & Phalanx feature<br>- Add filters to Friends & Phalanx feature';
     content+= '<br><br><span class="ptre_tab_title">0.11.0</span><br><br>- Add Friends & Phalanx feature';
     content+= '<br><br><span class="ptre_tab_title">0.10.4</span><br><br>- Add Changelog feature<br>- Fix some minor CSS issues';
@@ -1758,7 +1776,7 @@ function processGalaxyDataCallback(data) {
     }
     console.log("[PTRE] ["+galaxy+":"+system+"] Processing System");
     //console.log(galaxyDataList);
-    
+
     // Init default previous structure
     for(var i = 1; i<=15; i++) {
         previousSystemData[i] = [];
@@ -1809,7 +1827,7 @@ function processGalaxyDataCallback(data) {
             if (playerId == deepSpacePlayerId) {
                 playerId = -1;
             }
-            
+
             //consoleDebug('['+galaxy+':'+system+':'+position+'] '+playerName+' ('+playerId+')');
             // Search Moon index (depends on debris field or not)
             // If there is a debris field AND/OR a moon
@@ -2043,6 +2061,7 @@ function updateLastAvailableVersion(force) {
                         }
                         if (document.getElementById('ptreMenuName')) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
+                            document.getElementById('ptreMenuName').classList.add('error_status');
                         }
                         consoleDebug('Version ' + availableVersion + ' is available');
                     } else {
@@ -2132,7 +2151,7 @@ function parsePlayerResearchs(json, mode) {
     out["0"]["lifeformBonuses"]["CharacterClassBooster"]["1"] = obj.bonuses.characterClassBooster["1"];
     out["0"]["lifeformBonuses"]["CharacterClassBooster"]["2"] = obj.bonuses.characterClassBooster["2"];
     out["0"]["lifeformBonuses"]["CharacterClassBooster"]["3"] = obj.bonuses.characterClassBooster["3"];
-    
+
     // Hook for simulator
     let ARR_ATT = [];
     ARR_ATT.push(out["0"]);
