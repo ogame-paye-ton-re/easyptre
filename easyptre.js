@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.11.3
+// @version      0.11.4
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -1143,7 +1143,7 @@ function displayPTREMenu(mode = 'AGR') {
 
         // Shared data
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span></td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2">Phalanx: ';
         var dataJSON = '';
         dataJSON = GM_getValue(ptreDataToSync, '');
@@ -1153,7 +1153,7 @@ function displayPTREMenu(mode = 'AGR') {
         if (dataJSON != '') {
             dataList = JSON.parse(dataJSON);
             $.each(dataList, function(i, elem) {
-                if (elem.type = "phalanx") {
+                if (elem.type == "phalanx") {
                     phalanxCount++;
                 }
             });
@@ -1177,7 +1177,7 @@ function displayPTREMenu(mode = 'AGR') {
             var content = '<span class="ptre_maintitle">EasyPTRE update</span><br><br><br>' + updateMessageShort;
             content += '<br><br><br><span class="ptre_tab_title">Automatic updates</span><br><br>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
             content += '<br><br><br></b><span class="ptre_tab_title">Manual update</span><br><br>If you want to proceed to a manual update here is how to:<br>';
-            content += '<br>- Click on Tampermonkey Extension';
+            content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
             content += '<br>- Click on "Dashboard"';
             content += '<br>- Click on "Installed Userscripts" tab';
             content += '<br>- Select "EasyPTRE" checkbox';
@@ -1227,6 +1227,13 @@ function displayPTREMenu(mode = 'AGR') {
         if (document.getElementById('displayGalaxyTracking')) {
             document.getElementById('displayGalaxyTracking').addEventListener("click", function (event) {
                 displayGalaxyTracking();
+            });
+        }
+
+        // Action: Display Shared Data
+        if (document.getElementById('displaySharedData')) {
+            document.getElementById('displaySharedData').addEventListener("click", function (event) {
+                displaySharedData();
             });
         }
 
@@ -1617,6 +1624,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox();
     var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Changelog</span><br>(scroll for old versions)';
+    content+= '<br><br><span class="ptre_tab_title">0.11.4</span><br><br>- Fix phalanx purge and update';
     content+= '<br><br><span class="ptre_tab_title">0.11.3</span><br><br>- Improve update visibility<br>- Add manual update procedure';
     content+= '<br><br><span class="ptre_tab_title">0.11.2</span><br><br>- Fix Galaxy pushs';
     content+= '<br><br><span class="ptre_tab_title">0.11.1</span><br><br>- Add buddies to Friends & Phalanx feature<br>- Add filters to Friends & Phalanx feature';
@@ -1679,6 +1687,32 @@ function displayGalaxyTracking() {
     document.getElementById('purgeGalaxyTracking').addEventListener("click", function (event) {
         validatePurgeGalaxyTracking();
     });
+}
+
+function displaySharedData() {
+    setupInfoBox();
+    var content = '<span class="ptre_maintitle">Shared data</span><br><br><span class="ptre_tab_title">Phalanx</span><br><br>';
+    var phalanxCount = 0;
+    var dataJSON = '';
+    var dataList = [];
+    var undefElem = 0;
+    dataJSON = GM_getValue(ptreDataToSync, '');
+
+    content += '<table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td><td class="td_cell_radius_0" align="center">ID</td></tr>';
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        $.each(dataList, function(i, elem) {
+            if (elem.type == "phalanx") {
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + elem.val + '</td><td class="td_cell_radius_1" align="center">' + elem.id + '</td></tr>';
+                phalanxCount++;
+            } else {
+                undefElem++;
+            }
+        });
+    }
+    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx (' + undefElem + ')</td></tr></table><br><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>';
+
+    document.getElementById('infoBoxContent').innerHTML = content;
 }
 
 function validatePurgeGalaxyTracking() {
@@ -2254,13 +2288,41 @@ function syncSharableData(mode) {
         displayPTREPopUpMessage("No TeamKey: Add a PTRE TeamKey in EasyPTRE settings");
         return -1;
     }
+
+    // Get current planet list
+    const planetListFromDOM = document.querySelectorAll('.planet-koords');
+    var planetList = [];
+    planetListFromDOM.forEach(function(planet) {
+        planetList.push(planet.textContent.replace(/[\[\]]/g, ""));
+    });
+
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
     if (dataJSON != '') {
+        // Clean phalanx according to planet list
+        var dataList = JSON.parse(dataJSON);
+        var finalDataList = [];
+        consoleDebug("Phalanx cleaning...");
+        $.each(dataList, function(i, elem) {
+            if (elem.type == "phalanx") {
+                if (planetList.includes(elem.coords)) {
+                    finalDataList.push(elem);
+                } else {
+                    consoleDebug("Deleting phalanx " + elem.coords)
+                }
+            } else {
+                finalDataList.push(elem);
+            }
+        });
+        // Save updated list
+        var finalDataJSON = JSON.stringify(finalDataList);
+        GM_setValue(ptreDataToSync, finalDataJSON);
+
+        // Push data to PTRE
         $.ajax({
             url : urlPTRESyncSharableData + '&version=' + GM_info.script.version + '&current_player_id=' + currentPlayerID + '&ptre_id=' + GM_getValue(ptreID, '') + '&team_key=' + teamKey,
             type : 'POST',
-            data: dataJSON,
+            data: finalDataJSON,
             cache: false,
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
