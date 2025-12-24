@@ -82,6 +82,7 @@ var ptreDataToSync = "ptre-" + country + "-" + universe + "-DataToSync";
 var ptreGalaxyData = "ptre-" + country + "-" + universe + "-GalaxyDataG";
 var ptreBuddiesList = "ptre-" + country + "-" + universe + "-BuddiesList";
 var ptreBuddiesListLastRefresh = "ptre-" + country + "-" + universe + "-BuddiesListLastRefresh";
+var ptreToogleEventsOverview = "ptre-" + country + "-" + universe + "-ToogleEventsOverview";
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -137,6 +138,13 @@ if (modeEasyPTRE == "ingame") {
     if (!/page=standalone&component=empire/.test(location.href)) {
         consoleDebug("Any page detected");
         setTimeout(improvePageAny, improvePageDelay);
+    }
+
+    // Toogle events on Overview page
+    if (/component=overview/.test(location.href)) {
+        if (GM_getValue(ptreToogleEventsOverview, 'false') == 'true') {
+            toggleEvents();
+        }
     }
 
     // Galaxy page: Set routines
@@ -253,6 +261,9 @@ GM_addStyle(`
 }
 .ptre_bold {
     font-weight:bold;
+}
+.ptre_small {
+    font-size: 8pt;
 }
 .td_cell {
     padding: 3px;
@@ -1053,10 +1064,18 @@ function displayPTREMenu(mode = 'AGR') {
         divPTRE += '</td></tr>';
         tdId++;
         // Add Buddies to Friends and Phalanx feature
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br>(List is not shared, nor stored by PTRE)</td>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptre_small">(List is not shared, nor stored by PTRE)</span></td>';
         var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREAddBuddiesToFriendsAndPhalanx" type="checkbox" ';
         divPTRE += buddiesOn;
+        divPTRE += ' />';
+        divPTRE += '</td></tr>';
+        tdId++;
+        // Toogle Events on Overview Page
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptre_small">(Works well with option "Always show events" set to "Hide")</span></td>';
+        var ToogleOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleEventOnOverviewPage" type="checkbox" ';
+        divPTRE += ToogleOn;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr></table></td></tr>';
@@ -1065,7 +1084,7 @@ function displayPTREMenu(mode = 'AGR') {
         // A reprendre
         if (isOGLorOGIEnabled()) {
             divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Targets list & Galaxy data</span></td></tr>';
-            divPTRE += '<tr><td class="td_cell" colspan="2"><br><span class="warning_status">OGLight or OGInfinity is enabled: some EasyPTRE features are disabled to leave priority to your favorite tool, OGL / OGI. Please also add your PTRE TeamKey into OGL / OGI</span>';
+            divPTRE += '<tr><td class="td_cell" colspan="2"><br><span class="warning_status">OGLight or OGInfinity is enabled: some EasyPTRE features are disabled to leave priority to your favorite tool, OGL / OGI. Please also add your PTRE TeamKey into OGL / OGI.</span>';
             divPTRE += '<br><br>EasyPTRE is still managing some tasks like:<br>- Galaxy Event Explorer Infos (in galaxy view)<br>- Lifeforms/combat researchs sync (for PTRE spy reports)<br>- Phalanx infos sharing (in galaxy view or Discord)</td></tr>';
         } else {
             // EasyPTRE enabled (AGR mode or vanilla mode)
@@ -1263,6 +1282,8 @@ function displayPTREMenu(mode = 'AGR') {
                 GM_setValue(ptreEnableConsoleDebug, document.getElementById('PTREEnableConsoleDebug').checked + '');
                 // Save Buddies status
                 GM_setValue(ptreAddBuddiesToFriendsAndPhalanx, document.getElementById('PTREAddBuddiesToFriendsAndPhalanx').checked + '');
+                // Update Toggle Events on Overview page
+                GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
                 // Update menu image and remove it after few sec
                 document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
                 setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
