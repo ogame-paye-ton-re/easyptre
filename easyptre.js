@@ -1268,36 +1268,7 @@ function displayPTREMenu(mode = 'AGR') {
 
         // Action: Save
         document.getElementById('btnSaveOptPTRE').addEventListener("click", function (event) {
-            // Save PTRE Team Key
-            var newTK = document.getElementById('ptreTK').value;
-            // Check PTRE Team Key Format
-            if (newTK == '' || (newTK.replace(/-/g, "").length == 18 && newTK.substr(0,2) == "TM")) {
-                // If new TK, store it
-                if (newTK != ptreStoredTK) {
-                    GM_setValue(ptreTeamKey, document.getElementById('ptreTK').value);
-                }
-                if (isAGROn) {
-                    // Update settings
-                    GM_setValue(ptreImproveAGRSpyTable, document.getElementById('PTREImproveAGRSpyTable').checked + '');
-                }
-                // Update Console Debug Mode
-                GM_setValue(ptreEnableConsoleDebug, document.getElementById('PTREEnableConsoleDebug').checked + '');
-                // Save Buddies status
-                GM_setValue(ptreAddBuddiesToFriendsAndPhalanx, document.getElementById('PTREAddBuddiesToFriendsAndPhalanx').checked + '');
-                // Update Toggle Events on Overview page
-                GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
-                // Update menu image and remove it after few sec
-                document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
-                setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
-                // Display OK message and remove div after few sec
-                if (newTK == '') {
-                    displayMessageInSettings('Team Key removed');
-                } else {
-                    displayMessageInSettings('Team Key Format OK');
-                }
-            } else {
-                displayMessageInSettings('Wrong Team Key Format');
-            }
+            savePTRESettings();
         });
         document.getElementById('btnRefreshOptPTRE').addEventListener("click", function (event) {
             document.getElementById('divPTRESettings').parentNode.removeChild(document.getElementById('divPTRESettings'));
@@ -1396,6 +1367,40 @@ function displayPTREMenu(mode = 'AGR') {
         }
     }
     syncSharableData();
+}
+
+function savePTRESettings() {
+    // General settings
+    if (isAGREnabled()) {
+        // Update AGR settings
+        GM_setValue(ptreImproveAGRSpyTable, document.getElementById('PTREImproveAGRSpyTable').checked + '');
+    }
+    // Update Console Debug Mode
+    GM_setValue(ptreEnableConsoleDebug, document.getElementById('PTREEnableConsoleDebug').checked + '');
+    // Save Buddies status
+    GM_setValue(ptreAddBuddiesToFriendsAndPhalanx, document.getElementById('PTREAddBuddiesToFriendsAndPhalanx').checked + '');
+    // Update Toggle Events on Overview page
+    GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
+
+    // Save PTRE Team Key
+    var newTK = document.getElementById('ptreTK').value;
+    // Check PTRE Team Key Format
+    if (newTK == '' || (newTK.replace(/-/g, "").length == 18 && newTK.substr(0,2) == "TM")) {
+        // If new TK, store it
+        if (newTK != GM_getValue(ptreTeamKey, '')) {
+            GM_setValue(ptreTeamKey, newTK);
+        }
+        if (newTK == '') {
+            displayMessageInSettings('Team Key removed');
+        } else {
+            displayMessageInSettings('Team Key Format OK');
+        }
+    } else {
+        displayMessageInSettings('Wrong Team Key Format');
+    }
+    // Update menu image and remove it after few sec
+    document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
+    setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
 }
 
 // This function adds PTRE send SR button to AGR Spy Table
