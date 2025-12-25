@@ -38,13 +38,15 @@ const ptreTargetListMaxSize = 300;
 const deepSpacePlayerId = 99999;
 // TODO: Set ptreAGRTargetListMaxSize
 
+// Consts
+const toolName = 'EasyPTRE';
+const ptreID = "ptre-id";
+
 // Variables
-var toolName = 'EasyPTRE';
 var server = -1;
 var country = "";
 var universe = -1;
 var currentPlayerID = -1;
-var ptreID = "ptre-id";
 var lastActivitiesGalaSent = 0;
 var lastActivitiesSysSent = 0;
 var lastPTREActivityPushMicroTS = 0;
@@ -474,7 +476,7 @@ function improvePageGalaxy() {
     tempContent+= '<td valign="top"><span class="ptre_maintitle">PTRE TOOLBAR</span></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
     tempContent+= '<td valign="top">';
     if (!isOGLorOGIEnabled()) {
-        tempContent+= '<span id="ptreGalaxyActivityCount" class="success_status"></span> Activities | <span id="ptreGalaxyEventCount" class="success_status"></span> Galaxy Events';
+        tempContent+= '<span id="ptreGalaxyActivityCount" class="success_status">???</span> Activities | <span id="ptreGalaxyEventCount" class="success_status">???</span> Galaxy Events';
     } else {
         tempContent+= '---';
     }
@@ -846,7 +848,7 @@ function addPlayerToList(playerId, playerPseudo, type) {
 }
 
 // This list contains targets that should not be shared to PTRE Team
-function tooglePrivatePlayer(playerId) {
+function toogleTargetPrivateStatus(playerId) {
     var targetJSON = '';
     var targetList = [];
     var status = '';
@@ -1213,12 +1215,12 @@ function displayPTREMenu(mode = 'AGR') {
         //fin div table tr
         divPTRE += '</table></div>';
 
-        var eletementSetPTRE = document.createElement("div");
-        eletementSetPTRE.innerHTML = divPTRE;
-        eletementSetPTRE.id = 'divPTRESettings';
+        var elementSetPTRE = document.createElement("div");
+        elementSetPTRE.innerHTML = divPTRE;
+        elementSetPTRE.id = 'divPTRESettings';
 
         if (document.getElementById('bottom')) {
-            document.getElementById('bottom').appendChild(eletementSetPTRE);
+            document.getElementById('bottom').appendChild(elementSetPTRE);
         }
 
         // Action: Sync data to PTRE
@@ -1314,7 +1316,7 @@ function displayPTREMenu(mode = 'AGR') {
             $.each(targetStatus, function(nb, target) {
                 document.getElementById(target.id).addEventListener("click", function (event)
                 {
-                    var status = tooglePrivatePlayer(target.id);
+                    var status = toogleTargetPrivateStatus(target.id);
                     displayMessageInSettings('Target is now ' + status);
                 });
             });
@@ -1587,12 +1589,12 @@ function setupInfoBox() {
         document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
     }
     var divPTRE = '<div id="boxPTREInfos"><table border="1" width="100%"><tr><td align="right"><div id="btnCloseInfosPTRE" type="button" class="button btn_blue">CLOSE</div><hr></td></tr><tr><td><div id="infoBoxContent"><br><br><center><span class="warning_status">LOADING...</span><center><br><br><br></div></td></tr></table>';
-    var eletementSetPTRE = document.createElement("div");
-    eletementSetPTRE.innerHTML = divPTRE;
-    eletementSetPTRE.id = 'divPTREInfos';
+    var elementSetPTRE = document.createElement("div");
+    elementSetPTRE.innerHTML = divPTRE;
+    elementSetPTRE.id = 'divPTREInfos';
 
     if (document.getElementById('ingamepage')) {
-        document.getElementById('ingamepage').appendChild(eletementSetPTRE);
+        document.getElementById('ingamepage').appendChild(elementSetPTRE);
     }
 
     document.getElementById('btnCloseInfosPTRE').addEventListener("click", function (event) {
