@@ -399,10 +399,6 @@ GM_addStyle(`
 #btnSaveOptPTRE {
     cursor:pointer;
 }
-#ptreGalaxyMiniMessage {
-    color:green;
-    font-weight:bold;
-}
 #ptreGalaxyBox {
     background-color: #171d22;
     font-weight: revert;
@@ -497,14 +493,6 @@ function improvePageGalaxy() {
     document.getElementById('ptreGalaxyGEEButton').addEventListener("click", function (event) {
         getGEEInfosFromGala();
     });
-
-    // Add PTRE debug message Div
-    if (!document.getElementById("ptreGalaxyMessageD")) {
-        tempDiv = document.createElement("div");
-        tempDiv.innerHTML = '<span id="ptreGalaxyMiniMessage"></span>';
-        tempDiv.id = 'ptreGalaxyMessageD';
-        document.getElementsByClassName('galaxyRow ctGalaxyFleetInfo')[0].appendChild(tempDiv);
-    }
 
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         // Run it once (As AGR does not modifiy Galaxy)
@@ -692,8 +680,8 @@ function cleanFirstPTREPopUpMessage() {
 
 // Display message under galaxy view
 function displayGalaxyMiniMessage(message) {
-    if (document.getElementById("ptreGalaxyMiniMessage")) {
-        document.getElementById("ptreGalaxyMiniMessage").innerHTML = "PTRE: " + message;
+    if (document.getElementById("fleetstatusrow")) {
+        document.getElementById("fleetstatusrow").innerHTML = '<div class="success">PTRE: ' + message + '</div>';
     } else {
         console.log("[PTRE] Error. Cant display: " + message);
     }
