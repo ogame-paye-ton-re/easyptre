@@ -2442,33 +2442,36 @@ function syncTargets(mode) {
     });
 
     // Sync to PTRE
-    fetch(urlPTRESyncTargets + '&version=' + GM_info.script.version + '&team_key=' + ptreStoredTK,
-    { method:'POST', body:JSON.stringify(targetList) })
-    .then(response => response.json())
-    .then(data => {
-        if(data.code == 1) {
-            var count = 0;
-            var newTargetList = JSON.parse(JSON.stringify(data.targets_array));
-            $.each(newTargetList, function(i, incomingPlayer) {
-                if (!isPlayerInLists(incomingPlayer.player_id)) {
-                    addPlayerToList(incomingPlayer.player_id, incomingPlayer.pseudo, 'PTRE');
-                    count++;
+    $.ajax({
+        url : urlPTRESyncTargets + '&version=' + GM_info.script.version + '&team_key=' + ptreStoredTK,
+        type : 'POST',
+        data: JSON.stringify(targetList),
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = jQuery.parseJSON(reponse);
+            if (reponseDecode.code == 1) {
+                var count = 0;
+                var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
+                $.each(newTargetList, function(i, incomingPlayer) {
+                    if (!isPlayerInLists(incomingPlayer.player_id)) {
+                        addPlayerToList(incomingPlayer.player_id, incomingPlayer.pseudo, 'PTRE');
+                        count++;
+                    }
+                });
+                if (mode == "manual") {
+                    displayMessageInSettings(nb_private + ' private targets ignored. ' + reponseDecode.message + ' ' + count + ' new targets added.');
                 }
-            });
-            if (mode == "manual") {
-                displayMessageInSettings(nb_private + ' private targets ignored. ' + data.message + ' ' + count + ' new targets added.');
+                GM_setValue(ptreLastTargetsSync, currentTime);
+                if (document.getElementById("ptreLastTargetsSyncField")) {
+                    document.getElementById("ptreLastTargetsSyncField").innerHTML = getLastUpdateLabel(currentTime);
+                }
+                // Refresh targets list if displayed
+                if (document.getElementById('targetsListDiv')) {
+                    displayTargetsList();
+                }
+            } else {
+                displayMessageInSettings(reponseDecode.message);
             }
-            GM_setValue(ptreLastTargetsSync, currentTime);
-            if (document.getElementById("ptreLastTargetsSyncField")) {
-                document.getElementById("ptreLastTargetsSyncField").innerHTML = getLastUpdateLabel(currentTime);
-            }
-        } else {
-            displayMessageInSettings(data.message);
-        }
-
-        // Refresh targets list if displayed
-        if (document.getElementById('targetsListDiv')) {
-            displayTargetsList();
         }
     });
 }
