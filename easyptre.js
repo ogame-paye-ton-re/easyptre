@@ -87,6 +87,7 @@ var ptreBuddiesListLastRefresh = "ptre-" + country + "-" + universe + "-BuddiesL
 var ptreToogleEventsOverview = "ptre-" + country + "-" + universe + "-ToogleEventsOverview";
 var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync";
 var ptreLastSharedDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
+var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -180,6 +181,11 @@ if (modeEasyPTRE == "ingame") {
     if (/page=ingame&component=buddies/.test(location.href)) {
         consoleDebug("Buddies page detected");
         setTimeout(improvePageBuddies, improvePageDelay);
+    }
+
+    // Global Sync
+    if ((serverTime.getTime() / 1000) > (GM_getValue(ptreLastGlobalSync, 0) + 24*3600)) {
+        setTimeout(globalPTRESync, 3000);
     }
 
     // Check for new version only if we already did the check once
@@ -606,6 +612,9 @@ function improvePageFleet() {
             displayPTREPopUpMessage(tempMessage);
             // Update last check TS
             GM_setValue(ptreLastTechnosRefresh, currentTime);
+            if (document.getElementById("ptreLastTechnosRefreshField")) {
+                document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
+            }
         } else {
             console.log("[PTRE] Cant find Techs!");
         }
@@ -1097,7 +1106,7 @@ function displayPTREMenu() {
         // Features diabled when OGL/OGI detected
         if (!isOGLorOGIEnabled()) {
             // Targets list
-            divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Targets list</span> (' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + ')</td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue"/>OPEN LIST</div></td></tr>';
+            divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Targets list</span> (<span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue"/>OPEN LIST</div></td></tr>';
             divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
             divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
@@ -1108,12 +1117,12 @@ function displayPTREMenu() {
         }
 
         // Lifeforms Menu
-        divPTRE += '<tr><td class="td_cell" colspan="2"><span class="ptre_title">Lifeforms researchs</span> (' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + ')</td></tr>';
+        divPTRE += '<tr><td class="td_cell" colspan="2"><span class="ptre_title">Lifeforms researchs</span> (<span id="ptreLastTechnosRefreshField">' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + '</span>)</td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet menu to update</a> - <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Check it out on PTRE</a></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         // Shared data
-        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (' + getLastUpdateLabel(GM_getValue(ptreLastSharedDataSync, 0)) + ')</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (<span id="ptreLastSharedDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastSharedDataSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2">Phalanx: ';
         var dataJSON = '';
         dataJSON = GM_getValue(ptreDataToSync, '');
@@ -1230,7 +1239,15 @@ function displayPTREMenu() {
             });
         }
     }
-    syncSharableData();
+
+    // Sync targets
+    if (currentTime > (GM_getValue(ptreLastTargetsSync, 0) + 15*60)) {
+        setTimeout(syncTargets, 1000);
+    }
+    // Sync Data
+    if (currentTime > (GM_getValue(ptreLastSharedDataSync, 0) + 15*60)) {
+        setTimeout(syncSharableData, 2000);
+    }
 }
 
 function savePTRESettings() {
@@ -1684,7 +1701,7 @@ function displayTargetsList() {
 
     // Action: sync targets
     document.getElementById('synctTargetsWithPTRE').addEventListener("click", function (event) {
-        syncTargets();
+        syncTargets("manual");
     });
     // Action: Toogle target status
     var targetStatus = document.getElementsByClassName('sharedTargetStatus');
@@ -2376,6 +2393,9 @@ function syncSharableData(mode) {
                     displayMessageInSettings(reponseDecode.message);
                 }
                 GM_setValue(ptreLastSharedDataSync, currentTime);
+                if (document.getElementById("ptreLastSharedDataSyncField")) {
+                    document.getElementById("ptreLastSharedDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
+                }
             }
         });
     } else {
@@ -2386,7 +2406,7 @@ function syncSharableData(mode) {
 }
 
 // Action: Sync targets
-function syncTargets() {
+function syncTargets(mode) {
     const currentTime = serverTime.getTime() / 1000;
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
     var AGRJSON = GM_getValue(ptreAGRPlayerListJSON, '');
@@ -2396,6 +2416,7 @@ function syncTargets() {
     var player;
     var nb_private = 0;
 
+    // Create full target list
     if (AGRJSON != '' && PTREJSON != '') {
         targetListTemp = JSON.parse(AGRJSON);
         var targetListPTRE = JSON.parse(PTREJSON);
@@ -2408,8 +2429,9 @@ function syncTargets() {
         targetListTemp = [];
     }
 
+    // Remove private targets from list
     targetListTemp.forEach(function(item, index, object) {
-        consoleDebug(item.id + ' ' + item.pseudo);
+        //consoleDebug(item.id + ' ' + item.pseudo);
         if (isTargetPrivate(item.id)) {
             consoleDebug("Ignoring " + item.pseudo);
             nb_private++;
@@ -2419,6 +2441,7 @@ function syncTargets() {
         }
     });
 
+    // Sync to PTRE
     fetch(urlPTRESyncTargets + '&version=' + GM_info.script.version + '&team_key=' + ptreStoredTK,
     { method:'POST', body:JSON.stringify(targetList) })
     .then(response => response.json())
@@ -2432,8 +2455,13 @@ function syncTargets() {
                     count++;
                 }
             });
-            displayMessageInSettings(nb_private + ' private targets ignored. ' + data.message + ' ' + count + ' new targets added.');
+            if (mode == "manual") {
+                displayMessageInSettings(nb_private + ' private targets ignored. ' + data.message + ' ' + count + ' new targets added.');
+            }
             GM_setValue(ptreLastTargetsSync, currentTime);
+            if (document.getElementById("ptreLastTargetsSyncField")) {
+                document.getElementById("ptreLastTargetsSyncField").innerHTML = getLastUpdateLabel(currentTime);
+            }
         } else {
             displayMessageInSettings(data.message);
         }
@@ -2443,6 +2471,15 @@ function syncTargets() {
             displayTargetsList();
         }
     });
+}
+
+// Sync all data
+function globalPTRESync() {
+    console.log("[PTRE] Global Sync...");
+    var currentTime = serverTime.getTime() / 1000;
+    syncTargets();
+    syncSharableData();
+    GM_setValue(ptreLastGlobalSync, currentTime);
 }
 
 // This function fetchs closest friend phalanx
