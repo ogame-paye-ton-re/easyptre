@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.11.4
+// @version      0.11.5
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -85,6 +85,8 @@ var ptreGalaxyData = "ptre-" + country + "-" + universe + "-GalaxyDataG";
 var ptreBuddiesList = "ptre-" + country + "-" + universe + "-BuddiesList";
 var ptreBuddiesListLastRefresh = "ptre-" + country + "-" + universe + "-BuddiesListLastRefresh";
 var ptreToogleEventsOverview = "ptre-" + country + "-" + universe + "-ToogleEventsOverview";
+var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync";
+var ptreLastSharedDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -357,7 +359,7 @@ GM_addStyle(`
 }
 #divPTRESettings {
     position: fixed;
-    bottom: 30px;
+    top: 30px;
     right: 10px;
     z-index: 1000;
     font-size: 10pt;
@@ -379,7 +381,7 @@ GM_addStyle(`
 }
 #boxPTREInfos {
     position: fixed;
-    bottom: 30px;
+    top: 30px;
     right: 540px;
     z-index: 1000;
     font-size: 10pt;
@@ -753,6 +755,24 @@ function setNumber(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
+function getLastUpdateLabel(lastCheck) {
+    const currentTime = serverTime.getTime() / 1000;
+    var temp = '<span class="error_status ptre_small">never updated</span>';
+    if (lastCheck > 0) {
+        var nb_min = (currentTime - lastCheck) / 60;
+        if (nb_min <= 1) {
+            temp = '<span class="success_status ptre_small">updated now</span>';
+        } else if (nb_min < 60) {
+            temp = '<span class="success_status ptre_small">updated ' + round(nb_min, 0) + ' mins ago</span>';
+        } else if (nb_min < 24*60) {
+            temp = '<span class="warning_status ptre_small">updated today</span>';
+        } else {
+            temp = '<span class="error_status ptre_small">updated' + round(nb_min/(24*60), 1) + ' days ago</span>';
+        }
+    }
+    return temp;
+}
+
 // ****************************************
 // PTRE/AGR LIST RELATED
 // ****************************************
@@ -1012,6 +1032,7 @@ function addPTRELinkToAGRPinnedTarget() {
 
 // Displays PTRE settings
 function displayPTREMenu() {
+    const currentTime = serverTime.getTime() / 1000;
 
     if (!document.getElementById('btnSaveOptPTRE')) {
         purgeOldSharableData(); // Temporary
@@ -1076,7 +1097,7 @@ function displayPTREMenu() {
         // Features diabled when OGL/OGI detected
         if (!isOGLorOGIEnabled()) {
             // Targets list
-            divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Targets list</span></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue"/>OPEN LIST</div></td></tr>';
+            divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Targets list</span> (' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + ')</td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue"/>OPEN LIST</div></td></tr>';
             divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
             divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
@@ -1087,27 +1108,12 @@ function displayPTREMenu() {
         }
 
         // Lifeforms Menu
-        const currentTime = serverTime.getTime() / 1000;
-        const lastTechCheck = GM_getValue(ptreLastTechnosRefresh, 0);
-        var techMessage = '<span class="error_status">No Lifeforms researchs saved. Go to <a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet Page to update</a>.</span>';
-        if (lastTechCheck != 0) {
-            var temp = "today";
-            var nb_min = (currentTime - lastTechCheck) / 60;
-            if (nb_min <= 1) {
-                temp = 'now';
-            } else if (nb_min < 60) {
-                temp = 'last hour';
-            } else if (nb_min > 24*60) {
-                temp = round(nb_min/(24*60), 1) + ' days ago';
-            }
-            techMessage = 'Last Lifeforms researchs update (for simulators): <span class="success_status">'+temp+'.<br><a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet menu to update</a> - <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Check it out on PTRE</a>';
-        }
-        divPTRE += '<tr><td class="td_cell" colspan="2"><span class="ptre_title">Lifeforms researchs</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2">'+techMessage+'</td></tr>';
+        divPTRE += '<tr><td class="td_cell" colspan="2"><span class="ptre_title">Lifeforms researchs</span> (' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + ')</td></tr>';
+        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet menu to update</a> - <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Check it out on PTRE</a></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         // Shared data
-        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span></td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (' + getLastUpdateLabel(GM_getValue(ptreLastSharedDataSync, 0)) + ')</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2">Phalanx: ';
         var dataJSON = '';
         dataJSON = GM_getValue(ptreDataToSync, '');
@@ -1122,8 +1128,7 @@ function displayPTREMenu() {
                 }
             });
         }
-        divPTRE += '<span class="success_status">' + phalanxCount + '</span> synced to PTRE Team<br>';
-        divPTRE += '<a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></td></tr>';
+        divPTRE += '<span class="success_status">' + phalanxCount + '</span> synced to PTRE Team | <a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         if (isOGLorOGIEnabled()) {
@@ -1140,20 +1145,7 @@ function displayPTREMenu() {
         if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
             var updateMessageShort = '<span class="error_status">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
             divPTRE += updateMessageShort;
-            // Add Message Box
-            setupInfoBox();
-            var content = '<span class="ptre_maintitle">EasyPTRE update</span><br><br><br>' + updateMessageShort;
-            content += '<br><br><br><span class="ptre_tab_title">Automatic updates</span><br><br>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
-            content += '<br><br><br></b><span class="ptre_tab_title">Manual update</span><br><br>If you want to proceed to a manual update here is how to:<br>';
-            content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
-            content += '<br>- Click on "Dashboard"';
-            content += '<br>- Click on "Installed Userscripts" tab';
-            content += '<br>- Select "EasyPTRE" checkbox';
-            content += '<br>- From the dropdown menu called "Please choose an option", select "Trigger Update"';
-            content += '<br>- Press "Start"';
-            content += '<br>- (optionnal) If TamperMonkey proposes "Overwrite", validate it';
-            content += '<br>- Update should be done';
-            document.getElementById('infoBoxContent').innerHTML = content;
+            displayUpdateBox(updateMessageShort);
         }
         divPTRE += '</span></td></tr>';
         // Check last script version
@@ -1544,6 +1536,22 @@ function displayChangelog() {
     content+= '<br><br><span class="ptre_tab_title">0.7.6</span><br><br>- Import AGR custom lists to PTRE tracking list (in addition of basic lists)<br>- Improve notification system (keep 5 sec history)';
     content+= '<br><br><span class="ptre_tab_title">0.7.5</span><br><br>- Display target top fleet directly into EasyPTRE pannel<br>- feature: Add help menu';
     content+= '<br><br><span class="ptre_tab_title">0.7.4</span><br><br>- [Feature] Sync AGR/PTRE targets list with teammates via PTRE (non-mandatory)<br>- [Feature] Add a private targets list management system (in order to not share)<br>- [Feature] Add a debug mode option<br>- [Feature] Script will check, once a day, for updates and display a label<br>- [Fix] Fix pushing activities when refreshing same system<br>- [Fix] Remove AGR "Traders" from targets lists ("Friends" were already removed)<br>- [Fix] Fix galaxy page detection (depending on from where player clicks)<br>- [Fix] Add scrollbar to targets list<br>- [Fix] Move EasyPTRE pannel to right side in order to not overlap with AGR</div>';
+    document.getElementById('infoBoxContent').innerHTML = content;
+}
+
+function displayUpdateBox(updateMessageShort) {
+    setupInfoBox();
+    var content = '<span class="ptre_maintitle">EasyPTRE update</span><br><br><br>' + updateMessageShort;
+    content += '<br><br><br><span class="ptre_tab_title">Automatic updates</span><br><br>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
+    content += '<br><br><br></b><span class="ptre_tab_title">Manual update</span><br><br>If you want to proceed to a manual update here is how to:<br>';
+    content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
+    content += '<br>- Click on "Dashboard"';
+    content += '<br>- Click on "Installed Userscripts" tab';
+    content += '<br>- Select "EasyPTRE" checkbox';
+    content += '<br>- From the dropdown menu called "Please choose an option", select "Trigger Update"';
+    content += '<br>- Press "Start"';
+    content += '<br>- (optionnal) If TamperMonkey proposes "Overwrite", validate it';
+    content += '<br>- Update should be done';
     document.getElementById('infoBoxContent').innerHTML = content;
 }
 
@@ -2319,6 +2327,7 @@ function purgeOldSharableData() {
 // - Phalanx levels
 function syncSharableData(mode) {
     console.log("[PTRE] Syncing data");
+    const currentTime = serverTime.getTime() / 1000;
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
         displayPTREPopUpMessage("No TeamKey: Add a PTRE TeamKey in EasyPTRE settings");
@@ -2366,6 +2375,7 @@ function syncSharableData(mode) {
                 if (mode == 'manual') {
                     displayMessageInSettings(reponseDecode.message);
                 }
+                GM_setValue(ptreLastSharedDataSync, currentTime);
             }
         });
     } else {
@@ -2377,6 +2387,7 @@ function syncSharableData(mode) {
 
 // Action: Sync targets
 function syncTargets() {
+    const currentTime = serverTime.getTime() / 1000;
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
     var AGRJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var PTREJSON = GM_getValue(ptrePTREPlayerListJSON, '');
@@ -2422,6 +2433,7 @@ function syncTargets() {
                 }
             });
             displayMessageInSettings(nb_private + ' private targets ignored. ' + data.message + ' ' + count + ' new targets added.');
+            GM_setValue(ptreLastTargetsSync, currentTime);
         } else {
             displayMessageInSettings(data.message);
         }
