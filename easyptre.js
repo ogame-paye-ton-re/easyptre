@@ -1779,7 +1779,10 @@ function validatePurgeGalaxyTracking() {
 
     // Action: Purge Galaxy Tracking
     document.getElementById('purgeGalaxyTracking').addEventListener("click", function (event) {
-        for(var gala = 1; gala <= 12 ; gala++) {GM_deleteValue(ptreGalaxyData+gala); displayGalaxyTracking();}
+        for(var gala = 1; gala <= 12 ; gala++) {
+            GM_deleteValue(ptreGalaxyData+gala);
+        }
+        displayGalaxyTracking();
     });
 }
 
