@@ -99,15 +99,19 @@ var imgSupPlayer = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAA
 
 // PTRE URLs
 var galaxyContentLinkTest = "https:\/\/"+server+"\/game\/index.php?page=ingame&component=galaxy&action=fetchGalaxyContent&ajax=1&asJson=1";
-var urlPTREImportSR = 'https://ptre.chez.gg/scripts/oglight_import.php?tool=' + toolName;
-var urlPTREPushActivity = 'https://ptre.chez.gg/scripts/oglight_import_player_activity.php?tool=' + toolName + '&country=' + country + '&univers=' + universe;
-var urlPTRESyncTargets = 'https://ptre.chez.gg/scripts/api_sync_target_list.php?tool=' + toolName + '&country=' + country + '&univers=' + universe;
-var urlPTREGetPlayerInfos = 'https://ptre.chez.gg/scripts/oglight_get_player_infos.php?tool=' + toolName + '&country=' + country + '&univers=' + universe;
-var urlPTRESyncSharableData = 'https://ptre.chez.gg/scripts/api_sync_data.php?tool=' + toolName + '&country=' + country + '&univers=' + universe;
-var urlPTREGetPhalanxInfosFromGala = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php?tool=' + toolName + '&country=' + country + '&univers=' + universe;
-var urlPTREGetGEEInfosFromGala = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php?tool=' + toolName + '&country=' + country + '&univers=' + universe;
-var urlPTREPushGalaUpdate = 'https://ptre.chez.gg/scripts/api_galaxy_import_infos.php?tool=' + toolName + '&country=' + country + '&univers=' + universe;
 var urlToScriptMetaInfos = 'https://openuserjs.org/meta/GeGe_GM/EasyPTRE.meta.js';
+var ptreCommonUrlParams = '?tool=' + toolName + '&country=' + country + '&univers=' + universe;
+var ptreEasyPTREUrlParams = ptreCommonUrlParams + '&version=' + GM_info.script.version + '&current_player_id=' + currentPlayerID + '&ptre_id=' + GM_getValue(ptreID, '');
+// Common endpoints (with OGL / OGI / EasyPTRE)
+var urlPTREImportSR = 'https://ptre.chez.gg/scripts/oglight_import.php?tool=' + toolName;
+var urlPTREPushActivity = 'https://ptre.chez.gg/scripts/oglight_import_player_activity.php' + ptreCommonUrlParams;
+var urlPTRESyncTargets = 'https://ptre.chez.gg/scripts/api_sync_target_list.php' + ptreCommonUrlParams;
+var urlPTREGetPlayerInfos = 'https://ptre.chez.gg/scripts/oglight_get_player_infos.php' + ptreCommonUrlParams;
+var urlPTREPushGalaUpdate = 'https://ptre.chez.gg/scripts/api_galaxy_import_infos.php' + ptreCommonUrlParams;
+// EasyPTRE specific endpoints
+var urlPTRESyncSharableData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEasyPTREUrlParams;
+var urlPTREGetPhalanxInfos = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php' + ptreEasyPTREUrlParams;
+var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + ptreEasyPTREUrlParams;
 
 // ****************************************
 // MAIN EXEC
@@ -2371,7 +2375,7 @@ function syncSharableData(mode) {
 
         // Push data to PTRE
         $.ajax({
-            url : urlPTRESyncSharableData + '&version=' + GM_info.script.version + '&current_player_id=' + currentPlayerID + '&ptre_id=' + GM_getValue(ptreID, '') + '&team_key=' + teamKey,
+            url : urlPTRESyncSharableData + '&team_key=' + teamKey,
             type : 'POST',
             data: finalDataJSON,
             cache: false,
@@ -2506,7 +2510,7 @@ function getPhalanxInfosFromGala() {
     }
 
     $.ajax({
-        url : urlPTREGetPhalanxInfosFromGala + '&version=' + GM_info.script.version + '&current_player_id=' + currentPlayerID + '&ptre_id=' + GM_getValue(ptreID, '') + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
+        url : urlPTREGetPhalanxInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
         type : 'POST',
         data: dataJSON,
         cache: false,
@@ -2534,7 +2538,7 @@ function getGEEInfosFromGala() {
         return -1;
     }
     $.ajax({
-        url : urlPTREGetGEEInfosFromGala + '&version=' + GM_info.script.version + '&current_player_id=' + currentPlayerID + '&ptre_id=' + GM_getValue(ptreID, '') + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
+        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
         type : 'POST',
         data: null,
         cache: false,
