@@ -764,7 +764,7 @@ function getLastUpdateLabel(lastCheck) {
         } else if (nb_min < 24*60) {
             temp = '<span class="warning_status ptre_small">updated today</span>';
         } else {
-            temp = '<span class="error_status ptre_small">updated' + round(nb_min/(24*60), 1) + ' days ago</span>';
+            temp = '<span class="error_status ptre_small">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
     }
     return temp;
@@ -2244,6 +2244,7 @@ function parsePlayerResearchs(json, mode) {
 }
 
 // Add data to sharable structure
+// Element should be like: {type: string_type, id: ID, coords: coords, val: a_value};
 function addDataToPTREData(newData) {
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
