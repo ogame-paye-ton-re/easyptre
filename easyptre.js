@@ -16,6 +16,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
+// @grant        GM_listValues
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
@@ -36,6 +37,8 @@ const dataSharingDelay = 200;
 const improvePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const deepSpacePlayerId = 99999;
+const logsRetentionDuration = 7*24*60*60;
+const globalPTRESyncTimeout = 24*60*60;
 // TODO: Set ptreAGRTargetListMaxSize
 
 // Consts
@@ -67,6 +70,9 @@ if (modeEasyPTRE == "ingame") {
 }
 
 // GM keys
+var ptreLastAvailableVersion = "ptre-LastAvailableVersion";
+var ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
+var ptreLogsList = "ptre-Logs";
 var ptreTeamKey = "ptre-" + country + "-" + universe + "-TK";
 var ptreImproveAGRSpyTable = "ptre-" + country + "-" + universe + "-ImproveAGRSpyTable";
 var ptrePTREPlayerListJSON = "ptre-" + country + "-" + universe + "-PTREPlayerListJSON";
@@ -74,8 +80,6 @@ var ptreAGRPlayerListJSON = "ptre-" + country + "-" + universe + "-AGRPlayerList
 var ptreAGRPrivatePlayerListJSON = "ptre-" + country + "-" + universe + "-AGRPrivatePlayerListJSON";
 var ptreEnableConsoleDebug = "ptre-" + country + "-" + universe + "-EnableConsoleDebug";
 var ptreAddBuddiesToFriendsAndPhalanx = "ptre-" + country + "-" + universe + "-AddBuddiesToFriendsAndPhalanx";
-var ptreLastAvailableVersion = "ptre-" + country + "-" + universe + "-LastAvailableVersion";
-var ptreLastAvailableVersionRefresh = "ptre-" + country + "-" + universe + "-LastAvailableVersionRefresh";
 var ptreMaxCounterSpyTsSeen = "ptre-" + country + "-" + universe + "-MaxCounterSpyTsSeen";
 var ptreTechnosJSON = "ptre-" + country + "-" + universe + "-Technos";
 var ptreLastTechnosRefresh = "ptre-" + country + "-" + universe + "-LastTechnosRefresh";
@@ -188,18 +192,13 @@ if (modeEasyPTRE == "ingame") {
     }
 
     // Global Sync
-    if ((serverTime.getTime() / 1000) > (GM_getValue(ptreLastGlobalSync, 0) + 24*3600)) {
+    if ((serverTime.getTime() / 1000) > (GM_getValue(ptreLastGlobalSync, 0) + globalPTRESyncTimeout)) {
         setTimeout(globalPTRESync, 3000);
     }
 
-    // Check for new version only if we already did the check once
-    // In order to not display the Tampermoney autorisation window during an inappropriate moment
-    // It will be enabled when user opens the PTRE menu
-    if (GM_getValue(ptreLastAvailableVersionRefresh, 0) != 0) {
-        updateLastAvailableVersion(false);
-    } else {
-        consoleDebug("Version Check not initialized: open settings to initialize it");
-    }
+    // Check for new version only (no need to run it if only browsing)
+    setTimeout(updateLastAvailableVersion, 4000);
+
 }
 
 // ****************************************
@@ -624,17 +623,20 @@ function improvePageFacilities() {
             var phalanx_level = levelSpan.getAttribute('data-value');
             var coords = document.getElementsByName('ogame-planet-coordinates')[0].content;
             var moonID = document.getElementsByName('ogame-planet-id')[0].content;
-            //console.log('[PTRE] ' + coords + ' Found Phalanx level '+phalanx_level);
+            consoleDebug(coords + ': Found Phalanx level '+phalanx_level);
 
             //var moon = {type: "moon", id: coords, val: {pha_lvl: phalanx_level, toto: "titi", tata: "tutu"}};
             var phalanx = {type: "phalanx", id: moonID, coords: coords, val: phalanx_level};
             addDataToPTREData(phalanx);
         }
+    } else {
+        consoleDebug("Cant find technologies element");
     }
 }
 
 // Parse Buddies page
 function improvePageBuddies() {
+    console.log("[PTRE] Improving Buddies Page");
     const currentTime = serverTime.getTime() / 1000;
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
@@ -1036,7 +1038,8 @@ function displayPTREMenu() {
     const currentTime = serverTime.getTime() / 1000;
 
     if (!document.getElementById('btnSaveOptPTRE')) {
-        purgeOldSharableData(); // Temporary
+        migrateDataAndCleanStorage();
+
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
 
         // Check if AGR is enabled
@@ -1047,7 +1050,7 @@ function displayPTREMenu() {
 
         var tdId = 0;
         var divPTRE = '<div id="boxPTRESettings"><table border="1" width="100%">';
-        divPTRE += '<tr><td class="td_cell"><span class="ptre_maintitle">EasyPTRE PANNEL</span></td><td class="td_cell" align="right"><div id="btnHelpPTRE" type="button" class="button btn_blue">HELP</div> <div id="btnRefreshOptPTRE" type="button" class="button btn_blue">REFRESH</div> <div id="btnCloseOptPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell" width="50%"><span class="ptre_maintitle">EasyPTRE PANNEL</span></td><td class="td_cell" align="right"><div id="btnHelpPTRE" type="button" class="button btn_blue">HELP</div> <div id="btnRefreshOptPTRE" type="button" class="button btn_blue">REFRESH</div> <div id="btnCloseOptPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><div id=messageDivInSettings class="warning_status"></div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
         // Settings
@@ -1138,9 +1141,9 @@ function displayPTREMenu() {
         }
 
         // Footer
-        divPTRE += '<tr><td class="td_cell" align="left" width="50%"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></td>';
-        divPTRE += '<td class="td_cell" align="right"><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION</div> <div id="displayChangelog" type="button" class="button btn_blue">CHANGELOG</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="right" colspan="2"><span class="ptre_bold">EasyPTRE v' + GM_info.script.version + '</span></td></tr>';
+        //divPTRE += '<tr>';
+        divPTRE += '<tr><td class="td_cell" align="right" colspan="2"><div id="displayLogs" type="button" class="button btn_blue">LOGS</div> <div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION</div> <div id="displayChangelog" type="button" class="button btn_blue">CHANGELOG</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell" align="left"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></td><td class="td_cell" align="right"><span class="ptre_bold">EasyPTRE v' + GM_info.script.version + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><span id="ptreUpdateVersionMessage">';
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
@@ -1149,8 +1152,6 @@ function displayPTREMenu() {
             displayUpdateBox(updateMessageShort);
         }
         divPTRE += '</span></td></tr>';
-        // Check last script version
-        updateLastAvailableVersion(false);
 
         //fin div table tr
         divPTRE += '</table></div>';
@@ -1170,8 +1171,13 @@ function displayPTREMenu() {
 
         // Action: Check version
         document.getElementById('forceCheckVersionButton').addEventListener("click", function (event) {
-            document.getElementById('ptreUpdateVersionMessage').innerHTML = '';
+            document.getElementById('ptreUpdateVersionMessage').innerHTML = 'Checking EasyPTRE version...';
             updateLastAvailableVersion(true);
+        });
+
+        // Action: Check version
+        document.getElementById('displayLogs').addEventListener("click", function (event) {
+            displayLogs();
         });
 
         // Action: Help
@@ -1230,6 +1236,9 @@ function displayPTREMenu() {
                 displayOGLOGIInfos();
             });
         }
+
+        // Check last script version
+        updateLastAvailableVersion(false);
     }
 
     // Sync targets
@@ -1271,6 +1280,7 @@ function savePTRESettings() {
     } else {
         displayMessageInSettings('Wrong Team Key Format');
     }
+    addToLogs("Saving settings");
     // Update menu image and remove it after few sec
     document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
     setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
@@ -1318,6 +1328,8 @@ function improveAGRSpyTable(mutationList, observer) {
                                 success: function(reponse) {
                                     if (reponse.code == 1) {
                                         document.getElementById('sendSRFromAGRTable-'+apiKeyRE).remove();
+                                    } else {
+                                        addToLogs(reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
                                 }
@@ -1370,6 +1382,7 @@ function addPTREStuffsToMessagesPage() {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
+                                        addToLogs(reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
                                 }
@@ -1451,6 +1464,7 @@ function addPTREStuffsToMessagesPage() {
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);
+                            addToLogs(reponseDecode.message);
                         }
                     }
                 });
@@ -1499,6 +1513,7 @@ function getPlayerInfos(playerID, pseudo) {
                 content+= '</table>';
             } else {
                 content+= '<span class="error_status">' + reponse.message + '</span>';
+                addToLogs(reponse.message);
             }
             content+= '</center>';
             document.getElementById('infoBoxContent').innerHTML = content;
@@ -1570,6 +1585,31 @@ function displayOGLOGIInfos() {
     content += '<br><br>EasyPTRE is still managing some tasks like:<br>- Galaxy Event Explorer Infos (in galaxy view)<br>- Lifeforms/combat researchs sync (for PTRE spy reports)<br>- Phalanx infos sharing (in galaxy view or Discord)';
 
     document.getElementById('infoBoxContent').innerHTML = content;
+}
+
+function displayLogs() {
+    setupInfoBox();
+    var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Logs</span><br><br>Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
+    content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
+
+    var currentTime = serverTime.getTime() / 1000;
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    var logsList = [];
+    if (logsJSON != '') {
+        logsList = JSON.parse(logsJSON);
+    }
+    logsList.sort((a, b) => b.ts - a.ts);
+    $.each(logsList, function(i, elem) {
+        content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+    });
+    content+= '</table></div>';
+
+    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('purgeLogs').addEventListener("click", function (event) {
+        GM_deleteValue(ptreLogsList);
+        addToLogs("Logs cleaned");
+        displayLogs();
+    });
 }
 
 function displayGalaxyTracking() {
@@ -1783,6 +1823,7 @@ function validatePurgeGalaxyTracking() {
             GM_deleteValue(ptreGalaxyData+gala);
         }
         displayGalaxyTracking();
+        addToLogs("Purged Galaxy data");
     });
 }
 
@@ -2073,6 +2114,7 @@ function processGalaxyDataCallback(data) {
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code != 1) {
                     displayPTREPopUpMessage(reponseDecode.message);
+                    addToLogs(reponseDecode.message);
                 }
             }
         });
@@ -2104,6 +2146,7 @@ function processGalaxyDataCallback(data) {
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code != 1) {
                     displayPTREPopUpMessage(reponseDecode.message);
+                    addToLogs(reponseDecode.message);
                 }
             }
         });
@@ -2122,14 +2165,13 @@ function processGalaxyDataCallback(data) {
 // ****************************************
 
 // Check if EasyPTRE needs to be updated
-function updateLastAvailableVersion(force) {
+function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
     var currentTime = serverTime.getTime() / 1000;
 
     if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
-        purgeOldSharableData(); // Temporary
         consoleDebug("Checking last version available");
         GM_xmlhttpRequest({
             method:'GET',
@@ -2147,12 +2189,13 @@ function updateLastAvailableVersion(force) {
                     GM_setValue(ptreLastAvailableVersionRefresh, currentTime);
                     if (availableVersion !== GM_info.script.version) {
                         if (document.getElementById('ptreUpdateVersionMessage')) {
-                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="error_status">New version '+ lastAvailableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>';
+                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="error_status">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>';
                         }
                         if (document.getElementById('ptreMenuName')) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
                             document.getElementById('ptreMenuName').classList.add('error_status');
                         }
+                        displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
                         consoleDebug('Version ' + availableVersion + ' is available');
                     } else {
                         if (document.getElementById('ptreUpdateVersionMessage')) {
@@ -2166,7 +2209,7 @@ function updateLastAvailableVersion(force) {
         });
     } else {
         var temp = lastCheckTime + versionCheckTimeout - currentTime;
-        consoleDebug("Skipping last version check. Next check in " + round(temp, 0) + " sec min");
+        consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }
 
@@ -2266,7 +2309,7 @@ function addDataToPTREData(newData) {
         //console.log("[PTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
-                //console.log("[PTRE] Element has not changed. No update");
+                consoleDebug("Element has not changed. No update.");
                 idASup = -2;
             } else {
                 idASup = i;
@@ -2303,36 +2346,6 @@ function debugSharableData() {
     } else {
         console.log("[PTRE] No data to display");
     }
-}
-
-// Temp function to clean old version data
-// To be removed mid-November 2024
-function purgeOldSharableData() {
-    console.log("[PTRE] Purge Old Sharable Data");
-    //debugSharableData();
-    var dataJSON = '';
-    var dataJSONNew = '';
-    dataJSON = GM_getValue(ptreDataToSync, '');
-
-    const regex = /\:/;
-
-    var dataList = [];
-    var dataListNew = [];
-    if (dataJSON != '') {
-        dataList = JSON.parse(dataJSON);
-        $.each(dataList, function(i, elem) {
-            //console.log("[" + elem.type + "] " + elem.id + " => " + elem.val);
-            if (regex.test(elem.id)) {
-                //console.log("Need to remove " + elem.id);
-            } else {
-                //console.log("Need to KEEP " + elem.id);
-                dataListNew.push(elem);
-            }
-        });
-        dataJSONNew = JSON.stringify(dataListNew);
-        GM_setValue(ptreDataToSync, dataJSONNew);
-    }
-    //debugSharableData();
 }
 
 // This function sends commun data to Team
@@ -2384,13 +2397,17 @@ function syncSharableData(mode) {
             cache: false,
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
-                console.log('[PTRE] ' + reponseDecode.message);
+                if (reponseDecode.code == 1) {
+                    console.log('[PTRE] ' + reponseDecode.message);
+                    GM_setValue(ptreLastSharedDataSync, currentTime);
+                    if (document.getElementById("ptreLastSharedDataSyncField")) {
+                        document.getElementById("ptreLastSharedDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
+                    }
+                } else {
+                    addToLogs(reponseDecode.message);
+                }
                 if (mode == 'manual') {
                     displayMessageInSettings(reponseDecode.message);
-                }
-                GM_setValue(ptreLastSharedDataSync, currentTime);
-                if (document.getElementById("ptreLastSharedDataSyncField")) {
-                    document.getElementById("ptreLastSharedDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
                 }
             }
         });
@@ -2467,6 +2484,7 @@ function syncTargets(mode) {
                 }
             } else {
                 displayMessageInSettings(reponseDecode.message);
+                addToLogs(reponseDecode.message);
             }
         }
     });
@@ -2474,8 +2492,9 @@ function syncTargets(mode) {
 
 // Sync all data
 function globalPTRESync() {
-    console.log("[PTRE] Global Sync...");
+    addToLogs("Global Sync");
     var currentTime = serverTime.getTime() / 1000;
+    migrateDataAndCleanStorage();
     syncTargets();
     syncSharableData();
     GM_setValue(ptreLastGlobalSync, currentTime);
@@ -2521,7 +2540,7 @@ function getPhalanxInfosFromGala() {
             var reponseDecode = jQuery.parseJSON(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
-                console.log('[PTRE] ' + message);
+                addToLogs(reponseDecode.message_debug);
             }
             displayGalaxyMessageContent(warning+message);
         }
@@ -2549,7 +2568,7 @@ function getGEEInfosFromGala() {
             var reponseDecode = jQuery.parseJSON(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
-                console.log('[PTRE] ' + message);
+                addToLogs(reponseDecode.message_debug);
             }
             displayGalaxyMessageContent(message);
         }
@@ -2571,4 +2590,83 @@ function displayTotalSystemsSaved() {
         }
     }
     return 'Tracked Galaxies: <span class="success_status">'+countGala+'</span> | Tracked Systems: <span class="success_status">'+countSsystem+'</span>';
+}
+
+// ****************************************
+// Internal debug stuffs
+// ****************************************
+
+// Temp function to clean old version data
+function migrateDataAndCleanStorage() {
+    console.log("[PTRE] Migrate Data and clean storage");
+    var currentTime = serverTime.getTime() / 1000;
+
+    // Clean logs
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    if (logsJSON != '') {
+        var minTs = currentTime - logsRetentionDuration;
+        var logsList = [];
+        logsList = JSON.parse(logsJSON);
+        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));
+        logsJSON = JSON.stringify(logsList);
+        GM_setValue(ptreLogsList, logsJSON);
+    }
+    // End: Clean logs
+
+    // Clean Sharable Data with wrong format
+    // To be removed soon
+    //debugSharableData();
+    var dataJSON = '';
+    var dataJSONNew = '';
+    dataJSON = GM_getValue(ptreDataToSync, '');
+    const regex = /\:/;
+    var dataList = [];
+    var dataListNew = [];
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        $.each(dataList, function(i, elem) {
+            //console.log("[" + elem.type + "] " + elem.id + " => " + elem.val);
+            if (regex.test(elem.id)) {
+                //console.log("Need to remove " + elem.id);
+            } else {
+                //console.log("Need to KEEP " + elem.id);
+                dataListNew.push(elem);
+            }
+        });
+        dataJSONNew = JSON.stringify(dataListNew);
+        GM_setValue(ptreDataToSync, dataJSONNew);
+    }
+    //debugSharableData();
+    // End: Clean Sharable Data with wrong format
+
+    // Clean LastAvailableVersion Keys from each universe
+    const pattern = /LastAvailableVersion/i;
+    var count = 0;
+    GM_listValues().forEach(key => {
+        if (pattern.test(key)) {
+            if (key != ptreLastAvailableVersion && key != ptreLastAvailableVersionRefresh) {
+                GM_deleteValue(key);
+                count++;
+            }
+        }
+    });
+    if (count > 0) {
+        addToLogs("Deleted " + count + " deprecated Keys (LastAvailableVersion)");
+    }
+    // End: Clean LastAvailableVersion Keys
+}
+
+function addToLogs(message) {
+    var currentTime = serverTime.getTime() / 1000;
+    consoleDebug(message);
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    var logsList = [];
+    if (logsJSON != '') {
+        logsList = JSON.parse(logsJSON);
+    }
+    var newLog = {ts: currentTime, uni: country + "-" + universe, log: message};
+    logsList.push(newLog);
+
+    logsJSON = JSON.stringify(logsList);
+    GM_setValue(ptreLogsList, logsJSON);
 }
