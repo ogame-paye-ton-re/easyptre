@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.11.5
+// @version      0.12.0
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -95,6 +95,7 @@ var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync
 var ptreLastSharedDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
 var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
 var ptreEnableMinerMode = "ptre-" + country + "-" + universe + "-EnableMinerMode";
+var ptreEnableBetaMode = "ptre-" + country + "-" + universe + "-EnableBetaMode";
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -130,11 +131,12 @@ if (modeEasyPTRE == "ingame") {
 
     // Add EasyPTRE menu
     if (!/page=standalone&component=empire/.test(location.href)) {
-        // Setup Mneu Button
+        // Setup Menu Button
         var ptreMenuName = toolName;
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         var updateClass = '';
-        if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
+        var ptreStoredTK = GM_getValue(ptreTeamKey, '');
+        if ((lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '')) {
             ptreMenuName = "CLICK ME";
             updateClass = " error_status";
         }
@@ -486,11 +488,15 @@ function improvePageMessages() {
 function improvePageGalaxy() {
     console.log("[PTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
-
-    // Set observer waiting for galaxy content
-    waitForGalaxyToBeLoaded();
+    const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
 
     if (minerMode == 'false') {
+        if (betaMode == 'true') {
+            // Set observer waiting for galaxy content
+            waitForGalaxyToBeLoaded();
+        }
+
+        // Add PTRE Toolbar
         var tempContent = '<table width="100%"><tr>';
         tempContent+= '<td valign="top"><span class="ptre_maintitle">PTRE TOOLBAR</span></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
         tempContent+= '<td valign="top">';
@@ -721,7 +727,8 @@ function getLastUpdateLabel(lastCheck) {
         } else if (nb_min < 60) {
             temp = '<span class="success_status ptre_small">updated ' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
-            temp = '<span class="warning_status ptre_small">updated today</span>';
+            var nb_h = (currentTime - lastCheck) / 3600;
+            temp = '<span class="warning_status ptre_small">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
             temp = '<span class="error_status ptre_small">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
@@ -1010,7 +1017,11 @@ function displayPTREMenu() {
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
         // Settings
         divPTRE += '<tr><td class="td_cell"><div class="ptre_title">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">SAVE</div></td></tr>';
-        divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
+        divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
+        if (ptreStoredTK == '') {
+            divPTRE += '<br><span class="error_status">Add your PTRE TEAM KEY</span><br><span class="ptre_small error_status">Looks like: TM-????-????-????-????</span>';
+        }
+        divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
         tdId++;
         // If AGR is detected
         if (isAGROn) {
@@ -1064,6 +1075,15 @@ function displayPTREMenu() {
         divPTRE += '</td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleMinerMode" type="checkbox" ';
         divPTRE += MinerModeOn;
+        divPTRE += ' />';
+        divPTRE += '</td></tr>';
+        tdId++;
+        // Beta Mode
+        var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:<br><span class="ptre_small">Enables Beta features that might be unpolished</span>';
+        divPTRE += '</td>';
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleBetaMode" type="checkbox" ';
+        divPTRE += BetaModeOn;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
@@ -1195,6 +1215,7 @@ function displayPTREMenu() {
         // Action: Save
         document.getElementById('btnSaveOptPTRE').addEventListener("click", function (event) {
             savePTRESettings();
+            setTimeout(function() {document.getElementById('divPTRESettings').parentNode.removeChild(document.getElementById('divPTRESettings')); displayPTREMenu();}, 2000);
         });
 
         // Action: Refresh
@@ -1238,6 +1259,8 @@ function savePTRESettings() {
     GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
     // Update Miner Mode
     GM_setValue(ptreEnableMinerMode, document.getElementById('PTREToogleMinerMode').checked + '');
+    // Update Beta Mode
+    GM_setValue(ptreEnableBetaMode, document.getElementById('PTREToogleBetaMode').checked + '');
 
     // Save PTRE Team Key
     var newTK = document.getElementById('ptreTK').value;
@@ -1255,7 +1278,7 @@ function savePTRESettings() {
     } else {
         displayMessageInSettings('Wrong Team Key Format');
     }
-    addToLogs("Saving settings");
+    addToLogs('Saving settings (Miner mode: ' + document.getElementById('PTREToogleMinerMode').checked + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
     document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
     setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
@@ -1575,7 +1598,9 @@ function displayLogs() {
     }
     logsList.sort((a, b) => b.ts - a.ts);
     $.each(logsList, function(i, elem) {
-        content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+        if (elem.uni == country + "-" + universe) {
+            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+        }
     });
     content+= '</table></div>';
 
@@ -1890,7 +1915,7 @@ function openPTREGalaxyActions(galaxy, system, pos) {
     const panel = document.createElement('div');
     panel.id = 'ptreGalaxyActionsDiv';
     panel.innerHTML = `
-        <table border="1" width="100%"><tr><td><span class="ptre_maintitle">Galaxy InfoxBox</span></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr>
+        <table border="1" width="100%"><tr><td><span class="ptre_maintitle">EasyPTRE Galaxy Box</span></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr>
         <tr><td colspan="2"><hr><div id="ptreGalaxyActionsContent">
         <span class="ptre_tab_title">Informations</span><br><br>
         [` + galaxy + `:` + system + `:` + pos + `]<br>
