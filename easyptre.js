@@ -514,6 +514,7 @@ function improvePageGalaxy() {
         });
     }
 
+    //TODO: to move to new function improveGalaxyTable()
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         // Run it once (As AGR does not modifiy Galaxy)
         checkForNewSystem();
@@ -527,74 +528,6 @@ function improvePageGalaxy() {
                 childList: true, // observer les enfants directs
                 subtree: true, // et les descendants aussi
                 characterDataOldValue: true*/ // transmettre les anciennes données au callback
-            });
-        }
-    }
-
-    // If no AGR/OGL/OGI: add PTRE stuffs to Galaxy tab
-    // This only add buttons to add target to native EasyPTRE
-    if (!isAGREnabled() && !isOGLorOGIEnabled()) {
-        consoleDebug("Improving Galaxy Page for AGR");
-        var galaxy = document.getElementsByClassName('galaxyRow ctContentRow ');
-        var nbBtnPTRE = 0;
-        if (!document.getElementById('spanAddPlayer0') && !document.getElementById('spanSuppPlayer0')) {
-            $.each(galaxy, function(nb, lignePosition) {
-                if (lignePosition.children[7] != '') {
-                    var actionPos = lignePosition.children[7];
-                    if (actionPos.innerHTML != '') {
-                        if (actionPos.children[1] && actionPos.children[1].getAttributeNode('data-playerid')) {
-                            var playerId = actionPos.children[1].getAttributeNode('data-playerid').value;
-                            var playerInfo = lignePosition.children[5];
-                            if (playerInfo.children[0]) {
-                                var playerPseudo = playerInfo.children[0].innerText;
-                                var notIna = true;
-                                var inaPlayer = playerInfo.children[1].innerText;
-                                if (playerPseudo == '') {
-                                    playerPseudo = playerInfo.children[1].innerText;
-                                    inaPlayer = playerInfo.children[2].innerText;
-                                }
-                                if (isAGREnabled()) {
-                                    inaPlayer = playerInfo.children[0].innerText;
-                                    inaPlayer = inaPlayer.substr(-4, 4);
-                                    var indexPseudo = playerPseudo.search(/\n/);
-                                    playerPseudo = playerPseudo.substr(0, indexPseudo);
-                                }
-                                if (inaPlayer == ' (i)' || inaPlayer == ' (I)') {
-                                    notIna = false;
-                                }
-                                //consoleDebug('id : '+playerId+' pseudo :'+playerPseudo+' ina :'+inaPlayer);
-                                //TODO: to remove
-                                var isInList = isPlayerInTheList(playerId, 'PTRE');
-                                if (!isInList && notIna) {
-                                    var AddPlayerCheck = '<a class="tooltip" id="addcheckptr_'+nbBtnPTRE+'" title="Ajouter ce joueur a la liste PTRE" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgAddPlayer + '" height="20" width="20"></a>';
-                                    var btnAddPlayer = document.createElement("span");
-                                    btnAddPlayer.innerHTML = AddPlayerCheck;
-                                    btnAddPlayer.id = 'spanAddPlayer'+nbBtnPTRE;
-                                    lignePosition.children[7].appendChild(btnAddPlayer);//
-                                    document.getElementById('addcheckptr_'+nbBtnPTRE).addEventListener("click", function (event)
-                                    {
-                                        //alert('J ajoute le joueur '+playerPseudo+' '+playerId);
-                                        var retAdd = addPlayerToList(playerId, playerPseudo, 'PTRE');
-                                        displayPTREPopUpMessage(retAdd[1]);
-                                    }, true);
-                                    nbBtnPTRE++;
-                                } else if (isInList) {
-                                    var SupPlayerCheck = '<a class="tooltip" id="suppcheckptr_'+nbBtnPTRE+'" title="Retirer ce joueur de la liste PTRE" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgSupPlayer + '" height="20" width="20"></a>';
-                                    var btnSupPlayer = document.createElement("span");
-                                    btnSupPlayer.innerHTML = SupPlayerCheck;
-                                    btnSupPlayer.id = 'spanSuppPlayer'+nbBtnPTRE;
-                                    lignePosition.children[7].appendChild(btnSupPlayer);//
-                                    document.getElementById('suppcheckptr_'+nbBtnPTRE).addEventListener("click", function (event)
-                                    {
-                                        var retSupp = deletePlayerFromList(playerId, 'PTRE');
-                                        displayPTREPopUpMessage(retSupp);
-                                    }, true);
-                                    nbBtnPTRE++;
-                                }
-                            }
-                        }
-                    }
-                }
             });
         }
     }
