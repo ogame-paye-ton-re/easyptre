@@ -92,6 +92,7 @@ var ptreToogleEventsOverview = "ptre-" + country + "-" + universe + "-ToogleEven
 var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync";
 var ptreLastSharedDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
 var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
+var ptreEnableMinerMode = "ptre-" + country + "-" + universe + "-EnableMinerMode";
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -474,28 +475,33 @@ function improvePageMessages() {
 // Add buttons to galaxy
 function improvePageGalaxy() {
     console.log("[PTRE] Improving Galaxy Page");
+    const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
 
-    var tempContent = '<table width="100%"><tr>';
-    tempContent+= '<td valign="top"><span class="ptre_maintitle">PTRE TOOLBAR</span></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
-    tempContent+= '<td valign="top">';
-    if (!isOGLorOGIEnabled()) {
-        tempContent+= '<span id="ptreGalaxyActivityCount" class="success_status">???</span> Activities | <span id="ptreGalaxyEventCount" class="success_status">???</span> Galaxy Events';
-    } else {
-        tempContent+= '---';
+    consoleDebug("==================> Miner Mode: " + minerMode);
+
+    if (minerMode == 'false') {
+        var tempContent = '<table width="100%"><tr>';
+        tempContent+= '<td valign="top"><span class="ptre_maintitle">PTRE TOOLBAR</span></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
+        tempContent+= '<td valign="top">';
+        if (!isOGLorOGIEnabled()) {
+            tempContent+= '<span id="ptreGalaxyActivityCount" class="success_status">???</span> Activities | <span id="ptreGalaxyEventCount" class="success_status">???</span> Galaxy Events';
+        } else {
+            tempContent+= '---';
+        }
+        tempContent+= '</td></tr><td valign="top" colspan="3"><hr></td></tr>';
+        tempContent+= '<td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr></table>';
+        var tempDiv = document.createElement("div");
+        tempDiv.innerHTML = tempContent;
+        tempDiv.id = 'ptreGalaxyBox';
+        document.getElementsByClassName("galaxyTable")[0].appendChild(tempDiv);
+
+        document.getElementById('ptreGalaxyPhalanxButton').addEventListener("click", function (event) {
+            getPhalanxInfosFromGala();
+        });
+        document.getElementById('ptreGalaxyGEEButton').addEventListener("click", function (event) {
+            getGEEInfosFromGala();
+        });
     }
-    tempContent+= '</td></tr><td valign="top" colspan="3"><hr></td></tr>';
-    tempContent+= '<td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr></table>';
-    var tempDiv = document.createElement("div");
-    tempDiv.innerHTML = tempContent;
-    tempDiv.id = 'ptreGalaxyBox';
-    document.getElementsByClassName("galaxyTable")[0].appendChild(tempDiv);
-
-    document.getElementById('ptreGalaxyPhalanxButton').addEventListener("click", function (event) {
-        getPhalanxInfosFromGala();
-    });
-    document.getElementById('ptreGalaxyGEEButton').addEventListener("click", function (event) {
-        getGEEInfosFromGala();
-    });
 
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         // Run it once (As AGR does not modifiy Galaxy)
@@ -1048,6 +1054,8 @@ function displayPTREMenu() {
             isAGROn = true;
         }
 
+        const recommendedLabelOn = '<br><span class="ptre_small warning_status">(recommended: ON)</span>';
+        const recommendedLabelOff = '<br><span class="ptre_small warning_status">(recommended: OFF)</span>';
         var tdId = 0;
         var divPTRE = '<div id="boxPTRESettings"><table border="1" width="100%">';
         divPTRE += '<tr><td class="td_cell" width="50%"><span class="ptre_maintitle">EasyPTRE PANNEL</span></td><td class="td_cell" align="right"><div id="btnHelpPTRE" type="button" class="button btn_blue">HELP</div> <div id="btnRefreshOptPTRE" type="button" class="button btn_blue">REFRESH</div> <div id="btnCloseOptPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr>';
@@ -1060,41 +1068,59 @@ function displayPTREMenu() {
         // If AGR is detected
         if (isAGROn) {
             // AGR Spy Table Improvement
-            divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Improve AGR Spy Table:</td>';
             var improveAGRSpyTableValue = (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true' ? 'checked' : '');
+            divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Improve AGR Spy Table:';
+            if (improveAGRSpyTableValue != 'checked') {
+                divPTRE += recommendedLabelOn;
+            }
+            divPTRE += '</td>';
             divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREImproveAGRSpyTable" type="checkbox" ';
             divPTRE += improveAGRSpyTableValue;
             divPTRE += ' />';
-            if (improveAGRSpyTableValue != 'checked') {
-                divPTRE += ' <span class="warning_status">(recommended)</span>';
-            }
             divPTRE += '</td></tr>';
             tdId++;
         }
         // Console Debug mode
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Console Debug:</td>';
         var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Console Debug:</td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREEnableConsoleDebug" type="checkbox" ';
         divPTRE += debugMode;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
         // Add Buddies to Friends and Phalanx feature
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptre_small">(List is not shared, nor stored by PTRE)</span></td>';
         var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptre_small">List is not shared, nor stored by PTRE</span>';
+        if (buddiesOn != 'checked') {
+            divPTRE += recommendedLabelOn;
+        }
+        divPTRE += '</td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREAddBuddiesToFriendsAndPhalanx" type="checkbox" ';
         divPTRE += buddiesOn;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
         // Toogle Events on Overview Page
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptre_small">(Works well with option "Always show events" set to "Hide")</span></td>';
-        var ToogleOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
+        var toogleEventsOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptre_small">Works well with option "Always show events" set to "Hide"</span></td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleEventOnOverviewPage" type="checkbox" ';
-        divPTRE += ToogleOn;
+        divPTRE += toogleEventsOn;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
+        // Miner Mode
+        var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Miner Mode:<br><span class="ptre_small">I do not want every UX improvements,<br>but I sill want to help my Team</span>';
+        if (MinerModeOn == 'checked') {
+            divPTRE += recommendedLabelOff;
+        }
+        divPTRE += '</td>';
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleMinerMode" type="checkbox" ';
+        divPTRE += MinerModeOn;
+        divPTRE += ' />';
+        divPTRE += '</td></tr>';
+        tdId++;
+        //
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr></table></td></tr>';
         // End Settings
 
@@ -1263,6 +1289,8 @@ function savePTRESettings() {
     GM_setValue(ptreAddBuddiesToFriendsAndPhalanx, document.getElementById('PTREAddBuddiesToFriendsAndPhalanx').checked + '');
     // Update Toggle Events on Overview page
     GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
+    // Update Miner Mode
+    GM_setValue(ptreEnableMinerMode, document.getElementById('PTREToogleMinerMode').checked + '');
 
     // Save PTRE Team Key
     var newTK = document.getElementById('ptreTK').value;
