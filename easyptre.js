@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.11.5
+// @version      0.12.0
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -30,7 +30,7 @@ if (/ptre.chez.gg/.test(location.href)) {
 // Settings
 const ptreMessageDisplayTime = 5*1000;
 const menuImageDisplayTime = 3*1000;
-const ptrePushDelayMicroSec = 500;
+const ptrePushDelayMiliSec = 500;
 const versionCheckTimeout = 6*60*60;
 const technosCheckTimeout = 15*60;
 const dataSharingDelay = 200;
@@ -52,11 +52,13 @@ var universe = -1;
 var currentPlayerID = -1;
 var lastActivitiesGalaSent = 0;
 var lastActivitiesSysSent = 0;
-var lastPTREActivityPushMicroTS = 0;
+var lastPTREActivityPushMiliTS = 0;
 var ptreGalaxyActivityCount = 0;
 var ptreGalaxyEventCount = 0;
+var galaxyInitMiliTS = 0;
 
 if (modeEasyPTRE == "ingame") {
+    galaxyInitMiliTS = serverTime.getTime();
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
     universe = splitted[0].slice(1);
@@ -72,6 +74,7 @@ if (modeEasyPTRE == "ingame") {
 // GM keys
 var ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 var ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
+var ptreCheckForUpdateCooldown = "ptre-CheckForUpdateCooldown";
 var ptreLogsList = "ptre-Logs";
 var ptreTeamKey = "ptre-" + country + "-" + universe + "-TK";
 var ptreImproveAGRSpyTable = "ptre-" + country + "-" + universe + "-ImproveAGRSpyTable";
@@ -90,9 +93,12 @@ var ptreBuddiesList = "ptre-" + country + "-" + universe + "-BuddiesList";
 var ptreBuddiesListLastRefresh = "ptre-" + country + "-" + universe + "-BuddiesListLastRefresh";
 var ptreToogleEventsOverview = "ptre-" + country + "-" + universe + "-ToogleEventsOverview";
 var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync";
-var ptreLastSharedDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
+var ptreLastDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
+var ptreLastUpdateCheck = "ptre-" + country + "-" + universe + "-LastUpdateCheck";
+var ptreCurrentBackendUpdateTS = "ptre-" + country + "-" + universe + "-CurrentBackendUpdateTS"; // TS from Backend (Not Local)
 var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
 var ptreEnableMinerMode = "ptre-" + country + "-" + universe + "-EnableMinerMode";
+var ptreEnableBetaMode = "ptre-" + country + "-" + universe + "-EnableBetaMode";
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -113,10 +119,12 @@ var urlPTREPushActivity = 'https://ptre.chez.gg/scripts/oglight_import_player_ac
 var urlPTRESyncTargets = 'https://ptre.chez.gg/scripts/api_sync_target_list.php' + ptreCommonUrlParams;
 var urlPTREGetPlayerInfos = 'https://ptre.chez.gg/scripts/oglight_get_player_infos.php' + ptreCommonUrlParams;
 var urlPTREPushGalaUpdate = 'https://ptre.chez.gg/scripts/api_galaxy_import_infos.php' + ptreCommonUrlParams;
+var urlPTREGetRanks = 'https://ptre.chez.gg/scripts/api_get_ranks.php' + ptreCommonUrlParams;
 // EasyPTRE specific endpoints
-var urlPTRESyncSharableData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEasyPTREUrlParams;
+var urlPTRESyncData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEasyPTREUrlParams;
 var urlPTREGetPhalanxInfos = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php' + ptreEasyPTREUrlParams;
 var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + ptreEasyPTREUrlParams;
+var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 
 // ****************************************
 // MAIN EXEC
@@ -127,11 +135,12 @@ if (modeEasyPTRE == "ingame") {
 
     // Add EasyPTRE menu
     if (!/page=standalone&component=empire/.test(location.href)) {
-        // Setup Mneu Button
+        // Setup Menu Button
         var ptreMenuName = toolName;
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         var updateClass = '';
-        if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
+        var ptreStoredTK = GM_getValue(ptreTeamKey, '');
+        if ((lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '')) {
             ptreMenuName = "CLICK ME";
             updateClass = " error_status";
         }
@@ -193,13 +202,28 @@ if (modeEasyPTRE == "ingame") {
     }
 
     // Global Sync
-    if ((serverTime.getTime() / 1000) > (GM_getValue(ptreLastGlobalSync, 0) + globalPTRESyncTimeout)) {
+    if ((Math.floor(serverTime.getTime()) / 1000) > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
         setTimeout(globalPTRESync, 3000);
     }
 
     // Check for new version only (no need to run it if only browsing)
     setTimeout(updateLastAvailableVersion, 4000);
 
+    // Prepare next Backend Check
+    // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
+    // It only check if update is needed, it does not do the update
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
+    if (cooldown > 0) {
+        const nextCheckDelay = Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown - currentTime);
+        if (nextCheckDelay <= 0) {
+            consoleDebug("Need to Check For Update");
+            setTimeout(checkForPTREUpdate, 1000);
+        } else {
+            consoleDebug("Next Check For Update in " + nextCheckDelay + " sec");
+            setTimeout(checkForPTREUpdate, nextCheckDelay*1000);
+        }
+    }
 }
 
 // ****************************************
@@ -384,7 +408,7 @@ GM_addStyle(`
     position: fixed;
     bottom: 30px;
     right: 10px;
-    z-index: 1001;
+    z-index: 1100;
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
@@ -403,7 +427,7 @@ GM_addStyle(`
 #btnSaveOptPTRE {
     cursor:pointer;
 }
-#ptreGalaxyBox {
+#ptreGalaxyToolBar {
     background-color: #171d22;
     font-weight: revert;
     padding-top: 10px;
@@ -414,6 +438,14 @@ GM_addStyle(`
     text-align: left;
     display: block;
     line-height: 1.3em;
+}
+#ptreGalaxyPopUp {
+    width-min: 250px;
+    position: absolute;
+    border: solid black 2px;
+    background-color: #171d22;
+    z-index: 1001;
+    padding: 5px;
 }
 `);
 
@@ -476,10 +508,15 @@ function improvePageMessages() {
 function improvePageGalaxy() {
     console.log("[PTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
-
-    consoleDebug("==================> Miner Mode: " + minerMode);
+    const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
 
     if (minerMode == 'false') {
+        if (betaMode == 'true') {
+            // Set observer waiting for galaxy content
+            waitForGalaxyToBeLoaded();
+        }
+
+        // Add PTRE Toolbar
         var tempContent = '<table width="100%"><tr>';
         tempContent+= '<td valign="top"><span class="ptre_maintitle">PTRE TOOLBAR</span></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
         tempContent+= '<td valign="top">';
@@ -492,7 +529,7 @@ function improvePageGalaxy() {
         tempContent+= '<td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr></table>';
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
-        tempDiv.id = 'ptreGalaxyBox';
+        tempDiv.id = 'ptreGalaxyToolBar';
         document.getElementsByClassName("galaxyTable")[0].appendChild(tempDiv);
 
         document.getElementById('ptreGalaxyPhalanxButton').addEventListener("click", function (event) {
@@ -503,6 +540,7 @@ function improvePageGalaxy() {
         });
     }
 
+    //TODO: to move to new function improveGalaxyTable()
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         // Run it once (As AGR does not modifiy Galaxy)
         checkForNewSystem();
@@ -519,80 +557,13 @@ function improvePageGalaxy() {
             });
         }
     }
-
-    // If no AGR/OGL/OGI: add PTRE stuffs to Galaxy tab
-    // This only add buttons to add target to native EasyPTRE
-    if (!isAGREnabled() && !isOGLorOGIEnabled()) {
-        consoleDebug("Improving Galaxy Page for AGR");
-        var galaxy = document.getElementsByClassName('galaxyRow ctContentRow ');
-        var nbBtnPTRE = 0;
-        if (!document.getElementById('spanAddPlayer0') && !document.getElementById('spanSuppPlayer0')) {
-            $.each(galaxy, function(nb, lignePosition) {
-                if (lignePosition.children[7] != '') {
-                    var actionPos = lignePosition.children[7];
-                    if (actionPos.innerHTML != '') {
-                        if (actionPos.children[1] && actionPos.children[1].getAttributeNode('data-playerid')) {
-                            var playerId = actionPos.children[1].getAttributeNode('data-playerid').value;
-                            var playerInfo = lignePosition.children[5];
-                            if (playerInfo.children[0]) {
-                                var playerPseudo = playerInfo.children[0].innerText;
-                                var notIna = true;
-                                var inaPlayer = playerInfo.children[1].innerText;
-                                if (playerPseudo == '') {
-                                    playerPseudo = playerInfo.children[1].innerText;
-                                    inaPlayer = playerInfo.children[2].innerText;
-                                }
-                                if (isAGREnabled()) {
-                                    inaPlayer = playerInfo.children[0].innerText;
-                                    inaPlayer = inaPlayer.substr(-4, 4);
-                                    var indexPseudo = playerPseudo.search(/\n/);
-                                    playerPseudo = playerPseudo.substr(0, indexPseudo);
-                                }
-                                if (inaPlayer == ' (i)' || inaPlayer == ' (I)') {
-                                    notIna = false;
-                                }
-                                //consoleDebug('id : '+playerId+' pseudo :'+playerPseudo+' ina :'+inaPlayer);
-                                var isInList = isPlayerInTheList(playerId, 'PTRE');
-                                if (!isInList && notIna) {
-                                    var AddPlayerCheck = '<a class="tooltip" id="addcheckptr_'+nbBtnPTRE+'" title="Ajouter ce joueur a la liste PTRE" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgAddPlayer + '" height="20" width="20"></a>';
-                                    var btnAddPlayer = document.createElement("span");
-                                    btnAddPlayer.innerHTML = AddPlayerCheck;
-                                    btnAddPlayer.id = 'spanAddPlayer'+nbBtnPTRE;
-                                    lignePosition.children[7].appendChild(btnAddPlayer);//
-                                    document.getElementById('addcheckptr_'+nbBtnPTRE).addEventListener("click", function (event)
-                                    {
-                                        //alert('J ajoute le joueur '+playerPseudo+' '+playerId);
-                                        var retAdd = addPlayerToList(playerId, playerPseudo, 'PTRE');
-                                        displayPTREPopUpMessage(retAdd[1]);
-                                    }, true);
-                                    nbBtnPTRE++;
-                                } else if (isInList) {
-                                    var SupPlayerCheck = '<a class="tooltip" id="suppcheckptr_'+nbBtnPTRE+'" title="Retirer ce joueur de la liste PTRE" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgSupPlayer + '" height="20" width="20"></a>';
-                                    var btnSupPlayer = document.createElement("span");
-                                    btnSupPlayer.innerHTML = SupPlayerCheck;
-                                    btnSupPlayer.id = 'spanSuppPlayer'+nbBtnPTRE;
-                                    lignePosition.children[7].appendChild(btnSupPlayer);//
-                                    document.getElementById('suppcheckptr_'+nbBtnPTRE).addEventListener("click", function (event)
-                                    {
-                                        var retSupp = deletePlayerFromList(playerId, 'PTRE');
-                                        displayPTREPopUpMessage(retSupp);
-                                    }, true);
-                                    nbBtnPTRE++;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
 }
 
 // Save lifeforms researchs
 // Save JSON "API 2" from fleet page
 function improvePageFleet() {
     console.log("[PTRE] Improving Fleet Page");
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         GM_setValue(ptrePlayerID, currentPlayerID);
         var spanElement = document.querySelector('.show_fleet_apikey');
@@ -643,7 +614,7 @@ function improvePageFacilities() {
 // Parse Buddies page
 function improvePageBuddies() {
     console.log("[PTRE] Improving Buddies Page");
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
     consoleDebug(playerIds);
@@ -757,6 +728,8 @@ function round(x, y) {
 function displayMessageInSettings(message) {
     if (document.getElementById('messageDivInSettings')) {
         document.getElementById('messageDivInSettings').innerHTML = message;
+    } else {
+        displayPTREPopUpMessage(message);
     }
 }
 
@@ -765,7 +738,7 @@ function setNumber(x) {
 }
 
 function getLastUpdateLabel(lastCheck) {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     var temp = '<span class="error_status ptre_small">never updated</span>';
     if (lastCheck > 0) {
         var nb_min = (currentTime - lastCheck) / 60;
@@ -774,7 +747,8 @@ function getLastUpdateLabel(lastCheck) {
         } else if (nb_min < 60) {
             temp = '<span class="success_status ptre_small">updated ' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
-            temp = '<span class="warning_status ptre_small">updated today</span>';
+            var nb_h = (currentTime - lastCheck) / 3600;
+            temp = '<span class="warning_status ptre_small">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
             temp = '<span class="error_status ptre_small">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
@@ -1041,7 +1015,7 @@ function addPTRELinkToAGRPinnedTarget() {
 
 // Displays PTRE settings
 function displayPTREMenu() {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
 
     if (!document.getElementById('btnSaveOptPTRE')) {
         migrateDataAndCleanStorage();
@@ -1063,7 +1037,11 @@ function displayPTREMenu() {
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
         // Settings
         divPTRE += '<tr><td class="td_cell"><div class="ptre_title">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">SAVE</div></td></tr>';
-        divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
+        divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
+        if (ptreStoredTK == '') {
+            divPTRE += '<br><span class="error_status">Add your PTRE TEAM KEY</span><br><span class="ptre_small error_status">Looks like: TM-????-????-????-????</span>';
+        }
+        divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
         tdId++;
         // If AGR is detected
         if (isAGROn) {
@@ -1120,6 +1098,15 @@ function displayPTREMenu() {
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
+        // Beta Mode
+        var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:<br><span class="ptre_small">Enables Beta features that might be unpolished</span>';
+        divPTRE += '</td>';
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleBetaMode" type="checkbox" ';
+        divPTRE += BetaModeOn;
+        divPTRE += ' />';
+        divPTRE += '</td></tr>';
+        tdId++;
         //
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr></table></td></tr>';
         // End Settings
@@ -1143,22 +1130,29 @@ function displayPTREMenu() {
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         // Shared data
-        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (<span id="ptreLastSharedDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastSharedDataSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2">Phalanx: ';
         var dataJSON = '';
         dataJSON = GM_getValue(ptreDataToSync, '');
-
         var phalanxCount = 0;
+        var dnpCount = 0;
+        var hotCount = 0;
         var dataList = [];
         if (dataJSON != '') {
             dataList = JSON.parse(dataJSON);
             $.each(dataList, function(i, elem) {
                 if (elem.type == "phalanx") {
                     phalanxCount++;
+                } else if (elem.type == "dnp") {
+                    dnpCount++;
+                } else if (elem.type == "hot") {
+                    hotCount++;
                 }
             });
         }
-        divPTRE += '<span class="success_status">' + phalanxCount + '</span> synced to PTRE Team | <a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></td></tr>';
+        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell" colspan="2">';
+        divPTRE += 'Phalanx: <span class="success_status">' + phalanxCount + '</span> synced to PTRE Team (<a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>)<br>';
+        divPTRE += 'Do Not Probe list: <span class="success_status">' + dnpCount + '</span> targets (Added via Galaxy)<br>';
+        divPTRE += 'Hot Targets list: <span class="success_status">' + hotCount + '</span> targets (new SR)</td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         if (isOGLorOGIEnabled()) {
@@ -1192,7 +1186,7 @@ function displayPTREMenu() {
 
         // Action: Sync data to PTRE
         document.getElementById('synctDataWithPTRE').addEventListener("click", function (event) {
-            syncSharableData('manual');
+            syncDataWithPTRE('manual');
         });
 
         // Action: Check version
@@ -1248,6 +1242,7 @@ function displayPTREMenu() {
         // Action: Save
         document.getElementById('btnSaveOptPTRE').addEventListener("click", function (event) {
             savePTRESettings();
+            setTimeout(function() {document.getElementById('divPTRESettings').parentNode.removeChild(document.getElementById('divPTRESettings')); displayPTREMenu();}, 2000);
         });
 
         // Action: Refresh
@@ -1272,8 +1267,8 @@ function displayPTREMenu() {
         setTimeout(syncTargets, 1000);
     }
     // Sync Data
-    if (currentTime > (GM_getValue(ptreLastSharedDataSync, 0) + 15*60)) {
-        setTimeout(syncSharableData, 2000);
+    if (currentTime > (GM_getValue(ptreLastDataSync, 0) + 15*60)) {
+        setTimeout(syncDataWithPTRE, 2000);
     }
 }
 
@@ -1291,6 +1286,8 @@ function savePTRESettings() {
     GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
     // Update Miner Mode
     GM_setValue(ptreEnableMinerMode, document.getElementById('PTREToogleMinerMode').checked + '');
+    // Update Beta Mode
+    GM_setValue(ptreEnableBetaMode, document.getElementById('PTREToogleBetaMode').checked + '');
 
     // Save PTRE Team Key
     var newTK = document.getElementById('ptreTK').value;
@@ -1308,7 +1305,7 @@ function savePTRESettings() {
     } else {
         displayMessageInSettings('Wrong Team Key Format');
     }
-    addToLogs("Saving settings");
+    addToLogs('Saving settings (Miner mode: ' + document.getElementById('PTREToogleMinerMode').checked + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
     document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
     setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
@@ -1508,7 +1505,7 @@ function setupInfoBox() {
     if (document.getElementById('divPTREInfos')) {
         document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
     }
-    var divPTRE = '<div id="boxPTREInfos"><table border="1" width="100%"><tr><td align="right"><div id="btnCloseInfosPTRE" type="button" class="button btn_blue">CLOSE</div><hr></td></tr><tr><td><div id="infoBoxContent"><br><br><center><span class="warning_status">LOADING...</span><center><br><br><br></div></td></tr></table>';
+    var divPTRE = '<div id="boxPTREInfos"><table border="1" width="100%"><tr><td align="right"><div id="btnCloseInfosPTRE" type="button" class="button btn_blue">CLOSE</div><hr></td></tr><tr><td><div id="infoBoxContent"><br><br><center><span class="warning_status">LOADING...</span></center><br><br><br></div></td></tr></table>';
     var elementSetPTRE = document.createElement("div");
     elementSetPTRE.innerHTML = divPTRE;
     elementSetPTRE.id = 'divPTREInfos';
@@ -1620,7 +1617,7 @@ function displayLogs() {
     var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Logs</span><br><br>Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {
@@ -1628,7 +1625,9 @@ function displayLogs() {
     }
     logsList.sort((a, b) => b.ts - a.ts);
     $.each(logsList, function(i, elem) {
-        content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+        if (elem.uni == country + "-" + universe) {
+            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+        }
     });
     content+= '</table></div>';
 
@@ -1648,7 +1647,7 @@ function displayGalaxyTracking() {
     var content2 = '';
     var content = '<span class="ptre_maintitle">Galaxy tracking distribution</span><br><br><br><span class="ptre_tab_title">Distribution</span><br><br><table>';
     var temp = [];
-    //var oldestTs = serverTime.getTime() / 1000 + 60;
+    //var oldestTs = Math.floor(serverTime.getTime() / 1000) + 60;
 
     for(var gala = 1; gala <= 12 ; gala++) {
         var galaxyDataJSON = GM_getValue(ptreGalaxyData+gala, '');
@@ -1691,7 +1690,7 @@ function displayGalaxyTracking() {
 function displayTargetsList() {
     setupInfoBox();
 
-    var content = '<div style="overflow-y: scroll; max-height: 600px;" id="targetsListDiv"><table width="100%"><tr><td><span class="ptre_maintitle">Targets List</span> <a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="synctTargetsWithPTRE" class="button btn_blue"/>SYNC TARGETS</div></td></tr></table><br><br>';
+    var content = '<div style="overflow-y: scroll; max-height: 600px;" id="targetsListDiv"><table width="100%"><tr><td><span class="ptre_maintitle">Targets List</span> <a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue"/>RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue"/>SYNC TARGETS</div></td></tr></table><br><br>';
 
     // Check if AGR is enabled
     var isAGROn = false;
@@ -1759,6 +1758,11 @@ function displayTargetsList() {
     content += '</td></tr></table></div>';
     document.getElementById('infoBoxContent').innerHTML = content;
 
+    // Action: reload list
+    document.getElementById('reloadLocalList').addEventListener("click", function (event) {
+        setupInfoBox();
+        setTimeout(displayTargetsList, 100);
+    });
     // Action: sync targets
     document.getElementById('synctTargetsWithPTRE').addEventListener("click", function (event) {
         syncTargets("manual");
@@ -1818,7 +1822,9 @@ function displaySharedData() {
     var dataList = [];
     var undefElem = 0;
     dataJSON = GM_getValue(ptreDataToSync, '');
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
 
+    // TODO: factorise loops
     content += '<table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td><td class="td_cell_radius_0" align="center">ID</td></tr>';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
@@ -1826,12 +1832,48 @@ function displaySharedData() {
             if (elem.type == "phalanx") {
                 content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + elem.val + '</td><td class="td_cell_radius_1" align="center">' + elem.id + '</td></tr>';
                 phalanxCount++;
-            } else {
-                undefElem++;
             }
         });
     }
     content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx (' + undefElem + ')</td></tr></table><br><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>';
+
+    content += '<hr><span class="ptre_tab_title">Hot Targets</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player ID</td><td class="td_cell_radius_0" align="center">Age</td></tr>';
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        $.each(dataList, function(i, elem) {
+            if (elem.type == "hot") {
+                var duration = Math.round((elem.val - currentTime) / 3600);
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.id + '</td><td class="td_cell_radius_1" align="center">' + duration + 'h (' + elem.val + ')</td></tr>';
+            }
+        });
+    }
+    content += '</table>';
+
+    content += '<hr><span class="ptre_tab_title">Do Not Probe</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player ID</td><td class="td_cell_radius_0" align="center">Duration</td></tr>';
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        $.each(dataList, function(i, elem) {
+            if (elem.type == "dnp") {
+                var duration = Math.round((elem.val - currentTime) / 3600);
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.id + '</td><td class="td_cell_radius_1" align="center">' + duration + 'h (' + elem.val + ')</td></tr>';
+            }
+        });
+    }
+    content += '</table>';
+
+    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+        const backendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
+        const updateCooldown = GM_getValue(ptreCheckForUpdateCooldown, 0);
+        const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
+        const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
+        const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
+        content += '<hr><span class="ptre_tab_title">Debug</span><br><br>';
+        content += 'Last Global Sync (once a day): ' + lastGlobalSync + '<br><br>';
+        if (updateCooldown > 0) {
+            content += 'Last "Live" Check (every ' + updateCooldown + ' sec): ' + lastCheck + '<br>';
+            content += 'Last Auto-Update: ' + lastDataSync + '<br>';
+        }
+    }
 
     document.getElementById('infoBoxContent').innerHTML = content;
 }
@@ -1859,6 +1901,320 @@ function validatePurgeGalaxyTracking() {
 // GALAXY EXEC STUFFS
 // ****************************************
 
+// Get ranks
+function updateGalaxyBoxWithPlayerRanks(playerId) {
+    // Check if Galaxy Box is still waiting the infos
+    if (!document.getElementById("ptreGalaxyPlayerRanksPlaceholder-" + playerId)) {
+        consoleDebug("Rank update canceled");
+        return;
+    }
+    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Loading ranks...";
+    }
+    $.ajax({
+        url : urlPTREGetRanks + "&team_key=" + GM_getValue(ptreTeamKey, '') + "&player_id=" + playerId,
+        type : 'POST',
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = jQuery.parseJSON(reponse);
+            consoleDebug(reponseDecode.message);
+            displayGalaxyMiniMessage(reponseDecode.message);
+            if (reponseDecode.code == 1) {
+                if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+                    document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
+                    var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
+                    $.each(reponseDecode.ranks_array, function(i, rank) {
+                        const previousRank = reponseDecode.ranks_array[i + 1];
+                        var classR = "";
+                        var diff = "-";
+                        if (previousRank) {
+                            if (Number(rank.total_score) < Number(previousRank.total_score)) {
+                                classR = "error_status";
+                                diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                            } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
+                                classR = "success_status";
+                                diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                                diff = "+" + diff;
+                            }
+                        }
+                        var when = "";
+                        if (i == 0) {
+                            when = "at midnight";
+                        } else {
+                            when = i + " days ago";
+                        }
+                        content+= '<tr><td class="td_cell_radius_1" align="center">' + when + '</td><td class="td_cell_radius_1" align="center">' + setNumber(rank.total_score) + ' pts</td><td class="td_cell_radius_1" align="center"><span class="' + classR + '">' + diff + '</span></td><td class="td_cell_radius_1" align="center">#' + rank.total_rank + '</td></tr>';
+                    });
+                    content+= '</table>';
+                    document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
+                }
+            } else {
+                if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+                    document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = reponseDecode.message;
+                }
+                addToLogs(reponseDecode.message);
+            }
+        }
+    });
+}
+
+// Called when user clicks on the PTRE icon in galaxy view
+function openPTREGalaxyActions(galaxy, system, pos) {
+    console.log("Click on pos " + galaxy + ":" + system + ":" + pos);
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+
+    const oldPanel = document.getElementById('ptreGalaxyPopUp');
+    if (oldPanel) oldPanel.remove();
+
+    const row = document.getElementById('galaxyRow' + pos);
+    if (row) {
+        // Player name and ID
+        var playerName = "";
+        var playerId = -1;
+        var planetId = -1;
+        var moonId = -1;
+        const cellPlayerName = row.querySelector('.cellPlayerName');
+        if (cellPlayerName) {
+            if (row.querySelector('.cellPlayerName .playerName .playerName')) {
+                playerName = row.querySelector('.cellPlayerName .playerName .playerName').innerHTML;
+                // Player ID
+                const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
+                if (playerSpan) {
+                    const rel = playerSpan.getAttribute('rel');
+                    if (rel) {
+                        playerId = rel.replace(/\D/g, '');
+                    }
+                }
+            }
+        }
+        // Planet ID
+        const planetDiv = row.querySelector('.cellPlanet .microplanet');
+        if (planetDiv) {
+            planetId = planetDiv.dataset.planetId;
+        }
+        // Moon ID
+        const moonDiv = row.querySelector('.cellMoon .micromoon');
+        if (moonDiv) {
+            moonId = moonDiv.dataset.moonId;
+        }
+
+        // Get players to highligh
+        dataJSON = GM_getValue(ptreDataToSync, '');
+        var dataList = [];
+        var targetComment = "";
+        var dnpButtonLabel = "DNP";
+        if (dataJSON != '') {
+            dataList = JSON.parse(dataJSON);
+            $.each(dataList, function(i, elem) {
+                if (elem.id == playerId) {
+                    if (elem.type == "hot") {
+                        targetComment+= '<span class="success_status">' + playerName + ' is part of HOT list</span><br>';
+                    }
+                    if (elem.type == "dnp" && elem.val > currentTime) {
+                        const duration = round((elem.val - currentTime) / 3600, 1);
+                        targetComment+= '<span class="error_status">' + playerName + ' is part of DNP list for ' + duration + 'h</span><br>';
+                        dnpButtonLabel = "DNP (+)";
+                    }
+                }
+            });
+        }
+
+        // Create panel
+        const panel = document.createElement('div');
+        panel.id = 'ptreGalaxyPopUp';
+        panel.innerHTML = `
+            <table border="1" width="100%"><tr><td><span class="ptre_maintitle">EasyPTRE Galaxy Box</span></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr>
+            <tr><td colspan="2"><hr><div id="ptreGalaxyActionsContent">
+            <span class="ptre_tab_title">Informations</span><br><br>
+            [` + galaxy + `:` + system + `:` + pos + `]<br>
+            <b>` + playerName + `</b> (#` + playerId + `)<br>
+            Planet: ` + planetId + `<br>
+            Moon:` + moonId + `<br>` + targetComment + `</span></center>
+            </div>
+            <hr><span class="ptre_tab_title">Actions</span><br><br>
+            <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue"/>SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
+            <hr><span class="ptre_tab_title">Points and Ranks, last days</span><br><br>
+            <div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-` + playerId + `">Highscores will be loaded after a 2 secs delay...</div></div>
+            </td></tr>
+            </table>
+        `;
+
+        // Position panel next to button
+        const button = document.getElementById('ptreActionPos-'+pos);
+        //const button = document.getElementById('galaxyHeader');
+        const rect = button.getBoundingClientRect();
+        panel.style.top = (window.scrollY + rect.bottom - 150) + 'px';
+        panel.style.left = (window.scrollX + rect.left + 20) + 'px';
+        document.body.appendChild(panel);
+
+        // Close if we click outside the Div
+        const clickHandler = (event) => {
+            if (!panel.contains(event.target) && event.target !== button) {
+                panel.remove();
+                document.removeEventListener('click', clickHandler);
+            }
+        };
+        document.addEventListener('click', clickHandler);
+        // Close button
+        document.getElementById('btnCloseGalaxyActions').addEventListener("click", function (event) {
+            if (document.getElementById("ptreGalaxyPopUp")) {
+                document.getElementById("ptreGalaxyPopUp").remove();
+            }
+        });
+
+        // Target list button
+        var isInList = isPlayerInTheList(playerId, 'PTRE');
+        if (!isInList) {
+            document.getElementById('btnManageList').addEventListener("click", function (event) {
+                var retAdd = addPlayerToList(playerId, playerName, 'PTRE');
+                displayPTREPopUpMessage(retAdd[1]);
+                document.getElementById('btnManageList').style.display = 'none';
+            });
+        } else if (isInList) {
+            document.getElementById('btnManageList').innerHTML = "REMOVE FROM LIST";
+            document.getElementById('btnManageList').addEventListener("click", function (event) {
+                var retSupp = deletePlayerFromList(playerId, 'PTRE');
+                displayPTREPopUpMessage(retSupp);
+                document.getElementById('btnManageList').style.display = 'none';
+            });
+        }
+
+        // Target sync button
+        document.getElementById('synctTargetsWithPTREViaGalaxy').addEventListener("click", function (event) {
+            syncTargets("manual");
+        });
+
+        // DNP button
+        document.getElementById('btnDNP').addEventListener("click", function (event) {
+            consoleDebug("Adding " + playerId + " to DNP list");
+            //var tmp = Math.floor(serverTime.getTime() / 1000);
+            // We set 0 as PTRE backend will decide on duration and update it back
+            var dnp = {type: "dnp", id: playerId, val: 0};
+            addDataToPTREData(dnp);
+            displayPTREPopUpMessage("Adding target to Do Not Probe list");
+        });
+
+        // Get ranks call
+        // Set a delay, so we dont fetch data if player closes the box too fast
+        // Once function is run, it will check if Pop-up is still waiting
+        setTimeout(function() {updateGalaxyBoxWithPlayerRanks(playerId)}, 2000);
+    }
+}
+
+function improveGalaxyTable() {
+    var systemElem = $("input#system_input")[0];
+    var galaxyElem = $("input#galaxy_input")[0];
+    var galaxy = galaxyElem.value;
+    var system = systemElem.value;
+    consoleDebug("Improving Galaxy Table " + galaxy + ":" + system);
+
+    const currentMiliTime = serverTime.getTime();
+    const currentTime = Math.floor(currentMiliTime / 1000);
+
+    // Get players to highligh
+    dataJSON = GM_getValue(ptreDataToSync, '');
+    var dataList = [];
+    var hotList = [];
+    var dnpList = [];
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        $.each(dataList, function(i, elem) {
+            if (elem.type == "hot") {
+                hotList.push(elem.id);
+            } else if (elem.type == "dnp" && elem.val > currentTime) {
+                dnpList.push(elem.id);
+            }
+        });
+    }
+
+    for(let pos = 1; pos <= 15 ; pos++) {
+        // Get row
+        const row = document.getElementById('galaxyRow' + pos);
+        if (row) {
+            //consoleDebug('Improving galaxyRow' + pos);
+            // Skip inactive players
+            if(!row.classList.contains("inactive_filter")) {
+                // Get player cell
+                const cellPlayerName = row.querySelector('.cellPlayerName');
+                if (cellPlayerName && cellPlayerName.children.length > 0) {
+                    // Get Player ID
+                    const cellPlayerName = row.querySelector('.cellPlayerName');
+                    if (cellPlayerName) {
+                        const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
+                        if (playerSpan) {
+                            const rel = playerSpan.getAttribute('rel');
+                            const playerId = rel.replace(/\D/g, '');
+                            consoleDebug("PlayerID: " + playerId);
+                            // Create PTRE button
+                            var btn = document.createElement("span");
+                            btn.dataset.galaxy = galaxy;
+                            btn.dataset.system = system;
+                            btn.dataset.pos = pos;
+                            if (dnpList.includes(playerId)) {
+                                consoleDebug("Is part of DNP list");
+                                btn.style.border = "3px solid red";
+                            } else if (hotList.includes(playerId)) {
+                                consoleDebug("Is part of HOT list");
+                                btn.style.border = "3px solid green";
+                            }
+                            btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
+                            cellPlayerName.appendChild(btn);
+                            // Add action
+                            btn.addEventListener('click', function () {
+                                openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos);
+                            });
+                        }
+                    }
+                }
+            } else {
+                consoleDebug("Ina player");
+            }
+        } else {
+            consoleDebug("No galaxy row " + pos);
+        }
+    }
+    // Wait for new SS change
+    const galaxyLoading = document.getElementById('galaxyLoading');
+    const observer = new MutationObserver((mutations, obs) => {
+        if (window.getComputedStyle(galaxyLoading).display !== 'none') {
+            consoleDebug("Galaxy change triggered");
+            obs.disconnect();
+            waitForGalaxyToBeLoaded();
+        }
+    });
+    observer.observe(galaxyLoading, {
+        childList: true,
+        attributes: true
+    });
+    const tmp = serverTime.getTime() - currentMiliTime;
+    consoleDebug("Galaxy improvement duration: " + tmp + " ms");
+}
+
+function waitForGalaxyToBeLoaded() {
+    consoleDebug("Waiting for Galaxy content");
+    galaxyInitMiliTS = serverTime.getTime();
+    const galaxyLoading = document.getElementById('galaxyLoading');
+    if (window.getComputedStyle(galaxyLoading).display === 'none') {
+        consoleDebug("Galaxy is already ready!");
+        improveGalaxyTable();
+    } else {
+        const observer = new MutationObserver((mutations, obs) => {
+            if (window.getComputedStyle(galaxyLoading).display === 'none') {
+                let tempDuration = serverTime.getTime() - galaxyInitMiliTS;
+                consoleDebug("Galaxy is ready after " + tempDuration + " miliseconds");
+                obs.disconnect();
+                improveGalaxyTable();
+            } else {
+                consoleDebug("Galaxy is still NOT ready. Waiting...");
+            }
+        });
+        observer.observe(galaxyLoading, {
+            childList: true,
+            attributes: true
+        });
+    }
+}
+
 // Function called on galaxy page
 // Checks if a new system is displayed
 // If yes, we will push activities
@@ -1876,9 +2232,9 @@ function checkForNewSystem() {
         return;
     }
 
-    var currentMicroTime = serverTime.getTime();
-    if (galaxy != lastActivitiesGalaSent || system != lastActivitiesSysSent || (currentMicroTime > lastPTREActivityPushMicroTS + ptrePushDelayMicroSec)) {
-        lastPTREActivityPushMicroTS = currentMicroTime;
+    var currentMiliTime = serverTime.getTime();
+    if (galaxy != lastActivitiesGalaSent || system != lastActivitiesSysSent || (currentMiliTime > lastPTREActivityPushMiliTS + ptrePushDelayMiliSec)) {
+        lastPTREActivityPushMiliTS = currentMiliTime;
         lastActivitiesGalaSent = galaxy;
         lastActivitiesSysSent = system;
         consoleDebug('[' + galaxy + ':' + system + "] Need to update");
@@ -2038,7 +2394,7 @@ function processGalaxyDataCallback(data) {
             // Push galaxy data
             if (!isOGLorOGIEnabled()) {
                 // Push if new system or if there is some changes
-                consoleDebug("Position "+position+": "+previousSystemData[position]["playerId"]+"=>"+playerId+" "+previousSystemData[position]["planetId"]+"=>"+planetId+" "+previousSystemData[position]["moonId"]+"=>"+moonId);
+                //consoleDebug("Position "+position+": "+previousSystemData[position]["playerId"]+"=>"+playerId+" "+previousSystemData[position]["planetId"]+"=>"+planetId+" "+previousSystemData[position]["moonId"]+"=>"+moonId);
                 if (systemIdInGalaxyList == -1 || playerId != previousSystemData[position]["playerId"] || planetId != previousSystemData[position]["planetId"] || moonId != previousSystemData[position]["moonId"]) {
                     systemNeedsToBeUpdated = 1;
                     var rank = -1;
@@ -2197,7 +2553,7 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
 
     if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
         consoleDebug("Checking last version available");
@@ -2237,7 +2593,7 @@ function updateLastAvailableVersion(force = false) {
         });
     } else {
         var temp = lastCheckTime + versionCheckTimeout - currentTime;
-        consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
+        //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }
 
@@ -2323,7 +2679,7 @@ function parsePlayerResearchs(json, mode) {
 
 // Add data to sharable structure
 // Element should be like: {type: string_type, id: ID, coords: coords, val: a_value};
-function addDataToPTREData(newData) {
+function addDataToPTREData(newData, syncToPTRE = true) {
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
     var dataList = [];
@@ -2337,9 +2693,10 @@ function addDataToPTREData(newData) {
         //console.log("[PTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
-                consoleDebug("Element has not changed. No update.");
+                consoleDebug("Element " + newData.type + " has not changed. No update.");
                 idASup = -2;
             } else {
+                consoleDebug("Element " + newData.type + " has changed (" + newData.val + " VS " + elem.val + "). Need to update.");
                 idASup = i;
             }
         }
@@ -2351,14 +2708,19 @@ function addDataToPTREData(newData) {
         dataList.splice(idASup, 1);
     }
     // Add the new entry
-    console.log("[PTRE] Updating " + newData.type + " data");
+    console.log("[PTRE] Adding/Updating " + newData.type + " ID:" + newData.id + " / val: " + newData.val, newData);
     dataList.push(newData);
 
     // Save list
     dataJSON = JSON.stringify(dataList);
     GM_setValue(ptreDataToSync, dataJSON);
-    // Sync data to PTRE (but not now, wait for no more refresh)
-    setTimeout(syncSharableData, dataSharingDelay);
+
+    //debugSharableData();
+
+    // Sync data to PTRE
+    if (syncToPTRE === true) {
+        setTimeout(syncDataWithPTRE, dataSharingDelay);
+    }
 }
 
 function debugSharableData() {
@@ -2369,67 +2731,118 @@ function debugSharableData() {
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
         $.each(dataList, function(i, elem) {
-            console.log("[" + elem.type + "] " + elem.id + " => " + elem.val);
+            console.log("[" + elem.type + "] " + elem.id + " => " + elem.val + " (" + elem.coords + ")");
         });
     } else {
         console.log("[PTRE] No data to display");
     }
 }
 
+// Ask PTRE if new data are available
+// This is disabled by default
+function checkForPTREUpdate() {
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    if (teamKey == '') {
+        return;
+    }
+    const CurrentBackendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
+    consoleDebug("Checking for Updates...");
+    $.ajax({
+        url : urlcheckForPTREUpdate + '&team_key=' + teamKey + '&current_ts=' + CurrentBackendUpdateTS,
+        type : 'POST',
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = jQuery.parseJSON(reponse);
+            if (reponseDecode.code == 1) {
+                // Update config
+                if (Number(reponseDecode.check_for_update_cooldown) > 0) {
+                    GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
+                }
+                // Is update needed?
+                if (reponseDecode.update == 1) {
+                    consoleDebug("Update needed!");
+                    displayPTREPopUpMessage("New update available");
+                    addToLogs("New update available");
+                    setTimeout(syncDataWithPTRE, 100);
+                } else {
+                    consoleDebug("NO Update needed");
+                }
+            }
+        }
+    });
+    GM_setValue(ptreLastUpdateCheck, currentTime);
+    var cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
+    if (cooldown < 60) {// safety
+        cooldown = 60;
+    }
+    setTimeout(checkForPTREUpdate, cooldown*1000);
+    consoleDebug("Next Check For Update in " + cooldown + " sec");
+}
+
 // This function sends commun data to Team
 // Like:
 // - Phalanx levels
-function syncSharableData(mode) {
+function syncDataWithPTRE(mode) {
     console.log("[PTRE] Syncing data");
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const hot_ts_max = currentTime + 24*3600;
+
+    migrateDataAndCleanStorage();
+
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
         displayPTREPopUpMessage("No TeamKey: Add a PTRE TeamKey in EasyPTRE settings");
         return -1;
     }
-
-    // Get current planet list
-    const planetListFromDOM = document.querySelectorAll('.planet-koords');
-    var planetList = [];
-    planetListFromDOM.forEach(function(planet) {
-        planetList.push(planet.textContent.replace(/[\[\]]/g, ""));
-    });
+    const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
+    var betaParam = "";
+    if (betaMode == "true") {
+        betaParam = "&beta=1";
+    }
 
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
     if (dataJSON != '') {
-        // Clean phalanx according to planet list
-        var dataList = JSON.parse(dataJSON);
-        var finalDataList = [];
-        consoleDebug("Phalanx cleaning...");
-        $.each(dataList, function(i, elem) {
-            if (elem.type == "phalanx") {
-                if (planetList.includes(elem.coords)) {
-                    finalDataList.push(elem);
-                } else {
-                    consoleDebug("Deleting phalanx " + elem.coords)
-                }
-            } else {
-                finalDataList.push(elem);
-            }
-        });
-        // Save updated list
-        var finalDataJSON = JSON.stringify(finalDataList);
-        GM_setValue(ptreDataToSync, finalDataJSON);
-
         // Push data to PTRE
         $.ajax({
-            url : urlPTRESyncSharableData + '&team_key=' + teamKey,
+            url : urlPTRESyncData + '&team_key=' + teamKey + betaParam,
             type : 'POST',
-            data: finalDataJSON,
+            data: dataJSON,
             cache: false,
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    console.log('[PTRE] ' + reponseDecode.message);
-                    GM_setValue(ptreLastSharedDataSync, currentTime);
-                    if (document.getElementById("ptreLastSharedDataSyncField")) {
-                        document.getElementById("ptreLastSharedDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
+                    // Update DNP list
+                    var dnpList = JSON.parse(JSON.stringify(reponseDecode.dnp_array));
+                    $.each(dnpList, function(i, dnp) {
+                        var ts_max = currentTime + dnp.duration;
+                        var dnpOut = {type: "dnp", id: dnp.player_id, val: ts_max};
+                        addDataToPTREData(dnpOut, false);
+                    });
+                    // Update HOT targets
+                    var dnpList = JSON.parse(JSON.stringify(reponseDecode.hot_array));
+                    $.each(dnpList, function(i, hot_id) {
+                        var hotOut = {type: "hot", id: hot_id, val: hot_ts_max};
+                        addDataToPTREData(hotOut, false);
+                    });
+
+                    // Update config
+                    GM_setValue(ptreLastDataSync, currentTime);
+                    GM_setValue(ptreLastUpdateCheck, currentTime);
+                    // If feature is enabled for this TEAM
+                    if (Number(reponseDecode.last_update_ts) > 0) {
+                        GM_setValue(ptreCurrentBackendUpdateTS, reponseDecode.last_update_ts);
+                    }
+                    if (Number(reponseDecode.check_for_update_cooldown) > 0) {
+                        GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
+                    }
+
+                    consoleDebug('[PTRE] ' + reponseDecode.message + " (" + reponseDecode.last_update_ts + " / " + reponseDecode.check_for_update_cooldown + ")");
+
+                    // Update info in menu
+                    if (document.getElementById("ptreLastDataSyncField")) {
+                        document.getElementById("ptreLastDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
                     }
                 } else {
                     addToLogs(reponseDecode.message);
@@ -2448,7 +2861,7 @@ function syncSharableData(mode) {
 
 // Action: Sync targets
 function syncTargets(mode) {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
     var AGRJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var PTREJSON = GM_getValue(ptrePTREPlayerListJSON, '');
@@ -2518,19 +2931,19 @@ function syncTargets(mode) {
     });
 }
 
-// Sync all data
+// Sync all data once a day
 function globalPTRESync() {
     addToLogs("Global Sync");
-    var currentTime = serverTime.getTime() / 1000;
-    migrateDataAndCleanStorage();
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    migrateDataAndCleanStorage();//TODO: no more needed?
     syncTargets();
-    syncSharableData();
+    syncDataWithPTRE();
     GM_setValue(ptreLastGlobalSync, currentTime);
 }
 
 // This function fetchs closest friend phalanx
 function getPhalanxInfosFromGala() {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     var warning = '';
     var systemElem = $("input#system_input")[0];
     var galaxyElem = $("input#galaxy_input")[0];
@@ -2627,7 +3040,7 @@ function displayTotalSystemsSaved() {
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
     console.log("[PTRE] Migrate Data and clean storage");
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -2641,23 +3054,55 @@ function migrateDataAndCleanStorage() {
     }
     // End: Clean logs
 
-    // Clean Sharable Data with wrong format
-    // To be removed soon
-    //debugSharableData();
+    // Clean Sharable Data
     var dataJSON = '';
     var dataJSONNew = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
-    const regex = /\:/;
     var dataList = [];
     var dataListNew = [];
     if (dataJSON != '') {
+        // Get current planet list
+        const planetListFromDOM = document.querySelectorAll('.planet-koords');
+        var planetList = [];
+        planetListFromDOM.forEach(function(planet) {
+            planetList.push(planet.textContent.replace(/[\[\]]/g, ""));
+        });
         dataList = JSON.parse(dataJSON);
+        // Go throught every element
         $.each(dataList, function(i, elem) {
-            //console.log("[" + elem.type + "] " + elem.id + " => " + elem.val);
-            if (regex.test(elem.id)) {
-                //console.log("Need to remove " + elem.id);
+            var keep_elem = 1;
+            if (elem.type == "phalanx") {
+                // Clean relocated planets
+                if (!planetList.includes(elem.coords)) {
+                    consoleDebug("Deleting phalanx (no more planet): " + elem.coords);
+                    keep_elem = 0;
+                }
+                // Clean Old phalanx ID format
+                const regex = /\:/;
+                if (regex.test(elem.id)) {
+                    consoleDebug("Need to remove old ID format: " + elem.id);
+                    keep_elem = 0;
+                }
+            } else if (elem.type == "dnp") {
+                // Clean expired DNP
+                // We do not expire TS (val) equal to 0, as they are not sync yet to PTRE
+                if (Number(elem.val) != 0 && Number(elem.val) < Number(currentTime)) {
+                    consoleDebug("Need to remove expired DNP: " + elem.id + " (" + elem.val + ")");
+                    keep_elem = 0;
+                }
+            } else if (elem.type == "hot") {
+                if (Number(elem.val) < Number(currentTime)) {
+                    consoleDebug("Need to remove expired HOT: " + elem.id + " (" + elem.val + ")");
+                    keep_elem = 0;
+                }
             } else {
-                //console.log("Need to KEEP " + elem.id);
+                // Wrong / deprecated type
+                consoleDebug("Need to remove wrong / deprecated type: " + elem.type);
+                keep_elem = 0;
+            }
+            // Keep element
+            if (keep_elem == 1) {
+                //console.log("Need to KEEP " + elem.type + ": " + elem.id + " (" + elem.val + ")");
                 dataListNew.push(elem);
             }
         });
@@ -2685,7 +3130,7 @@ function migrateDataAndCleanStorage() {
 }
 
 function addToLogs(message) {
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
     consoleDebug(message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
