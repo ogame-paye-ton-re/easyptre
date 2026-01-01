@@ -30,7 +30,7 @@ if (/ptre.chez.gg/.test(location.href)) {
 // Settings
 const ptreMessageDisplayTime = 5*1000;
 const menuImageDisplayTime = 3*1000;
-const ptrePushDelayMicroSec = 500;
+const ptrePushDelayMiliSec = 500;
 const versionCheckTimeout = 6*60*60;
 const technosCheckTimeout = 15*60;
 const dataSharingDelay = 200;
@@ -52,7 +52,7 @@ var universe = -1;
 var currentPlayerID = -1;
 var lastActivitiesGalaSent = 0;
 var lastActivitiesSysSent = 0;
-var lastPTREActivityPushMicroTS = 0;
+var lastPTREActivityPushMiliTS = 0;
 var ptreGalaxyActivityCount = 0;
 var ptreGalaxyEventCount = 0;
 var galaxyInitMiliTS = 0;
@@ -547,7 +547,7 @@ function improvePageGalaxy() {
 // Save JSON "API 2" from fleet page
 function improvePageFleet() {
     console.log("[PTRE] Improving Fleet Page");
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         GM_setValue(ptrePlayerID, currentPlayerID);
         var spanElement = document.querySelector('.show_fleet_apikey');
@@ -598,7 +598,7 @@ function improvePageFacilities() {
 // Parse Buddies page
 function improvePageBuddies() {
     console.log("[PTRE] Improving Buddies Page");
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
     consoleDebug(playerIds);
@@ -722,7 +722,7 @@ function setNumber(x) {
 }
 
 function getLastUpdateLabel(lastCheck) {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     var temp = '<span class="error_status ptre_small">never updated</span>';
     if (lastCheck > 0) {
         var nb_min = (currentTime - lastCheck) / 60;
@@ -999,7 +999,7 @@ function addPTRELinkToAGRPinnedTarget() {
 
 // Displays PTRE settings
 function displayPTREMenu() {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
 
     if (!document.getElementById('btnSaveOptPTRE')) {
         migrateDataAndCleanStorage();
@@ -1596,7 +1596,7 @@ function displayLogs() {
     var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Logs</span><br><br>Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {
@@ -1626,7 +1626,7 @@ function displayGalaxyTracking() {
     var content2 = '';
     var content = '<span class="ptre_maintitle">Galaxy tracking distribution</span><br><br><br><span class="ptre_tab_title">Distribution</span><br><br><table>';
     var temp = [];
-    //var oldestTs = serverTime.getTime() / 1000 + 60;
+    //var oldestTs = Math.floor(serverTime.getTime() / 1000) + 60;
 
     for(var gala = 1; gala <= 12 ; gala++) {
         var galaxyDataJSON = GM_getValue(ptreGalaxyData+gala, '');
@@ -2140,9 +2140,9 @@ function checkForNewSystem() {
         return;
     }
 
-    var currentMicroTime = serverTime.getTime();
-    if (galaxy != lastActivitiesGalaSent || system != lastActivitiesSysSent || (currentMicroTime > lastPTREActivityPushMicroTS + ptrePushDelayMicroSec)) {
-        lastPTREActivityPushMicroTS = currentMicroTime;
+    var currentMiliTime = serverTime.getTime();
+    if (galaxy != lastActivitiesGalaSent || system != lastActivitiesSysSent || (currentMiliTime > lastPTREActivityPushMiliTS + ptrePushDelayMiliSec)) {
+        lastPTREActivityPushMiliTS = currentMiliTime;
         lastActivitiesGalaSent = galaxy;
         lastActivitiesSysSent = system;
         consoleDebug('[' + galaxy + ':' + system + "] Need to update");
@@ -2468,7 +2468,7 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
 
     if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
         consoleDebug("Checking last version available");
@@ -2715,7 +2715,7 @@ function syncSharableData(mode) {
 
 // Action: Sync targets
 function syncTargets(mode) {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
     var AGRJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var PTREJSON = GM_getValue(ptrePTREPlayerListJSON, '');
@@ -2788,7 +2788,7 @@ function syncTargets(mode) {
 // Sync all data
 function globalPTRESync() {
     addToLogs("Global Sync");
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
     migrateDataAndCleanStorage();//TODO: no more needed?
     syncTargets();
     syncSharableData();
@@ -2797,7 +2797,7 @@ function globalPTRESync() {
 
 // This function fetchs closest friend phalanx
 function getPhalanxInfosFromGala() {
-    const currentTime = serverTime.getTime() / 1000;
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     var warning = '';
     var systemElem = $("input#system_input")[0];
     var galaxyElem = $("input#galaxy_input")[0];
@@ -2894,7 +2894,7 @@ function displayTotalSystemsSaved() {
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
     console.log("[PTRE] Migrate Data and clean storage");
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -2978,7 +2978,7 @@ function migrateDataAndCleanStorage() {
 }
 
 function addToLogs(message) {
-    var currentTime = serverTime.getTime() / 1000;
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
     consoleDebug(message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
