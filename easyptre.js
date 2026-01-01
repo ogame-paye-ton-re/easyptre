@@ -74,6 +74,7 @@ if (modeEasyPTRE == "ingame") {
 // GM keys
 var ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 var ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
+var ptreCheckForUpdateCooldown = "ptre-CheckForUpdateCooldown";
 var ptreLogsList = "ptre-Logs";
 var ptreTeamKey = "ptre-" + country + "-" + universe + "-TK";
 var ptreImproveAGRSpyTable = "ptre-" + country + "-" + universe + "-ImproveAGRSpyTable";
@@ -92,7 +93,9 @@ var ptreBuddiesList = "ptre-" + country + "-" + universe + "-BuddiesList";
 var ptreBuddiesListLastRefresh = "ptre-" + country + "-" + universe + "-BuddiesListLastRefresh";
 var ptreToogleEventsOverview = "ptre-" + country + "-" + universe + "-ToogleEventsOverview";
 var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync";
-var ptreLastSharedDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
+var ptreLastDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
+var ptreLastUpdateCheck = "ptre-" + country + "-" + universe + "-LastUpdateCheck";
+var ptreCurrentBackendUpdateTS = "ptre-" + country + "-" + universe + "-CurrentBackendUpdateTS"; // TS from Backend (Not Local)
 var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
 var ptreEnableMinerMode = "ptre-" + country + "-" + universe + "-EnableMinerMode";
 var ptreEnableBetaMode = "ptre-" + country + "-" + universe + "-EnableBetaMode";
@@ -121,6 +124,7 @@ var urlPTREGetRanks = 'https://ptre.chez.gg/scripts/api_get_ranks.php' + ptreCom
 var urlPTRESyncData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEasyPTREUrlParams;
 var urlPTREGetPhalanxInfos = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php' + ptreEasyPTREUrlParams;
 var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + ptreEasyPTREUrlParams;
+var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 
 // ****************************************
 // MAIN EXEC
@@ -198,17 +202,28 @@ if (modeEasyPTRE == "ingame") {
     }
 
     // Global Sync
-    if ((serverTime.getTime() / 1000) > (GM_getValue(ptreLastGlobalSync, 0) + globalPTRESyncTimeout)) {
+    if ((Math.floor(serverTime.getTime()) / 1000) > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
         setTimeout(globalPTRESync, 3000);
     }
 
     // Check for new version only (no need to run it if only browsing)
     setTimeout(updateLastAvailableVersion, 4000);
 
-    // TODO: Next update call
-    // calculer le diff de temps
-    //setTimeout(getPTRELiveUpdate, XXX);
-
+    // Prepare next Backend Check
+    // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
+    // It only check if update is needed, it does not do the update
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
+    if (cooldown > 0) {
+        const nextCheckDelay = Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown - currentTime);
+        if (nextCheckDelay <= 0) {
+            consoleDebug("Need to Check For Update");
+            setTimeout(checkForPTREUpdate, 1000);
+        } else {
+            consoleDebug("Next Check For Update in " + nextCheckDelay + " sec");
+            setTimeout(checkForPTREUpdate, nextCheckDelay*1000);
+        }
+    }
 }
 
 // ****************************************
@@ -1115,8 +1130,6 @@ function displayPTREMenu() {
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         // Shared data
-        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (<span id="ptreLastSharedDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastSharedDataSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2">Phalanx: ';
         var dataJSON = '';
         dataJSON = GM_getValue(ptreDataToSync, '');
         var phalanxCount = 0;
@@ -1135,9 +1148,11 @@ function displayPTREMenu() {
                 }
             });
         }
-        divPTRE += '<span class="success_status">' + phalanxCount + '</span> synced to PTRE Team | <a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a><br>';
-        divPTRE += 'Do Not Probe list: <span class="success_status">' + dnpCount + '</span> targets | Added via Galaxy<br>';
-        divPTRE += 'Hot Targets list: <span class="success_status">' + hotCount + '</span> targets</td></tr>';
+        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell" colspan="2">';
+        divPTRE += 'Phalanx: <span class="success_status">' + phalanxCount + '</span> synced to PTRE Team (<a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>)<br>';
+        divPTRE += 'Do Not Probe list: <span class="success_status">' + dnpCount + '</span> targets (Added via Galaxy)<br>';
+        divPTRE += 'Hot Targets list: <span class="success_status">' + hotCount + '</span> targets (new SR)</td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         if (isOGLorOGIEnabled()) {
@@ -1252,7 +1267,7 @@ function displayPTREMenu() {
         setTimeout(syncTargets, 1000);
     }
     // Sync Data
-    if (currentTime > (GM_getValue(ptreLastSharedDataSync, 0) + 15*60)) {
+    if (currentTime > (GM_getValue(ptreLastDataSync, 0) + 15*60)) {
         setTimeout(syncDataWithPTRE, 2000);
     }
 }
@@ -1822,6 +1837,18 @@ function displaySharedData() {
     }
     content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx (' + undefElem + ')</td></tr></table><br><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>';
 
+    content += '<hr><span class="ptre_tab_title">Hot Targets</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player ID</td><td class="td_cell_radius_0" align="center">Age</td></tr>';
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        $.each(dataList, function(i, elem) {
+            if (elem.type == "hot") {
+                var duration = Math.round((elem.val - currentTime) / 3600);
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.id + '</td><td class="td_cell_radius_1" align="center">' + duration + 'h (' + elem.val + ')</td></tr>';
+            }
+        });
+    }
+    content += '</table>';
+
     content += '<hr><span class="ptre_tab_title">Do Not Probe</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player ID</td><td class="td_cell_radius_0" align="center">Duration</td></tr>';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
@@ -1834,17 +1861,19 @@ function displaySharedData() {
     }
     content += '</table>';
 
-    content += '<hr><span class="ptre_tab_title">Hot Targets</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player ID</td><td class="td_cell_radius_0" align="center">Age</td></tr>';
-    if (dataJSON != '') {
-        dataList = JSON.parse(dataJSON);
-        $.each(dataList, function(i, elem) {
-            if (elem.type == "hot") {
-                var duration = Math.round((elem.val - currentTime) / 3600);
-                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.id + '</td><td class="td_cell_radius_1" align="center">' + duration + 'h (' + elem.val + ')</td></tr>';
-            }
-        });
+    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+        const backendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
+        const updateCooldown = GM_getValue(ptreCheckForUpdateCooldown, 0);
+        const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
+        const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
+        const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
+        content += '<hr><span class="ptre_tab_title">Debug</span><br><br>';
+        content += 'Last Global Sync (once a day): ' + lastGlobalSync + '<br><br>';
+        if (updateCooldown > 0) {
+            content += 'Last "Live" Check (every ' + updateCooldown + ' sec): ' + lastCheck + '<br>';
+            content += 'Last Auto-Update: ' + lastDataSync + '<br>';
+        }
     }
-    content += '</table>';
 
     document.getElementById('infoBoxContent').innerHTML = content;
 }
@@ -2102,7 +2131,7 @@ function improveGalaxyTable() {
         // Get row
         const row = document.getElementById('galaxyRow' + pos);
         if (row) {
-            consoleDebug('Improving galaxyRow' + pos);
+            //consoleDebug('Improving galaxyRow' + pos);
             // Skip inactive players
             if(!row.classList.contains("inactive_filter")) {
                 // Get player cell
@@ -2519,13 +2548,6 @@ function processGalaxyDataCallback(data) {
 // CORE FUNCTIONS
 // ****************************************
 
-// Enable the live update feature
-// This is a Team Global parameter
-// Disabled by default
-function enablePTRELiveUpdate(live_update_ts) {
-
-}
-
 // Check if EasyPTRE needs to be updated
 function updateLastAvailableVersion(force = false) {
     // Only check once a while
@@ -2571,7 +2593,7 @@ function updateLastAvailableVersion(force = false) {
         });
     } else {
         var temp = lastCheckTime + versionCheckTimeout - currentTime;
-        consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
+        //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }
 
@@ -2716,12 +2738,55 @@ function debugSharableData() {
     }
 }
 
+// Ask PTRE if new data are available
+// This is disabled by default
+function checkForPTREUpdate() {
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    if (teamKey == '') {
+        return;
+    }
+    const CurrentBackendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
+    consoleDebug("Checking for Updates...");
+    $.ajax({
+        url : urlcheckForPTREUpdate + '&team_key=' + teamKey + '&current_ts=' + CurrentBackendUpdateTS,
+        type : 'POST',
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = jQuery.parseJSON(reponse);
+            if (reponseDecode.code == 1) {
+                // Update config
+                if (Number(reponseDecode.check_for_update_cooldown) > 0) {
+                    GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
+                }
+                // Is update needed?
+                if (reponseDecode.update == 1) {
+                    consoleDebug("Update needed!");
+                    displayPTREPopUpMessage("New update available");
+                    addToLogs("New update available");
+                    setTimeout(syncDataWithPTRE, 100);
+                } else {
+                    consoleDebug("NO Update needed");
+                }
+            }
+        }
+    });
+    GM_setValue(ptreLastUpdateCheck, currentTime);
+    var cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
+    if (cooldown < 60) {// safety
+        cooldown = 60;
+    }
+    setTimeout(checkForPTREUpdate, cooldown*1000);
+    consoleDebug("Next Check For Update in " + cooldown + " sec");
+}
+
 // This function sends commun data to Team
 // Like:
 // - Phalanx levels
 function syncDataWithPTRE(mode) {
     console.log("[PTRE] Syncing data");
     const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const hot_ts_max = currentTime + 24*3600;
 
     migrateDataAndCleanStorage();
 
@@ -2748,12 +2813,6 @@ function syncDataWithPTRE(mode) {
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    // TODO: set global params for live_updates
-                    if (reponseDecode.live_update_ts > 0) {
-                        enablePTRELiveUpdate(reponseDecode.live_update_ts);
-                        // updateLiveSettings(reponseDecode.live_update_ts);
-                        // a stocker : ACTIF ou NON + Dernier TS vérifié
-                    }
                     // Update DNP list
                     var dnpList = JSON.parse(JSON.stringify(reponseDecode.dnp_array));
                     $.each(dnpList, function(i, dnp) {
@@ -2764,13 +2823,26 @@ function syncDataWithPTRE(mode) {
                     // Update HOT targets
                     var dnpList = JSON.parse(JSON.stringify(reponseDecode.hot_array));
                     $.each(dnpList, function(i, hot_id) {
-                        var hotOut = {type: "hot", id: hot_id, val: 0};
+                        var hotOut = {type: "hot", id: hot_id, val: hot_ts_max};
                         addDataToPTREData(hotOut, false);
                     });
-                    console.log('[PTRE] ' + reponseDecode.message);
-                    GM_setValue(ptreLastSharedDataSync, currentTime);
-                    if (document.getElementById("ptreLastSharedDataSyncField")) {
-                        document.getElementById("ptreLastSharedDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
+
+                    // Update config
+                    GM_setValue(ptreLastDataSync, currentTime);
+                    GM_setValue(ptreLastUpdateCheck, currentTime);
+                    // If feature is enabled for this TEAM
+                    if (Number(reponseDecode.last_update_ts) > 0) {
+                        GM_setValue(ptreCurrentBackendUpdateTS, reponseDecode.last_update_ts);
+                    }
+                    if (Number(reponseDecode.check_for_update_cooldown) > 0) {
+                        GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
+                    }
+
+                    consoleDebug('[PTRE] ' + reponseDecode.message + " (" + reponseDecode.last_update_ts + " / " + reponseDecode.check_for_update_cooldown + ")");
+
+                    // Update info in menu
+                    if (document.getElementById("ptreLastDataSyncField")) {
+                        document.getElementById("ptreLastDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
                     }
                 } else {
                     addToLogs(reponseDecode.message);
@@ -2859,7 +2931,7 @@ function syncTargets(mode) {
     });
 }
 
-// Sync all data
+// Sync all data once a day
 function globalPTRESync() {
     addToLogs("Global Sync");
     var currentTime = Math.floor(serverTime.getTime() / 1000);
@@ -3013,13 +3085,16 @@ function migrateDataAndCleanStorage() {
                 }
             } else if (elem.type == "dnp") {
                 // Clean expired DNP
+                // We do not expire TS (val) equal to 0, as they are not sync yet to PTRE
                 if (Number(elem.val) != 0 && Number(elem.val) < Number(currentTime)) {
                     consoleDebug("Need to remove expired DNP: " + elem.id + " (" + elem.val + ")");
                     keep_elem = 0;
                 }
             } else if (elem.type == "hot") {
-                // To keep. Nothing to do, for now
-
+                if (Number(elem.val) < Number(currentTime)) {
+                    consoleDebug("Need to remove expired HOT: " + elem.id + " (" + elem.val + ")");
+                    keep_elem = 0;
+                }
             } else {
                 // Wrong / deprecated type
                 consoleDebug("Need to remove wrong / deprecated type: " + elem.type);
@@ -3027,7 +3102,7 @@ function migrateDataAndCleanStorage() {
             }
             // Keep element
             if (keep_elem == 1) {
-                console.log("Need to KEEP " + elem.type + ": " + elem.id + " (" + elem.val + ")");
+                //console.log("Need to KEEP " + elem.type + ": " + elem.id + " (" + elem.val + ")");
                 dataListNew.push(elem);
             }
         });
