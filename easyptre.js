@@ -2730,13 +2730,18 @@ function syncDataWithPTRE(mode) {
         displayPTREPopUpMessage("No TeamKey: Add a PTRE TeamKey in EasyPTRE settings");
         return -1;
     }
+    const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
+    var betaParam = "";
+    if (betaMode == "true") {
+        betaParam = "&beta=1";
+    }
 
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
     if (dataJSON != '') {
         // Push data to PTRE
         $.ajax({
-            url : urlPTRESyncData + '&team_key=' + teamKey,
+            url : urlPTRESyncData + '&team_key=' + teamKey + betaParam,
             type : 'POST',
             data: dataJSON,
             cache: false,
