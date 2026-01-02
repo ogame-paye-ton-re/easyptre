@@ -175,6 +175,7 @@ if (modeEasyPTRE == "ingame") {
     if (/component=galaxy/.test(location.href)) {
         consoleDebug("Galaxy page detected");
         setTimeout(improvePageGalaxy, improvePageDelay);
+        setTimeout(checkForPTREUpdate, 200);
     }
 
     // Message page: Add PTRE send SR button
@@ -213,18 +214,7 @@ if (modeEasyPTRE == "ingame") {
     // Prepare next Backend Check
     // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
     // It only check if update is needed, it does not do the update
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
-    const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
-    if (cooldown > 0) {
-        const nextCheckDelay = Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown - currentTime);
-        if (nextCheckDelay <= 0) {
-            consoleDebug("Need to Check For Update");
-            setTimeout(checkForPTREUpdate, 1000);
-        } else {
-            consoleDebug("Next Check For Update in " + nextCheckDelay + " sec");
-            setTimeout(checkForPTREUpdate, nextCheckDelay*1000);
-        }
-    }
+    runAutoCheckForPTREUpdate();
 }
 
 // ****************************************
@@ -2752,7 +2742,6 @@ function debugSharableData() {
 }
 
 // Ask PTRE if new data are available
-// This is disabled by default
 function checkForPTREUpdate() {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
     const TKey = GM_getValue(ptreTeamKey, '');
@@ -2784,12 +2773,26 @@ function checkForPTREUpdate() {
         });
         GM_setValue(ptreLastUpdateCheck, currentTime);
     }
-    var cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
-    if (cooldown < 60) {// safety
-        cooldown = 60;
+}
+
+// Enable auto-check to PTRE
+// This is disabled by default cooldown <= 0
+function runAutoCheckForPTREUpdate() {
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
+    // If Auto-Check is enabled
+    if (cooldown > 0) {
+        if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
+            consoleDebug("Need to Check For Updates");
+            checkForPTREUpdate();
+        } else {
+            const nextCheckDelay = Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown - currentTime);
+            consoleDebug("Next Check For Updates in " + nextCheckDelay + " sec (at least)");
+        }
+        setTimeout(runAutoCheckForPTREUpdate, 60*1000);
+    } else {
+        consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
     }
-    setTimeout(checkForPTREUpdate, cooldown*1000);
-    consoleDebug("Next Check For Update in " + cooldown + " sec");
 }
 
 // This function sends commun data to Team
