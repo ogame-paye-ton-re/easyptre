@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.12.0
+// @version      0.12.1
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -1522,33 +1522,39 @@ function setupInfoBox() {
 // This function calls PTRE backend to get player informations
 // And sends results to Info Box
 function getPlayerInfos(playerID, pseudo) {
-    setupInfoBox();
-    var content = '<center><div id="backToTargetsList" class="button btn_blue"/>BACK TO TARGETS LIST</div><br><br>';
-    $.ajax({
-        dataType: "json",
-        url: urlPTREGetPlayerInfos + '&team_key=' + GM_getValue(ptreTeamKey, '') + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
-        success: function(reponse) {
-            if (reponse.code == 1) {
-                content+= '<table width="90%"><tr><td class="td_ship ptre_tab_title" align="center">' + pseudo + '</td><td class="td_ship ptre_tab_title" align="center">' + setNumber(reponse.top_sr_fleet_points) + ' fleet points</td></tr>';
-                content+= '<tr><td class="td_ship" align="center">[<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PROFILE</a>]</td><td class="td_ship" align="center">[<a href="' + reponse.top_sr_link + '" target="_blank">BEST REPORT</a>]</td></tr>';
-                content+= '<tr><td class="td_ship" colspan="2"><hr></td></tr>';
-                reponse.fleet_json.forEach(function(item, index, object) {
-                    content+= '<tr><td class="td_ship" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></td><td class="td_ship" align="center"></span><span class="ptre_bold">' + setNumber(item.count) + '</span></td></tr>';
-                });
-                content+= '</table>';
-            } else {
-                content+= '<span class="error_status">' + reponse.message + '</span>';
-                addToLogs(reponse.message);
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        setupInfoBox();
+        var content = '<center><div id="backToTargetsList" class="button btn_blue"/>BACK TO TARGETS LIST</div><br><br>';
+        $.ajax({
+            dataType: "json",
+            url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
+            success: function(reponse) {
+                if (reponse.code == 1) {
+                    content+= '<table width="90%"><tr><td class="td_ship ptre_tab_title" align="center">' + pseudo + '</td><td class="td_ship ptre_tab_title" align="center">' + setNumber(reponse.top_sr_fleet_points) + ' fleet points</td></tr>';
+                    content+= '<tr><td class="td_ship" align="center">[<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PROFILE</a>]</td><td class="td_ship" align="center">[<a href="' + reponse.top_sr_link + '" target="_blank">BEST REPORT</a>]</td></tr>';
+                    content+= '<tr><td class="td_ship" colspan="2"><hr></td></tr>';
+                    reponse.fleet_json.forEach(function(item, index, object) {
+                        content+= '<tr><td class="td_ship" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></td><td class="td_ship" align="center"></span><span class="ptre_bold">' + setNumber(item.count) + '</span></td></tr>';
+                    });
+                    content+= '</table>';
+                } else {
+                    content+= '<span class="error_status">' + reponse.message + '</span>';
+                    addToLogs(reponse.message);
+                }
+                content+= '</center>';
+                document.getElementById('infoBoxContent').innerHTML = content;
+                if (document.getElementById('backToTargetsList')) {
+                    document.getElementById('backToTargetsList').addEventListener("click", function (event) {
+                        displayTargetsList();
+                    });
+                }
             }
-            content+= '</center>';
-            document.getElementById('infoBoxContent').innerHTML = content;
-            if (document.getElementById('backToTargetsList')) {
-                document.getElementById('backToTargetsList').addEventListener("click", function (event) {
-                    displayTargetsList();
-                });
-            }
-        }
-    });
+        });
+    } else {
+        displayPTREPopUpMessage("PTRE: NO TEAM KEY. Add it via settings.");
+        document.getElementById('infoBoxContent').innerHTML = "PTRE: NO TEAM KEY. Add it via settings.";
+    }
 }
 
 function displayHelp() {
@@ -1903,59 +1909,64 @@ function validatePurgeGalaxyTracking() {
 
 // Get ranks
 function updateGalaxyBoxWithPlayerRanks(playerId) {
-    // Check if Galaxy Box is still waiting the infos
-    if (!document.getElementById("ptreGalaxyPlayerRanksPlaceholder-" + playerId)) {
-        consoleDebug("Rank update canceled");
-        return;
-    }
-    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Loading ranks...";
-    }
-    $.ajax({
-        url : urlPTREGetRanks + "&team_key=" + GM_getValue(ptreTeamKey, '') + "&player_id=" + playerId,
-        type : 'POST',
-        cache: false,
-        success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug(reponseDecode.message);
-            displayGalaxyMiniMessage(reponseDecode.message);
-            if (reponseDecode.code == 1) {
-                if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                    document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
-                    var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
-                    $.each(reponseDecode.ranks_array, function(i, rank) {
-                        const previousRank = reponseDecode.ranks_array[i + 1];
-                        var classR = "";
-                        var diff = "-";
-                        if (previousRank) {
-                            if (Number(rank.total_score) < Number(previousRank.total_score)) {
-                                classR = "error_status";
-                                diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                            } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
-                                classR = "success_status";
-                                diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                                diff = "+" + diff;
-                            }
-                        }
-                        var when = "";
-                        if (i == 0) {
-                            when = "at midnight";
-                        } else {
-                            when = i + " days ago";
-                        }
-                        content+= '<tr><td class="td_cell_radius_1" align="center">' + when + '</td><td class="td_cell_radius_1" align="center">' + setNumber(rank.total_score) + ' pts</td><td class="td_cell_radius_1" align="center"><span class="' + classR + '">' + diff + '</span></td><td class="td_cell_radius_1" align="center">#' + rank.total_rank + '</td></tr>';
-                    });
-                    content+= '</table>';
-                    document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
-                }
-            } else {
-                if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                    document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = reponseDecode.message;
-                }
-                addToLogs(reponseDecode.message);
-            }
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        // Check if Galaxy Box is still waiting the infos
+        if (!document.getElementById("ptreGalaxyPlayerRanksPlaceholder-" + playerId)) {
+            consoleDebug("Rank update canceled");
+            return;
         }
-    });
+        if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+            document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Loading ranks...";
+        }
+        $.ajax({
+            url : urlPTREGetRanks + "&team_key=" + TKey + "&player_id=" + playerId,
+            type : 'POST',
+            cache: false,
+            success : function(reponse){
+                var reponseDecode = jQuery.parseJSON(reponse);
+                consoleDebug(reponseDecode.message);
+                displayGalaxyMiniMessage(reponseDecode.message);
+                if (reponseDecode.code == 1) {
+                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
+                        var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
+                        $.each(reponseDecode.ranks_array, function(i, rank) {
+                            const previousRank = reponseDecode.ranks_array[i + 1];
+                            var classR = "";
+                            var diff = "-";
+                            if (previousRank) {
+                                if (Number(rank.total_score) < Number(previousRank.total_score)) {
+                                    classR = "error_status";
+                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                                } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
+                                    classR = "success_status";
+                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                                    diff = "+" + diff;
+                                }
+                            }
+                            var when = "";
+                            if (i == 0) {
+                                when = "at midnight";
+                            } else {
+                                when = i + " days ago";
+                            }
+                            content+= '<tr><td class="td_cell_radius_1" align="center">' + when + '</td><td class="td_cell_radius_1" align="center">' + setNumber(rank.total_score) + ' pts</td><td class="td_cell_radius_1" align="center"><span class="' + classR + '">' + diff + '</span></td><td class="td_cell_radius_1" align="center">#' + rank.total_rank + '</td></tr>';
+                        });
+                        content+= '</table>';
+                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
+                    }
+                } else {
+                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = reponseDecode.message;
+                    }
+                    addToLogs(reponseDecode.message);
+                }
+            }
+        });
+    } else {
+        displayPTREPopUpMessage("PTRE: NO TEAM KEY. Add it via settings.");
+    }
 }
 
 // Called when user clicks on the PTRE icon in galaxy view
@@ -2742,36 +2753,35 @@ function debugSharableData() {
 // This is disabled by default
 function checkForPTREUpdate() {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    const teamKey = GM_getValue(ptreTeamKey, '');
-    if (teamKey == '') {
-        return;
-    }
-    const CurrentBackendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
-    consoleDebug("Checking for Updates...");
-    $.ajax({
-        url : urlcheckForPTREUpdate + '&team_key=' + teamKey + '&current_ts=' + CurrentBackendUpdateTS,
-        type : 'POST',
-        cache: false,
-        success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
-            if (reponseDecode.code == 1) {
-                // Update config
-                if (Number(reponseDecode.check_for_update_cooldown) > 0) {
-                    GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
-                }
-                // Is update needed?
-                if (reponseDecode.update == 1) {
-                    consoleDebug("Update needed!");
-                    displayPTREPopUpMessage("New update available");
-                    addToLogs("New update available");
-                    setTimeout(syncDataWithPTRE, 100);
-                } else {
-                    consoleDebug("NO Update needed");
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        const CurrentBackendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
+        consoleDebug("Checking for Updates...");
+        $.ajax({
+            url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + CurrentBackendUpdateTS,
+            type : 'POST',
+            cache: false,
+            success : function(reponse){
+                var reponseDecode = jQuery.parseJSON(reponse);
+                if (reponseDecode.code == 1) {
+                    // Update config
+                    if (Number(reponseDecode.check_for_update_cooldown) > 0) {
+                        GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
+                    }
+                    // Is update needed?
+                    if (reponseDecode.update == 1) {
+                        consoleDebug("Update needed!");
+                        displayPTREPopUpMessage("New update available");
+                        addToLogs("New update available");
+                        setTimeout(syncDataWithPTRE, 100);
+                    } else {
+                        consoleDebug("NO Update needed");
+                    }
                 }
             }
-        }
-    });
-    GM_setValue(ptreLastUpdateCheck, currentTime);
+        });
+        GM_setValue(ptreLastUpdateCheck, currentTime);
+    }
     var cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
     if (cooldown < 60) {// safety
         cooldown = 60;
@@ -2783,22 +2793,21 @@ function checkForPTREUpdate() {
 // This function sends commun data to Team
 // Like:
 // - Phalanx levels
-function syncDataWithPTRE(mode) {
+function syncDataWithPTRE(mode = "auto") {
     console.log("[PTRE] Syncing data");
     const currentTime = Math.floor(serverTime.getTime() / 1000);
     const hot_ts_max = currentTime + 24*3600;
+    const teamKey = GM_getValue(ptreTeamKey, "notk");
+    var addParams = "";
 
     migrateDataAndCleanStorage();
 
-    const teamKey = GM_getValue(ptreTeamKey, '');
-    if (teamKey == '') {
-        displayPTREPopUpMessage("No TeamKey: Add a PTRE TeamKey in EasyPTRE settings");
-        return -1;
+    if (mode == "auto") {
+        addParams+= "&mode=a";
     }
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
-    var betaParam = "";
     if (betaMode == "true") {
-        betaParam = "&beta=1";
+        addParams+= "&beta=1";
     }
 
     var dataJSON = '';
@@ -2806,7 +2815,7 @@ function syncDataWithPTRE(mode) {
     if (dataJSON != '') {
         // Push data to PTRE
         $.ajax({
-            url : urlPTRESyncData + '&team_key=' + teamKey + betaParam,
+            url : urlPTRESyncData + '&team_key=' + teamKey + addParams,
             type : 'POST',
             data: dataJSON,
             cache: false,
@@ -2862,13 +2871,18 @@ function syncDataWithPTRE(mode) {
 // Action: Sync targets
 function syncTargets(mode) {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var ptreStoredTK = GM_getValue(ptreTeamKey, '');
+    const ptreStoredTK = GM_getValue(ptreTeamKey, '');
     var AGRJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var PTREJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     var targetList = [];
     var targetListTemp;
     var player;
     var nb_private = 0;
+
+    if (ptreStoredTK == '') {
+        displayPTREPopUpMessage("No TeamKey: Add a PTRE TeamKey in EasyPTRE settings");
+        return -1;
+    }
 
     // Create full target list
     if (AGRJSON != '' && PTREJSON != '') {
@@ -2953,7 +2967,7 @@ function getPhalanxInfosFromGala() {
     const teamKey = GM_getValue(ptreTeamKey, '');
 
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="error_status">No TeamKey: Add a PTRE TeamKey in EasyPTRE settings</span>');
+        displayGalaxyMessageContent('<span class="error_status">NO TEAM KEY: Add a PTRE TeamKey in EasyPTRE settings</span>');
         return -1;
     }
 
@@ -2997,7 +3011,7 @@ function getGEEInfosFromGala() {
     displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="error_status">No TeamKey: Add a PTRE TeamKey in EasyPTRE settings</span>');
+        displayGalaxyMessageContent('<span class="error_status">NO TEAM KEY: Add a PTRE TeamKey in EasyPTRE settings</span>');
         return -1;
     }
     $.ajax({
