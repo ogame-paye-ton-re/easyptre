@@ -400,7 +400,7 @@ GM_addStyle(`
     font-size: 10pt;
 }
 #boxPTRESettings {
-    width: 500px;
+    width: 550px;
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
@@ -417,7 +417,7 @@ GM_addStyle(`
 #boxPTREInfos {
     position: fixed;
     top: 30px;
-    right: 540px;
+    right: 590px;
     z-index: 1000;
     font-size: 10pt;
     min-width: 300px;
@@ -1151,9 +1151,10 @@ function displayPTREMenu() {
         }
         divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displaySharedData" class="button btn_blue"/>DETAILS</div> <div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" colspan="2">';
-        divPTRE += 'Phalanx: <span class="success_status">' + phalanxCount + '</span> synced to PTRE Team (<a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>)<br>';
-        divPTRE += 'Do Not Probe list: <span class="success_status">' + dnpCount + '</span> targets (Added via Galaxy)<br>';
-        divPTRE += 'Hot Targets list: <span class="success_status">' + hotCount + '</span> targets (new SR)</td></tr>';
+        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br><span class="ptre_small"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + phalanxCount + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptre_small">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="success_status">' + dnpCount + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptre_small">Recent updates</span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + hotCount + '</span></td></tr></table>';
+        divPTRE += '</td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         if (isOGLorOGIEnabled()) {
@@ -2039,7 +2040,7 @@ function openPTREGalaxyActions(galaxy, system, pos) {
             <tr><td colspan="2"><hr><div id="ptreGalaxyActionsContent">
             <span class="ptre_tab_title">Informations</span><br><br>
             [` + galaxy + `:` + system + `:` + pos + `]<br>
-            <b>` + playerName + `</b> (#` + playerId + `)<br>
+            <b>` + playerName + `</b> (#` + playerId + `) - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br>
             Planet: ` + planetId + `<br>
             Moon:` + moonId + `<br>` + targetComment + `</span></center>
             </div>
@@ -2855,10 +2856,10 @@ function syncDataWithPTRE(mode = "auto") {
                         document.getElementById("ptreLastDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
                     }
                 } else {
-                    addToLogs(reponseDecode.message);
+                    addToLogs(reponseDecode.message_debug);
                 }
                 if (mode == 'manual') {
-                    displayMessageInSettings(reponseDecode.message);
+                    displayMessageInSettings(reponseDecode.message_debug);
                 }
             }
         });
