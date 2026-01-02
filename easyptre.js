@@ -1569,6 +1569,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox();
     var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Changelog</span><br>(scroll for old versions)';
+    content+= '<br><br><span class="ptre_tab_title">0.12.0</span><br><br>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
     content+= '<br><br><span class="ptre_tab_title">0.11.4</span><br><br>- Fix phalanx purge and update';
     content+= '<br><br><span class="ptre_tab_title">0.11.3</span><br><br>- Improve update visibility<br>- Add manual update procedure';
     content+= '<br><br><span class="ptre_tab_title">0.11.2</span><br><br>- Fix Galaxy pushs';
@@ -1581,7 +1582,7 @@ function displayChangelog() {
     content+= '<br><br><span class="ptre_tab_title">0.10.0</span><br><br>- Add Galaxy events tracking and sharing (same feature as OGL/OGI but for AGR)<br>- Share Phalanx level with PTRE Team (AGR/OGL/OGI)<br>- Add PTRE Toolbar to galaxy view (AGR/OGL/OGI)<br>- New button to fetch events from Galaxy Event Explorer (AGR/OGL/OGI)<br>- New button to fetch closest friend Phalanx (AGR/OGL/OGI)<br>- Save lifeform researchs to PTRE in order to send them from website to simulator (AGR/OGL/OGI)<br>- Rework buttons and UI';
     content+= '<br><br><span class="ptre_tab_title">0.8.0</span><br><br>- Send counter spy messages as activities<br>- Fix AGR spy table customization (following message page rework)<br>- Fix send spy report button in message page (following message page rework)';
     content+= '<br><br><span class="ptre_tab_title">0.7.6</span><br><br>- Import AGR custom lists to PTRE tracking list (in addition of basic lists)<br>- Improve notification system (keep 5 sec history)';
-    content+= '<br><br><span class="ptre_tab_title">0.7.5</span><br><br>- Display target top fleet directly into EasyPTRE pannel<br>- feature: Add help menu';
+    content+= '<br><br><span class="ptre_tab_title">0.7.5</span><br><br>- Display target top fleet directly into EasyPTRE pannel<br>- [Feature] Add help menu';
     content+= '<br><br><span class="ptre_tab_title">0.7.4</span><br><br>- [Feature] Sync AGR/PTRE targets list with teammates via PTRE (non-mandatory)<br>- [Feature] Add a private targets list management system (in order to not share)<br>- [Feature] Add a debug mode option<br>- [Feature] Script will check, once a day, for updates and display a label<br>- [Fix] Fix pushing activities when refreshing same system<br>- [Fix] Remove AGR "Traders" from targets lists ("Friends" were already removed)<br>- [Fix] Fix galaxy page detection (depending on from where player clicks)<br>- [Fix] Add scrollbar to targets list<br>- [Fix] Move EasyPTRE pannel to right side in order to not overlap with AGR</div>';
     document.getElementById('infoBoxContent').innerHTML = content;
 }
