@@ -44,6 +44,7 @@ const globalPTRESyncTimeout = 24*60*60;
 // Consts
 const toolName = 'EasyPTRE';
 const ptreID = "ptre-id";
+const ptreMissingTKMessage = "NO PTRE TEAM KEY: Add a Team Key via EasyPTRE settings";
 
 // Variables
 var server = -1;
@@ -1366,7 +1367,7 @@ function improveAGRSpyTable(mutationList, observer) {
                 }
             }
         } else {
-            displayPTREPopUpMessage("Error. Add Team Key to PTRE settings");
+            displayPTREPopUpMessage(ptreMissingTKMessage);
         }
     }
 }
@@ -1552,8 +1553,8 @@ function getPlayerInfos(playerID, pseudo) {
             }
         });
     } else {
-        displayPTREPopUpMessage("PTRE: NO TEAM KEY. Add it via settings.");
-        document.getElementById('infoBoxContent').innerHTML = "PTRE: NO TEAM KEY. Add it via settings.";
+        displayPTREPopUpMessage(ptreMissingTKMessage);
+        document.getElementById('infoBoxContent').innerHTML = ptreMissingTKMessage;
     }
 }
 
@@ -1965,7 +1966,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             }
         });
     } else {
-        displayPTREPopUpMessage("PTRE: NO TEAM KEY. Add it via settings.");
+        displayPTREPopUpMessage(ptreMissingTKMessage);
     }
 }
 
@@ -2880,7 +2881,7 @@ function syncTargets(mode) {
     var nb_private = 0;
 
     if (ptreStoredTK == '') {
-        displayPTREPopUpMessage("No TeamKey: Add a PTRE TeamKey in EasyPTRE settings");
+        displayPTREPopUpMessage(ptreMissingTKMessage);
         return -1;
     }
 
@@ -2967,7 +2968,7 @@ function getPhalanxInfosFromGala() {
     const teamKey = GM_getValue(ptreTeamKey, '');
 
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="error_status">NO TEAM KEY: Add a PTRE TeamKey in EasyPTRE settings</span>');
+        displayGalaxyMessageContent('<span class="error_status">' + ptreMissingTKMessage + '</span>');
         return -1;
     }
 
@@ -3011,7 +3012,7 @@ function getGEEInfosFromGala() {
     displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="error_status">NO TEAM KEY: Add a PTRE TeamKey in EasyPTRE settings</span>');
+        displayGalaxyMessageContent('<span class="error_status">' + ptreMissingTKMessage + '</span>');
         return -1;
     }
     $.ajax({
