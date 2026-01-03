@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.12.1
+// @version      0.12.2
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -126,6 +126,7 @@ var urlPTRESyncData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEas
 var urlPTREGetPhalanxInfos = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php' + ptreEasyPTREUrlParams;
 var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + ptreEasyPTREUrlParams;
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
+var urlPTREManagePlayerNote = 'https://ptre.chez.gg/scripts/api_manage_notes.php' + ptreEasyPTREUrlParams;
 
 // ****************************************
 // MAIN EXEC
@@ -1569,6 +1570,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox();
     var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Changelog</span><br>(scroll for old versions)';
+    content+= '<br><br><span class="ptre_tab_title">0.12.2</span><br><br>- [Feature] Add ingame shared notes, linked to targets (beta)';
     content+= '<br><br><span class="ptre_tab_title">0.12.0</span><br><br>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
     content+= '<br><br><span class="ptre_tab_title">0.11.4</span><br><br>- Fix phalanx purge and update';
     content+= '<br><br><span class="ptre_tab_title">0.11.3</span><br><br>- Improve update visibility<br>- Add manual update procedure';
@@ -1866,13 +1868,18 @@ function displaySharedData() {
         const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
         const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
         const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
+        const nextGlobalSync = Math.round((GM_getValue(ptreLastGlobalSync, 0) + globalPTRESyncTimeout - currentTime) / 3600);
+        const syncTimeout = globalPTRESyncTimeout / 3600;
         content += '<hr><span class="ptre_tab_title">Debug</span><br><br>';
-        content += 'Last Global Sync (once a day): ' + lastGlobalSync + '<br><br>';
+        content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + lastGlobalSync + '<br>';
+        content += 'Next Global Sync in ' + nextGlobalSync + 'h<br><br>';
+
         if (updateCooldown > 0) {
-            content += 'Last "Live" Check (every ' + updateCooldown + ' sec): ' + lastCheck + '<br>';
-            content += 'Last Auto-Update: ' + lastDataSync + '<br>';
+            content += 'Live Auto-Update is enabled<br>';
+            content += 'Last Check (every ' + updateCooldown + ' sec): ' + lastCheck + '<br>';
+            content += 'Last Data Sync: ' + lastDataSync + '<br>';
         } else {
-            content += 'Live Auto-Update: Disabled<br>';
+            content += 'Auto-Update is disabled<br>';
         }
     }
 
@@ -1901,6 +1908,57 @@ function validatePurgeGalaxyTracking() {
 // ****************************************
 // GALAXY EXEC STUFFS
 // ****************************************
+
+function updateGalaxyBoxWithPlayerNote(playerId) {
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        // Check if Galaxy Box is still waiting the infos
+        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+            document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
+            $.ajax({
+                url: urlPTREManagePlayerNote + "&team_key=" + TKey + "&action=get&player_id=" + playerId,
+                type: 'POST',
+                success: function (reponse) {
+                    var reponseDecode = jQuery.parseJSON(reponse);
+                    consoleDebug(reponseDecode.message);
+                    if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                        document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
+                    }
+                    if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
+                        document.getElementById("ptreGalaxyPlayerNote-" + playerId).value = reponseDecode.note;
+                    }
+                },
+            });
+        }
+    }
+}
+
+function pushPlayerNote(playerId) {
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
+            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Saving note...";
+            }
+            const note = $("#ptreGalaxyPlayerNote-" + playerId).val();
+            consoleDebug("Saving note for " + playerId);
+            $.ajax({
+                url: urlPTREManagePlayerNote + "&team_key=" + TKey + "&action=set&player_id=" + playerId,
+                type: 'POST',
+                data: {
+                    note: note
+                },
+                success: function (reponse) {
+                    var reponseDecode = jQuery.parseJSON(reponse);
+                    consoleDebug(reponseDecode.message);
+                    if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                        document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
+                    }
+                },
+            });
+        }
+    }
+}
 
 // Get ranks
 function updateGalaxyBoxWithPlayerRanks(playerId) {
@@ -2032,13 +2090,15 @@ function openPTREGalaxyActions(galaxy, system, pos) {
             <table border="1" width="100%"><tr><td><span class="ptre_maintitle">EasyPTRE Galaxy Box</span></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr>
             <tr><td colspan="2"><hr><div id="ptreGalaxyActionsContent">
             <span class="ptre_tab_title">Informations</span><br><br>
-            [` + galaxy + `:` + system + `:` + pos + `]<br>
-            <b>` + playerName + `</b> (#` + playerId + `) - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br>
-            Planet: ` + planetId + `<br>
-            Moon:` + moonId + `<br>` + targetComment + `</span></center>
+            [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> (#` + playerId + `) - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br>
+            Planet: ` + planetId + ` - Moon:` + moonId + `<br>` + targetComment + `</span></center>
             </div>
             <hr><span class="ptre_tab_title">Actions</span><br><br>
             <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue"/>SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
+            <hr><span class="ptre_tab_title">Shared notes (shared with PTRE Team)</span><br><br>
+            <div id="ptreGalaxyPlayerNoteStatus-` + playerId + `"></div><br>
+            <textarea name="note" id="ptreGalaxyPlayerNote-` + playerId + `" rows="5" cols="50"></textarea><br>
+            <div id="savePlayerNote" type="button" class="button btn_blue">SAVE NOTE</div>
             <hr><span class="ptre_tab_title">Points and Ranks, last days</span><br><br>
             <div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-` + playerId + `">Highscores will be loaded after a 2 secs delay...</div></div>
             </td></tr>
@@ -2047,10 +2107,10 @@ function openPTREGalaxyActions(galaxy, system, pos) {
 
         // Position panel next to button
         const button = document.getElementById('ptreActionPos-'+pos);
-        //const button = document.getElementById('galaxyHeader');
-        const rect = button.getBoundingClientRect();
-        panel.style.top = (window.scrollY + rect.bottom - 150) + 'px';
-        panel.style.left = (window.scrollX + rect.left + 20) + 'px';
+        const planetList = document.getElementById('planetList');
+        const rect = planetList.getBoundingClientRect();
+        panel.style.top = (window.scrollY + rect.top) + 'px';
+        panel.style.left = (window.scrollX + rect.left) + 'px';
         document.body.appendChild(panel);
 
         // Close if we click outside the Div
@@ -2100,10 +2160,16 @@ function openPTREGalaxyActions(galaxy, system, pos) {
             displayPTREPopUpMessage("Adding target to Do Not Probe list");
         });
 
+        // Note button
+        document.getElementById('savePlayerNote').addEventListener("click", function (event) {
+            pushPlayerNote(playerId);
+        });
+
         // Get ranks call
         // Set a delay, so we dont fetch data if player closes the box too fast
         // Once function is run, it will check if Pop-up is still waiting
         setTimeout(function() {updateGalaxyBoxWithPlayerRanks(playerId)}, 2000);
+        setTimeout(function() {updateGalaxyBoxWithPlayerNote(playerId)}, 200);
     }
 }
 
@@ -2150,17 +2216,17 @@ function improveGalaxyTable() {
                         if (playerSpan) {
                             const rel = playerSpan.getAttribute('rel');
                             const playerId = rel.replace(/\D/g, '');
-                            consoleDebug("PlayerID: " + playerId);
+                            //consoleDebug("PlayerID: " + playerId);
                             // Create PTRE button
                             var btn = document.createElement("span");
                             btn.dataset.galaxy = galaxy;
                             btn.dataset.system = system;
                             btn.dataset.pos = pos;
                             if (dnpList.includes(playerId)) {
-                                consoleDebug("Is part of DNP list");
+                                //consoleDebug("Is part of DNP list");
                                 btn.style.border = "3px solid red";
                             } else if (hotList.includes(playerId)) {
-                                consoleDebug("Is part of HOT list");
+                                //consoleDebug("Is part of HOT list");
                                 btn.style.border = "3px solid green";
                             }
                             btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
@@ -2173,7 +2239,7 @@ function improveGalaxyTable() {
                     }
                 }
             } else {
-                consoleDebug("Ina player");
+                //consoleDebug("Ina player");
             }
         } else {
             consoleDebug("No galaxy row " + pos);
@@ -2954,8 +3020,7 @@ function syncTargets(mode) {
 // Sync all data once a day
 function globalPTRESync() {
     addToLogs("Global Sync");
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
-    migrateDataAndCleanStorage();//TODO: no more needed?
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
     syncTargets();
     syncDataWithPTRE();
     GM_setValue(ptreLastGlobalSync, currentTime);
@@ -3060,7 +3125,7 @@ function displayTotalSystemsSaved() {
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
     console.log("[PTRE] Migrate Data and clean storage");
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -3147,6 +3212,12 @@ function migrateDataAndCleanStorage() {
         addToLogs("Deleted " + count + " deprecated Keys (LastAvailableVersion)");
     }
     // End: Clean LastAvailableVersion Keys
+
+    // Check TS
+    if (GM_getValue(ptreLastGlobalSync, 0) > currentTime) {
+        GM_setValue(ptreLastGlobalSync, currentTime);
+        addToLogs("Fixed bad TS ptreLastGlobalSync");
+    }
 }
 
 function addToLogs(message) {
