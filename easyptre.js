@@ -1871,6 +1871,8 @@ function displaySharedData() {
         if (updateCooldown > 0) {
             content += 'Last "Live" Check (every ' + updateCooldown + ' sec): ' + lastCheck + '<br>';
             content += 'Last Auto-Update: ' + lastDataSync + '<br>';
+        } else {
+            content += 'Live Auto-Update: Disabled<br>';
         }
     }
 
@@ -2744,35 +2746,36 @@ function debugSharableData() {
 
 // Ask PTRE if new data are available
 function checkForPTREUpdate() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
     const TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
-        const CurrentBackendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
-        consoleDebug("Checking for Updates...");
-        $.ajax({
-            url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + CurrentBackendUpdateTS,
-            type : 'POST',
-            cache: false,
-            success : function(reponse){
-                var reponseDecode = jQuery.parseJSON(reponse);
-                if (reponseDecode.code == 1) {
-                    // Update config
-                    if (Number(reponseDecode.check_for_update_cooldown) > 0) {
-                        GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
-                    }
-                    // Is update needed?
-                    if (reponseDecode.update == 1) {
-                        consoleDebug("Update needed!");
-                        displayPTREPopUpMessage("New update available");
-                        addToLogs("New update available");
-                        setTimeout(syncDataWithPTRE, 100);
-                    } else {
-                        consoleDebug("NO Update needed");
+        const currentTime = Math.floor(serverTime.getTime() / 1000);
+        if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
+            consoleDebug("Checking for Updates...");
+            $.ajax({
+                url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0),
+                type : 'POST',
+                cache: false,
+                success : function(reponse){
+                    var reponseDecode = jQuery.parseJSON(reponse);
+                    if (reponseDecode.code == 1) {
+                        // Update config
+                        if (Number(reponseDecode.check_for_update_cooldown) == 0 || Number(reponseDecode.check_for_update_cooldown) >= 60) {
+                            GM_setValue(ptreCheckForUpdateCooldown, Number(reponseDecode.check_for_update_cooldown));
+                        }
+                        // Is update needed?
+                        if (reponseDecode.update == 1) {
+                            consoleDebug("Update needed!");
+                            displayPTREPopUpMessage("New update available");
+                            addToLogs("New update available");
+                            setTimeout(syncDataWithPTRE, 100);
+                        } else {
+                            consoleDebug("NO Update needed");
+                        }
                     }
                 }
-            }
-        });
-        GM_setValue(ptreLastUpdateCheck, currentTime);
+            });
+            GM_setValue(ptreLastUpdateCheck, currentTime);
+        }
     }
 }
 
@@ -2783,14 +2786,12 @@ function runAutoCheckForPTREUpdate() {
     const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
     // If Auto-Check is enabled
     if (cooldown > 0) {
+        // Should we check?
         if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
             consoleDebug("Need to Check For Updates");
             checkForPTREUpdate();
-        } else {
-            const nextCheckDelay = Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown - currentTime);
-            consoleDebug("Next Check For Updates in " + nextCheckDelay + " sec (at least)");
         }
-        setTimeout(runAutoCheckForPTREUpdate, 60*1000);
+        setTimeout(runAutoCheckForPTREUpdate, 10*1000);
     } else {
         consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
     }
@@ -2821,7 +2822,7 @@ function syncDataWithPTRE(mode = "auto") {
     if (dataJSON != '') {
         // Push data to PTRE
         $.ajax({
-            url : urlPTRESyncData + '&team_key=' + teamKey + addParams,
+            url : urlPTRESyncData + '&team_key=' + teamKey + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) + addParams,
             type : 'POST',
             data: dataJSON,
             cache: false,
@@ -2842,15 +2843,14 @@ function syncDataWithPTRE(mode = "auto") {
                         addDataToPTREData(hotOut, false);
                     });
 
-                    // Update config
+                    // Update configuration
                     GM_setValue(ptreLastDataSync, currentTime);
                     GM_setValue(ptreLastUpdateCheck, currentTime);
-                    // If feature is enabled for this TEAM
-                    if (Number(reponseDecode.last_update_ts) > 0) {
-                        GM_setValue(ptreCurrentBackendUpdateTS, reponseDecode.last_update_ts);
+                    if (Number(reponseDecode.last_update_ts) >= 0) {
+                        GM_setValue(ptreCurrentBackendUpdateTS, Number(reponseDecode.last_update_ts));
                     }
-                    if (Number(reponseDecode.check_for_update_cooldown) > 0) {
-                        GM_setValue(ptreCheckForUpdateCooldown, reponseDecode.check_for_update_cooldown);
+                    if (Number(reponseDecode.check_for_update_cooldown) == 0 || Number(reponseDecode.check_for_update_cooldown) >= 60) {
+                        GM_setValue(ptreCheckForUpdateCooldown, Number(reponseDecode.check_for_update_cooldown));
                     }
 
                     consoleDebug('[PTRE] ' + reponseDecode.message + " (" + reponseDecode.last_update_ts + " / " + reponseDecode.check_for_update_cooldown + ")");
