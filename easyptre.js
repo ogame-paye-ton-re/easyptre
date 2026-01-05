@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.12.2
+// @version      0.12.3
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -1570,6 +1570,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox();
     var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Changelog</span><br>(scroll for old versions)';
+    content+= '<br><br><span class="ptre_tab_title">0.12.3</span><br><br>- [Feature] Send debris fields alongside activities';
     content+= '<br><br><span class="ptre_tab_title">0.12.2</span><br><br>- [Feature] Add ingame shared notes, linked to targets (beta)';
     content+= '<br><br><span class="ptre_tab_title">0.12.0</span><br><br>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
     content+= '<br><br><span class="ptre_tab_title">0.11.4</span><br><br>- Fix phalanx purge and update';
@@ -2460,7 +2461,7 @@ function processGalaxyDataCallback(data) {
             var moonId = -1;
             var moonSize = -1;
             var debrisIndex = -1;
-            var debrisSize = -1;
+            var debrisSize = 0;
             var playerId = positionContent.player['playerId'];
             var playerName = positionContent.player['playerName'];
             var position = positionContent.position;
@@ -2489,8 +2490,9 @@ function processGalaxyDataCallback(data) {
                 moonSize = positionContent.planets[moonIndex]['size'];
             }
             if (debrisIndex != -1) {
-                debrisSize = Number(positionContent.planets[debrisIndex]['resources']['metal']['amount']) + Number(positionContent.planets[debrisIndex]['resources']['crystal']['amount']) + Number(positionContent.planets[debrisIndex]['resources']['deuterium']['amount']);
+                debrisSize = Math.round(Number(positionContent.planets[debrisIndex]['resources']['metal']['amount']) + Number(positionContent.planets[debrisIndex]['resources']['crystal']['amount']) + Number(positionContent.planets[debrisIndex]['resources']['deuterium']['amount']));
             }
+            //consoleDebug("===> DEBRIS: "+debrisSize);
 
             // Push players activities
             if (playerId != -1 && !isOGLorOGIEnabled() && isPlayerInLists(playerId)) {
@@ -2513,6 +2515,7 @@ function processGalaxyDataCallback(data) {
                                        position : position,
                                        main : false,
                                        activity : convertActivityToOGLFormat(positionContent.planets[0]['activity']['showActivity'], positionContent.planets[0]['activity']['idleTime']),
+                                       cdr_total_size : debrisSize,
                                        moon : jsonLune};
                     //console.log(jsonActiPos);
                     tabActiPos.push(jsonActiPos);
@@ -2666,6 +2669,7 @@ function processGalaxyDataCallback(data) {
         console.log('[PTRE] [' + galaxy + ':' + system + '] Pushing Galaxy updates');
     }
     // Update counts on galaxy view
+    //TODO: update thoses counters with backend events counts from JSON
     if (document.getElementById('ptreGalaxyActivityCount') && document.getElementById('ptreGalaxyEventCount')) {
         document.getElementById('ptreGalaxyActivityCount').innerHTML = ptreGalaxyActivityCount;
         document.getElementById('ptreGalaxyEventCount').innerHTML = ptreGalaxyEventCount;
