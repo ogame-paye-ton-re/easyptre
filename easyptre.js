@@ -2178,6 +2178,8 @@ function improveGalaxyTable() {
     var galaxyElem = $("input#galaxy_input")[0];
     var galaxy = galaxyElem.value;
     var system = systemElem.value;
+    var previousSystemData = [];
+    var systemIdInGalaxyList = -1;
     consoleDebug("Improving Galaxy Table " + galaxy + ":" + system);
 
     const currentMiliTime = serverTime.getTime();
@@ -2199,47 +2201,102 @@ function improveGalaxyTable() {
         });
     }
 
+    // Get LOCAL Galaxy content (from storage)
+    var galaxyDataJSON = GM_getValue(ptreGalaxyData+galaxy, '');
+    if (galaxyDataJSON != '') {
+        galaxyDataList = JSON.parse(galaxyDataJSON);
+    }
+    //console.log(galaxyDataList);
+
+    // Init default previous structure
+    for(var i = 1; i<=15; i++) {
+        previousSystemData[i] = [];
+        previousSystemData[i]["planetId"] = -1;
+        previousSystemData[i]["moonId"] = -1;
+        previousSystemData[i]["playerId"] = -1;
+    }
+    // Search our SS in previous data
+    $.each(galaxyDataList, function(i, elem) {
+        if (Object.keys(elem)[0] == system) {
+            systemIdInGalaxyList = i;
+        }
+    });
+    // Merge both
+    if (systemIdInGalaxyList > -1) {
+        consoleDebug("Found previous system");
+        $.each(galaxyDataList[systemIdInGalaxyList][system][0], function(i, elem) {
+            previousSystemData[elem.pos]["playerId"] = elem.playerId;
+            previousSystemData[elem.pos]["planetId"] = elem.planetId;
+            previousSystemData[elem.pos]["moonId"] = elem.moonId;
+        });
+    }
+
     for(let pos = 1; pos <= 15 ; pos++) {
         // Get row
         const row = document.getElementById('galaxyRow' + pos);
         if (row) {
-            //consoleDebug('Improving galaxyRow' + pos);
-            // Skip inactive players
-            if(!row.classList.contains("inactive_filter")) {
-                // Get player cell
+
+            var planetId = -1;
+            var moonId = -1;
+            var playerId = -1;
+            // Planet ID
+            const planetDiv = row.querySelector('.cellPlanet .microplanet');
+            if (planetDiv) {
+                planetId = planetDiv.dataset.planetId;
+            }
+            // Moon ID
+            const moonDiv = row.querySelector('.cellMoon .micromoon');
+            if (moonDiv) {
+                moonId = moonDiv.dataset.moonId;
+            }
+            const cellPlayerName = row.querySelector('.cellPlayerName');
+            if (cellPlayerName && cellPlayerName.children.length > 0) {
+                // Get Player ID
                 const cellPlayerName = row.querySelector('.cellPlayerName');
-                if (cellPlayerName && cellPlayerName.children.length > 0) {
-                    // Get Player ID
-                    const cellPlayerName = row.querySelector('.cellPlayerName');
-                    if (cellPlayerName) {
-                        const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
-                        if (playerSpan) {
-                            const rel = playerSpan.getAttribute('rel');
-                            const playerId = rel.replace(/\D/g, '');
-                            //consoleDebug("PlayerID: " + playerId);
-                            // Create PTRE button
-                            var btn = document.createElement("span");
-                            btn.dataset.galaxy = galaxy;
-                            btn.dataset.system = system;
-                            btn.dataset.pos = pos;
-                            if (dnpList.includes(playerId)) {
-                                //consoleDebug("Is part of DNP list");
-                                btn.style.border = "3px solid red";
-                            } else if (hotList.includes(playerId)) {
-                                //consoleDebug("Is part of HOT list");
-                                btn.style.border = "3px solid green";
-                            }
-                            btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
-                            cellPlayerName.appendChild(btn);
-                            // Add action
-                            btn.addEventListener('click', function () {
-                                openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos);
-                            });
-                        }
+                if (cellPlayerName) {
+                    const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
+                    if (playerSpan) {
+                        const rel = playerSpan.getAttribute('rel');
+                        playerId = rel.replace(/\D/g, '');
                     }
                 }
-            } else {
-                //consoleDebug("Ina player");
+            }
+            consoleDebug("===> Player: " + previousSystemData[pos]["playerId"] + " => " + playerId + " | P: " + previousSystemData[pos]["planetId"] + " => " + planetId + " | M: " + previousSystemData[pos]["moonId"] + " => " + moonId);
+
+            if (systemIdInGalaxyList == -1 || previousSystemData[pos]["playerId"] != playerId || previousSystemData[pos]["planetId"] != planetId || previousSystemData[pos]["moonId"] != moonId) {
+                consoleDebug("Position changed!");
+
+            }
+
+
+
+
+
+
+
+
+
+
+
+            // Add button
+            if(!row.classList.contains("inactive_filter") && playerId > -1) {
+                var btn = document.createElement("span");
+                btn.dataset.galaxy = galaxy;
+                btn.dataset.system = system;
+                btn.dataset.pos = pos;
+                if (dnpList.includes(playerId)) {
+                    //consoleDebug("Is part of DNP list");
+                    btn.style.border = "3px solid red";
+                } else if (hotList.includes(playerId)) {
+                    //consoleDebug("Is part of HOT list");
+                    btn.style.border = "3px solid green";
+                }
+                btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
+                cellPlayerName.appendChild(btn);
+                // Add action
+                btn.addEventListener('click', function () {
+                    openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos);
+                });
             }
         } else {
             consoleDebug("No galaxy row " + pos);
