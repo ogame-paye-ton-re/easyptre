@@ -131,7 +131,7 @@ var urlPTRESyncData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEas
 var urlPTREGetPhalanxInfos = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php' + ptreEasyPTREUrlParams;
 var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + ptreEasyPTREUrlParams;
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
-var urlPTREManagePlayerNote = 'https://ptre.chez.gg/scripts/api_manage_notes.php' + ptreEasyPTREUrlParams;
+var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
 
 // ****************************************
 // MAIN EXEC
@@ -1933,23 +1933,37 @@ function validatePurgeGalaxyTracking() {
 // GALAXY EXEC STUFFS
 // ****************************************
 
-function updateGalaxyBoxWithPlayerNote(playerId) {
+function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
     const TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
         // Check if Galaxy Box is still waiting the infos
-        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-            document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
+        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId) || document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
+            consoleDebug("Getting Player notes");
+            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
+            }
+            if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
+                document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).value = "Loading events...";
+            }
             $.ajax({
-                url: urlPTREManagePlayerNote + "&team_key=" + TKey + "&action=get&player_id=" + playerId,
+                url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=get&player_id=" + playerId + "&galaxy=" + galaxy + "&system=" + system + "&pos=" + pos,
                 type: 'POST',
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
                     consoleDebug(reponseDecode.message);
-                    if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-                        document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
-                    }
-                    if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
-                        document.getElementById("ptreGalaxyPlayerNote-" + playerId).value = reponseDecode.note;
+                    if (reponseDecode.code == 1) {
+                        // Message
+                        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                            document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
+                        }
+                        // Update note content
+                        if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
+                            document.getElementById("ptreGalaxyPlayerNote-" + playerId).value = reponseDecode.note;
+                        }
+                        // Galaxy event
+                        if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
+                            document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).innerHTML = atob(reponseDecode.event);
+                        }
                     }
                 },
             });
@@ -1967,7 +1981,7 @@ function pushPlayerNote(playerId) {
             const note = $("#ptreGalaxyPlayerNote-" + playerId).val();
             consoleDebug("Saving note for " + playerId);
             $.ajax({
-                url: urlPTREManagePlayerNote + "&team_key=" + TKey + "&action=set&player_id=" + playerId,
+                url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=set&player_id=" + playerId,
                 type: 'POST',
                 data: {
                     note: note
@@ -2130,7 +2144,7 @@ function openPTREGalaxyActions(galaxy, system, pos) {
                 <td>
                     <hr>
                     <span class="ptre_tab_title">Live Events</span><br><br>
-                    TODO:
+                    <div id="ptreGalaxyPosEvent-` + galaxy + `:` + system + `:` + pos + `"></div><br>
                 </td>
             </tr>`;
         if (playerId > 0) {
@@ -2231,8 +2245,9 @@ function openPTREGalaxyActions(galaxy, system, pos) {
             // Set a delay, so we dont fetch data if player closes the box too fast
             // Once function is run, it will check if Pop-up is still waiting
             setTimeout(function() {updateGalaxyBoxWithPlayerRanks(playerId)}, 2000);
-            setTimeout(function() {updateGalaxyBoxWithPlayerNote(playerId)}, 200);
         }
+        // We still want event for empty positions
+        setTimeout(function() {updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos)}, 200);
     }
 }
 
