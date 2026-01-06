@@ -114,6 +114,7 @@ var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
 var ptreEnableMinerMode = "ptre-" + country + "-" + universe + "-EnableMinerMode";
 var ptreEnableBetaMode = "ptre-" + country + "-" + universe + "-EnableBetaMode";
 var ptreGalaxyStorageVersion = "ptre-" + country + "-" + universe + "-GalaxyStorageVersion";
+var ptreGalaxyEventsPos = "ptre-" + country + "-" + universe + "-GalaxyEventsPos";
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -2113,6 +2114,10 @@ function openPTREGalaxyActions(galaxy, system, pos) {
         }
         consoleDebug("Popup infos: " + playerId + " | " + planetId + " | " + moonId);
 
+        const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
+        if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
+            targetComment+= '<span class="warning_status">This position has changed recently!</span><br>';
+        }
         // Get players to highligh
         dataJSON = GM_getValue(ptreDataToSync, '');
         var dataList = [];
@@ -2152,7 +2157,7 @@ function openPTREGalaxyActions(galaxy, system, pos) {
             <tr>
                 <td>
                     <hr>
-                    <span class="ptre_tab_title">Live Events</span><br><br>
+                    <span class="ptre_tab_title">New Galaxy Events</span><br><br>
                     <div id="ptreGalaxyPosEvent-` + galaxy + `:` + system + `:` + pos + `"></div><br>
                 </td>
             </tr>`;
@@ -2280,6 +2285,7 @@ function improveGalaxyTable() {
     var dataList = [];
     var hotList = [];
     var dnpList = [];
+    var galaEventsList = [];
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
         $.each(dataList, function(i, elem) {
@@ -2291,7 +2297,8 @@ function improveGalaxyTable() {
         });
     }
 
-    // TODO: Get positions to highlight
+    // Get positions to highlight
+    galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
 
     // Get LOCAL Galaxy content from Storage
     var previousSystem = fetchSystemV2(galaxy, system);
@@ -2367,6 +2374,9 @@ function improveGalaxyTable() {
                     if (dnpList.includes(playerId)) {
                         //consoleDebug("Is part of DNP list");
                         btn.style.border = ptreBorderStyleDnpList;
+                    } else if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
+                        //consoleDebug("Is part of Galaxy Events list");
+                        btn.style.border = ptreBorderStyleGalaxyEvent;
                     } else if (hotList.includes(playerId)) {
                         //consoleDebug("Is part of HOT list");
                         btn.style.border = ptreBorderStyleHotList;
@@ -2466,6 +2476,12 @@ function improveGalaxyTable() {
                             if (btnTmp) {
                                 btnTmp.style.border = ptreBorderStyleGalaxyEvent;
                             }
+                            // TODO: Add to ptreGalaxyEventsPos for refresh without having to sync all
+                            /*const list = GM_getValue(ptreGalaxyEventsPos, []);
+                            if (!list.includes(elem)) {
+                                list.push(elem);
+                                GM_setValue(ptreGalaxyEventsPos, list);
+                            }*/
                         });
                     }
                 } else {
@@ -2976,19 +2992,22 @@ function syncDataWithPTRE(mode = "auto") {
                 var reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
                     // Update DNP list
-                    var dnpList = JSON.parse(JSON.stringify(reponseDecode.dnp_array));
+                    const dnpList = JSON.parse(JSON.stringify(reponseDecode.dnp_array));
                     $.each(dnpList, function(i, dnp) {
                         var ts_max = currentTime + dnp.duration;
                         var dnpOut = {type: "dnp", id: dnp.player_id, val: ts_max};
                         addDataToPTREData(dnpOut, false);
                     });
                     // Update HOT targets
-                    var dnpList = JSON.parse(JSON.stringify(reponseDecode.hot_array));
-                    $.each(dnpList, function(i, hot_id) {
+                    const hotList = JSON.parse(JSON.stringify(reponseDecode.hot_array));
+                    $.each(hotList, function(i, hot_id) {
                         var hotOut = {type: "hot", id: hot_id, val: hot_ts_max};
                         addDataToPTREData(hotOut, false);
                     });
-                    // TODO: Update Galaxy Events positions received from PTRE
+                    // Update Galaxy Events positions received from PTRE
+                    const galaxyEventsList = JSON.parse(JSON.stringify(reponseDecode.galaxy_events_array));
+                    GM_setValue(ptreGalaxyEventsPos, galaxyEventsList);
+
                     // TODO: Update playerID/name list received from PTRE
 
                     // Update configuration
