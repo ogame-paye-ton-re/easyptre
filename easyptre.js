@@ -55,6 +55,11 @@ var server = -1;
 var country = "";
 var universe = -1;
 var currentPlayerID = -1;
+var currentPlayerName = "";
+var currentPlanetID = -1;
+var currentPlanetCoords = "";
+var currentPlanetType = "";
+
 var lastActivitiesGalaSent = 0;
 var lastActivitiesSysSent = 0;
 var lastPTREActivityPushMiliTS = 0;
@@ -70,6 +75,10 @@ if (modeEasyPTRE == "ingame") {
     var splitted2 = splitted[1].split('.');
     country = splitted2[0];
     currentPlayerID = document.getElementsByName('ogame-player-id')[0].content;
+    currentPlayerName = document.getElementsByName('ogame-player-name')[0].content;
+    currentPlanetID = document.getElementsByName('ogame-planet-id')[0].content;
+    currentPlanetCoords = document.getElementsByName('ogame-planet-coordinates')[0].content;
+    currentPlanetType = document.getElementsByName('ogame-planet-type')[0].content;
 } else {
     country = document.getElementsByName('ptre-country')[0].content;
     universe = document.getElementsByName('ptre-universe')[0].content;
@@ -2309,11 +2318,9 @@ function improveGalaxyTable() {
             var planetId = -1;
             var moonId = -1;
             var playerId = -1;
-            //TODO: GET playername
-            //TODO: GET rank
-            //TODO: GET status
-            var status = "";
-            var rank = -1;
+            var player_name = "";
+            var player_rank = -1;
+            var player_status = "";//TODO: GET status
 
             // Planet ID
             const planetDiv = row.querySelector('.cellPlanet .microplanet');
@@ -2327,16 +2334,24 @@ function improveGalaxyTable() {
             }
             const cellPlayerName = row.querySelector('.cellPlayerName');
             if (cellPlayerName && cellPlayerName.children.length > 0) {
-                // Get Player ID
+                // Get Player
                 const cellPlayerName = row.querySelector('.cellPlayerName');
                 if (cellPlayerName) {
                     const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
                     if (playerSpan) {
+                        // Player ID
                         const rel = playerSpan.getAttribute('rel');
                         playerId = Number(rel.replace(/\D/g, ''));
+                        // Player rank
+                        player_rank = Number(document.getElementById(playerSpan.getAttribute('rel'))?.querySelector('li.rank a')?.textContent);
+                        // Player name
+                        const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
+                        player_name = playerSpanName.childNodes[0].textContent.trim();
                     } else if (cellPlayerName.firstElementChild.classList.contains('ownPlayerRow')) {
                         // This is OUR row. No playerID is provided, we replace it.
+                        // peut-etre qu'il faudrait parcourir tous les child, si l'ordre change for (const child of parent.children) console.log(child.tagName);
                         playerId = Number(currentPlayerID);
+                        player_name = currentPlayerName;
                     }
                 }
             }
@@ -2367,9 +2382,9 @@ function improveGalaxyTable() {
             //}
 
             // Compare new positions with previous one
-            consoleDebug("[GALAXY] Position [" + galaxy + ":" + system + ":" + pos + "] Player: "+previousSystem[pos].playerId+"=>"+playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+moonId);
+            consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+ player_name + " ("+player_rank+"): "+previousSystem[pos].playerId+"=>"+playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+moonId);
             if (previousSystemFound == 0 || playerId != previousSystem[pos].playerId || planetId != previousSystem[pos].planetId || moonId != previousSystem[pos].moonId) {
-                consoleDebug("[GALAXY] Position [" + galaxy + ":" + system + ":" + pos + "] has changed");
+                consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
                 updatedPositions++;
                 // Build data to send to PTRE
                 // Use Mili-sec TS
@@ -2382,11 +2397,11 @@ function improveGalaxyTable() {
                                 galaxy : galaxy,
                                 system : system,
                                 position : pos,
-                                name: "TODO:",
+                                name: player_name,
                                 old_player_id: previousSystem[pos].playerId,
                                 old_name: "",
-                                status: status,
-                                rank: rank,
+                                status: player_status,
+                                rank: player_rank,
                                 moon : jsonLuneG};
                 //console.log(jsonTemp);
                 newSystemToPush.push(jsonTemp);
