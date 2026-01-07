@@ -1172,12 +1172,12 @@ function displayPTREMenu() {
             divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Targets list</span> (<span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue"/>OPEN LIST</div></td></tr>';
             divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
             divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-
-            // Galaxy Data
-            divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 1) + ')</span></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue"/>DETAILS</div></td></tr>';
-            divPTRE += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
-            divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
         }
+
+        // Galaxy Data
+        divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 1) + ')</span></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue"/>DETAILS</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
+        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         // Lifeforms Menu
         divPTRE += '<tr><td class="td_cell" colspan="2"><span class="ptre_title">Lifeforms researchs</span> (<span id="ptreLastTechnosRefreshField">' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + '</span>)</td></tr>';
