@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.13.1
+// @version      0.13.2
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -87,37 +87,38 @@ if (modeEasyPTRE == "ingame") {
 }
 
 // GM keys
-var ptreLastAvailableVersion = "ptre-LastAvailableVersion";
-var ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
-var ptreLogsList = "ptre-Logs";
-var ptreTeamKey = "ptre-" + country + "-" + universe + "-TK";
-var ptreTeamName = "ptre-" + country + "-" + universe + "-TeamName";
-var ptreImproveAGRSpyTable = "ptre-" + country + "-" + universe + "-ImproveAGRSpyTable";
-var ptrePTREPlayerListJSON = "ptre-" + country + "-" + universe + "-PTREPlayerListJSON";
-var ptreAGRPlayerListJSON = "ptre-" + country + "-" + universe + "-AGRPlayerListJSON";
-var ptreAGRPrivatePlayerListJSON = "ptre-" + country + "-" + universe + "-AGRPrivatePlayerListJSON";
-var ptreEnableConsoleDebug = "ptre-" + country + "-" + universe + "-EnableConsoleDebug";
-var ptreAddBuddiesToFriendsAndPhalanx = "ptre-" + country + "-" + universe + "-AddBuddiesToFriendsAndPhalanx";
-var ptreMaxCounterSpyTsSeen = "ptre-" + country + "-" + universe + "-MaxCounterSpyTsSeen";
-var ptreTechnosJSON = "ptre-" + country + "-" + universe + "-Technos";
-var ptreLastTechnosRefresh = "ptre-" + country + "-" + universe + "-LastTechnosRefresh";
-var ptrePlayerID = "ptre-" + country + "-" + universe + "-PlayerID";
-var ptreDataToSync = "ptre-" + country + "-" + universe + "-DataToSync";
-var ptreGalaxyData = "ptre-" + country + "-" + universe + "-GalaxyDataG"; // Object
-var ptreBuddiesList = "ptre-" + country + "-" + universe + "-BuddiesList";
-var ptreBuddiesListLastRefresh = "ptre-" + country + "-" + universe + "-BuddiesListLastRefresh";
-var ptreToogleEventsOverview = "ptre-" + country + "-" + universe + "-ToogleEventsOverview";
-var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync";
-var ptreLastDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
-var ptreLastUpdateCheck = "ptre-" + country + "-" + universe + "-LastUpdateCheck";
-var ptreCurrentBackendUpdateTS = "ptre-" + country + "-" + universe + "-CurrentBackendUpdateTS"; // TS from Backend (Not Local)
-var ptreCheckForUpdateCooldown = "ptre-" + country + "-" + universe + "-CheckForUpdateCooldown";
-var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
-var ptreEnableMinerMode = "ptre-" + country + "-" + universe + "-EnableMinerMode";
-var ptreEnableBetaMode = "ptre-" + country + "-" + universe + "-EnableBetaMode";
-var ptreGalaxyStorageVersion = "ptre-" + country + "-" + universe + "-GalaxyStorageVersion";
-var ptreGalaxyEventsPos = "ptre-" + country + "-" + universe + "-GalaxyEventsPos"; // Array
-var ptreHighlightedPlayers = "ptre-" + country + "-" + universe + "-HighlightedPlayers"; // Object
+const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not change!
+const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
+const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
+const ptreLogsList = "ptre-Logs";
+const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
+const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
+const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
+const ptrePTREPlayerListJSON = ptrePerUniKeysPrefix + "PTREPlayerListJSON";
+const ptreAGRPlayerListJSON = ptrePerUniKeysPrefix + "AGRPlayerListJSON";
+const ptreAGRPrivatePlayerListJSON = ptrePerUniKeysPrefix + "AGRPrivatePlayerListJSON";
+const ptreEnableConsoleDebug = ptrePerUniKeysPrefix + "EnableConsoleDebug";
+const ptreAddBuddiesToFriendsAndPhalanx = ptrePerUniKeysPrefix + "AddBuddiesToFriendsAndPhalanx";
+const ptreMaxCounterSpyTsSeen = ptrePerUniKeysPrefix + "MaxCounterSpyTsSeen";
+const ptreTechnosJSON = ptrePerUniKeysPrefix + "Technos";
+const ptreLastTechnosRefresh = ptrePerUniKeysPrefix + "LastTechnosRefresh";
+const ptrePlayerID = ptrePerUniKeysPrefix + "PlayerID";
+const ptreDataToSync = ptrePerUniKeysPrefix + "DataToSync";
+const ptreGalaxyData = ptrePerUniKeysPrefix + "GalaxyDataG"; // Object
+const ptreBuddiesList = ptrePerUniKeysPrefix + "BuddiesList";
+const ptreBuddiesListLastRefresh = ptrePerUniKeysPrefix + "BuddiesListLastRefresh";
+const ptreToogleEventsOverview = ptrePerUniKeysPrefix + "ToogleEventsOverview";
+const ptreLastTargetsSync = ptrePerUniKeysPrefix + "LastTargetsSync";
+const ptreLastDataSync = ptrePerUniKeysPrefix + "LastSharedDataSync";
+const ptreLastUpdateCheck = ptrePerUniKeysPrefix + "LastUpdateCheck";
+const ptreCurrentBackendUpdateTS = ptrePerUniKeysPrefix + "CurrentBackendUpdateTS"; // TS from Backend (Not Local)
+const ptreCheckForUpdateCooldown = ptrePerUniKeysPrefix + "CheckForUpdateCooldown";
+const ptreLastGlobalSync = ptrePerUniKeysPrefix + "LastGlobalSync";
+const ptreEnableMinerMode = ptrePerUniKeysPrefix + "EnableMinerMode";
+const ptreEnableBetaMode = ptrePerUniKeysPrefix + "EnableBetaMode";
+const ptreGalaxyStorageVersion = ptrePerUniKeysPrefix + "GalaxyStorageVersion";
+const ptreGalaxyEventsPos = ptrePerUniKeysPrefix + "GalaxyEventsPos"; // Array
+const ptreHighlightedPlayers = ptrePerUniKeysPrefix + "HighlightedPlayers"; // Object
 
 // Images
 var imgPTRE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAB1FBMVEUAAEAAAEE1IjwvHTsEA0GBTCquYhxbNjINCUAFBEEqGjwyIDsAAUAYED+kXR++aBS7aBaKUCctHDwTDUBDKTeBSymwYxuYVyQPCkA8JTm4Zxi7ZxW9aBSrYR2fWyG+aRS8ZxS2Zhg6JDlqPzC+aRW8ZxV1RCwBAkEMCEGUVSW8aBSlXh8bET8oGj27aBdNLzZSMjW8aBaHTigGBUEXDz5kOS1qOymbWCG9aRayZBt0QihnOisiFj0PCj9FKjdKLDVIKzVGKjZHKjZILDYXDz8BAUENCD4OCD4KBj8OCT4MCD8CAkEiFj6MUSadWB+fWR2NUSYVDj8HBUBqPzGJTyeYViGeWB6fWR8+JzkFA0AWDj4kFz2ITiazZBl2RSwIBkASDD8ZED5hOTCwYhqbWSIHBD80IDodEz4PCT8kFjsKB0AhFDwTDD8DA0E1IToQCTybVh6pYB6ETSlWNDQrGzwHBUEjFj1PMDV+SSqoXhwfETmdVhyxZBuWViRrPy8DAkFjOzGPUiarXhgeETm9aBWiXCB9SSp4RiyeWiG1ZRm9aRW8aBWrXhmdVxysXhgPCT2UVCKzZRyxZByyZRyiXB8dEDoDAkAhFj4oGj4kGD4GBED///9i6fS4AAAAAWJLR0Sb79hXhAAAAAlwSFlzAAAOwgAADsIBFShKgAAAAAd0SU1FB+YMAw4EFzatfRkAAAE3SURBVCjPY2AgDBhxSzEx45JkYWVj5wDq5eTi5kGT4uXjFxAUEhYRFROXQLNJUkpaWkZWTkpeQVEJ1WRGZRVpaWlVGSChoqaOIqWhCRIFAy1tHRQpXTFVmJS0nj6yiYwGhnAZaX4jY7iEiamZuYUAHBhaWlnbQKVs7ewdHEHAyQlC2Tu7wM1jdHVzd3PzYGT08HRz8/JmRLbMh9XXzz8gMCg4JDQsPALFY5FR0TGxcfEMCYlJySnRcOHUtHROoLqMzCywouwcxlzePDewVH5BYVFxCQfUAsbSsvIKvsoqiFS1vLxhTW2dpEu9q3BeQyOboTx/UzNUqgUUfCpSrW3tHZ1d/MBw6e5BkgIBGXl5aEhiSCEAXKqXXxUNyPRBpPonTJyEBiZPmQqWmjZ9BgaYOYuIRIgVAABizF3wXn23IAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0wM1QxNDowNDoxNyswMDowMEeHM70AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMDNUMTQ6MDQ6MTcrMDA6MDA22osBAAAAAElFTkSuQmCC';
@@ -3078,7 +3079,7 @@ function syncTargets(mode) {
     targetListTemp.forEach(function(item, index, object) {
         //consoleDebug(item.id + ' ' + item.pseudo);
         if (isTargetPrivate(item.id)) {
-            consoleDebug("Ignoring " + item.pseudo);
+            //consoleDebug("Ignoring " + item.pseudo);
             nb_private++;
         } else {
             player = {id: item.id, pseudo: item.pseudo};
