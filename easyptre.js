@@ -75,11 +75,11 @@ if (modeEasyPTRE == "ingame") {
     var splitted2 = splitted[1].split('.');
     country = splitted2[0];
     currentPlayerID = document.getElementsByName('ogame-player-id')[0].content;
-    GM_setValue(ptrePlayerID, currentPlayerID);
     currentPlayerName = document.getElementsByName('ogame-player-name')[0].content;
     currentPlanetID = document.getElementsByName('ogame-planet-id')[0].content;
     currentPlanetCoords = document.getElementsByName('ogame-planet-coordinates')[0].content;
     currentPlanetType = document.getElementsByName('ogame-planet-type')[0].content;
+    GM_setValue("ptre-" + country + "-" + universe + "-PlayerID", currentPlayerID);
 } else {
     country = document.getElementsByName('ptre-country')[0].content;
     universe = document.getElementsByName('ptre-universe')[0].content;
@@ -89,7 +89,6 @@ if (modeEasyPTRE == "ingame") {
 // GM keys
 var ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 var ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
-var ptreCheckForUpdateCooldown = "ptre-CheckForUpdateCooldown";
 var ptreLogsList = "ptre-Logs";
 var ptreTeamKey = "ptre-" + country + "-" + universe + "-TK";
 var ptreTeamName = "ptre-" + country + "-" + universe + "-TeamName";
@@ -112,6 +111,7 @@ var ptreLastTargetsSync = "ptre-" + country + "-" + universe + "-LastTargetsSync
 var ptreLastDataSync = "ptre-" + country + "-" + universe + "-LastSharedDataSync";
 var ptreLastUpdateCheck = "ptre-" + country + "-" + universe + "-LastUpdateCheck";
 var ptreCurrentBackendUpdateTS = "ptre-" + country + "-" + universe + "-CurrentBackendUpdateTS"; // TS from Backend (Not Local)
+var ptreCheckForUpdateCooldown = "ptre-" + country + "-" + universe + "-CheckForUpdateCooldown";
 var ptreLastGlobalSync = "ptre-" + country + "-" + universe + "-LastGlobalSync";
 var ptreEnableMinerMode = "ptre-" + country + "-" + universe + "-EnableMinerMode";
 var ptreEnableBetaMode = "ptre-" + country + "-" + universe + "-EnableBetaMode";
@@ -635,7 +635,7 @@ function improvePageBuddies() {
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
     consoleDebug(playerIds);
-    dataJSON = JSON.stringify(playerIds);
+    const dataJSON = JSON.stringify(playerIds);
     GM_setValue(ptreBuddiesList, dataJSON);
     GM_setValue(ptreBuddiesListLastRefresh, currentTime);
     displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
@@ -1915,7 +1915,6 @@ function displaySharedData() {
     content += '</td></tr></table>';
 
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
-        const backendUpdateTS = GM_getValue(ptreCurrentBackendUpdateTS, 0);
         const updateCooldown = GM_getValue(ptreCheckForUpdateCooldown, 0);
         const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
         const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
@@ -2452,7 +2451,7 @@ function improveGalaxyTable() {
         // Save current System to storage
         updateSystemV2(galaxy, system, newSystemToStore);
         // Push to PTRE
-        jsonSystem = '{';
+        var jsonSystem = '{';
         $.each(newSystemToPush, function(nb, jsonPos){
             jsonSystem += '"'+jsonPos.coords+'":'+JSON.stringify(jsonPos)+',';
             //consoleDebug(jsonSystem);
@@ -2683,7 +2682,7 @@ function processGalaxyDataCallback(data) {
     // Do acti push
     if (tabActiPos.length > 0) {
         // Build JSON
-        jsonSystem = '{';
+        var jsonSystem = '{';
         $.each(tabActiPos, function(nb, jsonPos){
             jsonSystem += '"'+jsonPos.coords+'":'+JSON.stringify(jsonPos)+',';
             //consoleDebug(jsonSystem);
@@ -3007,6 +3006,7 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreTeamName, reponseDecode.team_name);
                 // Update highlighted players received from PTRE
                 //var temp = JSON.parse(JSON.stringify(reponseDecode.player_highlight_array));
+                GM_deleteValue(ptreHighlightedPlayers);
                 var temp = reponseDecode.player_highlight_array;
                 Object.keys(temp).forEach(i => {
                     if (temp[i].ts && temp[i].ts > 0) {
@@ -3322,6 +3322,16 @@ function migrateDataAndCleanStorage() {
     It will only make more requests to PTRE, at start
 */
 function dropGalaxyCacheStorageV1() {
+    //TODO: remove in few days
+    // Migrate cooldown check to "per universe"
+    if (GM_getValue(ptreCheckForUpdateCooldown, -1) == -1) { // if we dont have the new "per uni" parameter (exclude 0 as means disabled)
+        const oldUpdateCooldown = GM_getValue("ptre-CheckForUpdateCooldown", 0);
+        if (oldUpdateCooldown > 0) {
+            GM_setValue(ptreCheckForUpdateCooldown, oldUpdateCooldown);
+            addToLogs("Migrate cooldown " + oldUpdateCooldown + " to: " + ptreCheckForUpdateCooldown);
+        }
+    }
+    // Clean old storage ONCE
     if (GM_getValue(ptreGalaxyStorageVersion, 1) != 2) {
         GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
             GM_deleteValue(key);
