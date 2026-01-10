@@ -310,8 +310,9 @@ GM_addStyle(`
     font-weight:bold;
     margin: 5px;
 }
-.ptre_tab_title {
+.ptreSubTitle {
     color: #6f9fc8;
+    margin: 5px;
 }
 .ptre_bold {
     font-weight:bold;
@@ -1572,7 +1573,7 @@ function getPlayerInfos(playerID, pseudo) {
             url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
             success: function(reponse) {
                 if (reponse.code == 1) {
-                    content+= '<table width="90%"><tr><td class="td_ship ptre_tab_title" align="center">' + pseudo + '</td><td class="td_ship ptre_tab_title" align="center">' + setNumber(reponse.top_sr_fleet_points) + ' fleet points</td></tr>';
+                    content+= '<table width="90%"><tr><td class="td_ship" align="center"><div class="ptreSubTitle">' + pseudo + '</div></td><td class="td_ship" align="center"><div class="ptreSubTitle">' + setNumber(reponse.top_sr_fleet_points) + ' fleet points</div></td></tr>';
                     content+= '<tr><td class="td_ship" align="center">[<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PROFILE</a>]</td><td class="td_ship" align="center">[<a href="' + reponse.top_sr_link + '" target="_blank">BEST REPORT</a>]</td></tr>';
                     content+= '<tr><td class="td_ship" colspan="2"><hr></td></tr>';
                     reponse.fleet_json.forEach(function(item, index, object) {
@@ -1600,17 +1601,17 @@ function getPlayerInfos(playerID, pseudo) {
 
 function displayHelp() {
     setupInfoBox();
-    var content = '<div class="ptreBoxTitle">EasyPTRE Help</div><span class="ptre_tab_title">Purpose</span><br><br>EasyPTRE works as a side-car of AGR in order to enable PTRE basic features. Once configured, you will be able to: <br>- Push and share spy reports<br>- Push counter spy messages as acivities<br>- Track targets galaxy activities and check results on PTRE website<br>- Track galaxy events (new moons, etc)<br>- Display player top fleet from PTRE<br>- Sync targets list with your Team';
-    content+= '<br><br><span class="ptre_tab_title">Team Key setting</span><br><br>To use it, you need to create a Team on <a href="https://ptre.chez.gg?page=team" target="_blank">PTRE website</a> and add Team Key to EasyPTRE settings.<br>PTRE Team Key should look like: TM-XXXX-XXXX-XXXX-XXXX. Create your Team or ask your teammates for it.';
-    content+= '<br><br><span class="ptre_tab_title">Spy report push</span><br><br>You can push spy reports from the messages page or when opening a spy report. Spy report will be shared to your Team and over Discord (if <a href="https://ptre.chez.gg/?page=discord_integration" target="_blank">configuration</a> is done).';
-    content+= '<br><br><span class="ptre_tab_title">Galaxy tracking</span><br><br>EasyPTRE will track galaxy modifications (new moon, destroyed planet, etc) when you browse it and send data to your PTRE Team.<br>You can also enable notifications on Discord (type "!ptre !gala") or check all events on the <a href="https://ptre.chez.gg/?page=galaxy_event_explorer" target="_blank">Galaxy Event Explorer</a>.<br>This feature is disable if you use OGL or OGI, as it is directly integrated to thoses tools.';
-    content+= '<br><br><span class="ptre_tab_title">Lifeforms Researchs synchronization</span><br><br>EasyPTRE will save your LF researchs so you never have to manually enter thme into simulator when using PTRE links. <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Details here</a>.';
-    content+= '<br><br><span class="ptre_tab_title">Activity sharing</span><br><br>EasyPTRE will send targets activities from galaxy and counter-spy messages from Inbox.<br>It allows you to check activity table and what your opponent is doing.<br>This feature is disable if you use OGL or OGI, as it is directly integrated to thoses tools.';
-    content+= '<br><br><span class="ptre_tab_title">Target lists</span><br><br>EasyPTRE targets lists determines players that will be activity-tracked when exploring the galaxy. ';
+    var content = '<div class="ptreBoxTitle">EasyPTRE Help</div><div class="ptreCategoryTitle">Purpose</div>EasyPTRE works as a side-car of AGR in order to enable PTRE basic features. Once configured, you will be able to: <br>- Push and share spy reports<br>- Push counter spy messages as acivities<br>- Track targets galaxy activities and check results on PTRE website<br>- Track galaxy events (new moons, etc)<br>- Display player top fleet from PTRE<br>- Sync targets list with your Team';
+    content+= '<div class="ptreCategoryTitle">Team Key setting</div>To use it, you need to create a Team on <a href="https://ptre.chez.gg?page=team" target="_blank">PTRE website</a> and add Team Key to EasyPTRE settings.<br>PTRE Team Key should look like: TM-XXXX-XXXX-XXXX-XXXX. Create your Team or ask your teammates for it.';
+    content+= '<div class="ptreCategoryTitle">Spy report push</div>You can push spy reports from the messages page or when opening a spy report. Spy report will be shared to your Team and over Discord (if <a href="https://ptre.chez.gg/?page=discord_integration" target="_blank">configuration</a> is done).';
+    content+= '<div class="ptreCategoryTitle">Galaxy tracking</div>EasyPTRE will track galaxy modifications (new moon, destroyed planet, etc) when you browse it and send data to your PTRE Team.<br>You can also enable notifications on Discord (type "!ptre !gala") or check all events on the <a href="https://ptre.chez.gg/?page=galaxy_event_explorer" target="_blank">Galaxy Event Explorer</a>.<br>This feature is disable if you use OGL or OGI, as it is directly integrated to thoses tools.';
+    content+= '<div class="ptreCategoryTitle">Lifeforms Researchs synchronization</div>EasyPTRE will save your LF researchs so you never have to manually enter thme into simulator when using PTRE links. <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Details here</a>.';
+    content+= '<div class="ptreCategoryTitle">Activity sharing</div>EasyPTRE will send targets activities from galaxy and counter-spy messages from Inbox.<br>It allows you to check activity table and what your opponent is doing.<br>This feature is disable if you use OGL or OGI, as it is directly integrated to thoses tools.';
+    content+= '<div class="ptreCategoryTitle">Target lists</div>EasyPTRE targets lists determines players that will be activity-tracked when exploring the galaxy. ';
     content+= 'EasyPTRE manages two targets lists that works at same time (both lists are tracked):<br>- AGR target list: it is based on you AGR left pannel: Target, To attack, Watch, Miner. It ignores Friends and traders. To update this list, open your AGR target pannels<br>- PTRE target list: this list containes targets shared by your team';
-    content+= '<br><br>You can sync your target lists with your teammates (you may ignore some of your targets in order to NOT share them with friends and keep it to yourself).';
-    content+= '<br><br>Common targets list (for your PTRE Team) can be configured <a href="https://ptre.chez.gg/?page=players_list" target="_blank">on PTRE players list page</a>.';
-    content+= '<br><br><span class="ptre_tab_title">Need more help?</span><br><br>You can get some help on <a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>, come and ask us.';
+    content+= '<br>You can sync your target lists with your teammates (you may ignore some of your targets in order to NOT share them with friends and keep it to yourself).';
+    content+= '<br>Common targets list (for your PTRE Team) can be configured <a href="https://ptre.chez.gg/?page=players_list" target="_blank">on PTRE players list page</a>.';
+    content+= '<div class="ptreCategoryTitle">Need more help?</div>You can get some help on <a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>, come and ask us.';
 
     document.getElementById('infoBoxContent').innerHTML = content;
 }
@@ -1618,31 +1619,31 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox();
     var content = '<div style="overflow-y: scroll; max-height: 600px;"><div class="ptreBoxTitle">EasyPTRE Changelog</div>(scroll for old versions)';
-    content+= '<br><br><span class="ptre_tab_title">0.13.0</span><br><br>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
-    content+= '<br><br><span class="ptre_tab_title">0.12.2</span><br><br>- [Feature] Add ingame shared notes, linked to targets (beta)';
-    content+= '<br><br><span class="ptre_tab_title">0.12.0</span><br><br>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
-    content+= '<br><br><span class="ptre_tab_title">0.11.4</span><br><br>- Fix phalanx purge and update';
-    content+= '<br><br><span class="ptre_tab_title">0.11.3</span><br><br>- Improve update visibility<br>- Add manual update procedure';
-    content+= '<br><br><span class="ptre_tab_title">0.11.2</span><br><br>- Fix Galaxy pushs';
-    content+= '<br><br><span class="ptre_tab_title">0.11.1</span><br><br>- Add buddies to Friends & Phalanx feature<br>- Add filters to Friends & Phalanx feature';
-    content+= '<br><br><span class="ptre_tab_title">0.11.0</span><br><br>- Add Friends & Phalanx feature';
-    content+= '<br><br><span class="ptre_tab_title">0.10.4</span><br><br>- Add Changelog feature<br>- Fix some minor CSS issues';
-    content+= '<br><br><span class="ptre_tab_title">0.10.3</span><br><br>- Manage moon ID and relocation related to phalanx sharing<br>- Rework global design';
-    content+= '<br><br><span class="ptre_tab_title">0.10.2</span><br><br>- Fix counter-spy timestamp after V12 update';
-    content+= '<br><br><span class="ptre_tab_title">0.10.1</span><br><br>- Allow removing TeamKey from settings';
-    content+= '<br><br><span class="ptre_tab_title">0.10.0</span><br><br>- Add Galaxy events tracking and sharing (same feature as OGL/OGI but for AGR)<br>- Share Phalanx level with PTRE Team (AGR/OGL/OGI)<br>- Add PTRE Toolbar to galaxy view (AGR/OGL/OGI)<br>- New button to fetch events from Galaxy Event Explorer (AGR/OGL/OGI)<br>- New button to fetch closest friend Phalanx (AGR/OGL/OGI)<br>- Save lifeform researchs to PTRE in order to send them from website to simulator (AGR/OGL/OGI)<br>- Rework buttons and UI';
-    content+= '<br><br><span class="ptre_tab_title">0.8.0</span><br><br>- Send counter spy messages as activities<br>- Fix AGR spy table customization (following message page rework)<br>- Fix send spy report button in message page (following message page rework)';
-    content+= '<br><br><span class="ptre_tab_title">0.7.6</span><br><br>- Import AGR custom lists to PTRE tracking list (in addition of basic lists)<br>- Improve notification system (keep 5 sec history)';
-    content+= '<br><br><span class="ptre_tab_title">0.7.5</span><br><br>- Display target top fleet directly into EasyPTRE pannel<br>- [Feature] Add help menu';
-    content+= '<br><br><span class="ptre_tab_title">0.7.4</span><br><br>- [Feature] Sync AGR/PTRE targets list with teammates via PTRE (non-mandatory)<br>- [Feature] Add a private targets list management system (in order to not share)<br>- [Feature] Add a debug mode option<br>- [Feature] Script will check, once a day, for updates and display a label<br>- [Fix] Fix pushing activities when refreshing same system<br>- [Fix] Remove AGR "Traders" from targets lists ("Friends" were already removed)<br>- [Fix] Fix galaxy page detection (depending on from where player clicks)<br>- [Fix] Add scrollbar to targets list<br>- [Fix] Move EasyPTRE pannel to right side in order to not overlap with AGR</div>';
+    content+= '<div class="ptreSubTitle">0.13.0</div>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
+    content+= '<div class="ptreSubTitle">0.12.2</div>- [Feature] Add ingame shared notes, linked to targets (beta)';
+    content+= '<div class="ptreSubTitle">0.12.0</div>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
+    content+= '<div class="ptreSubTitle">0.11.4</div>- Fix phalanx purge and update';
+    content+= '<div class="ptreSubTitle">0.11.3</div>- Improve update visibility<br>- Add manual update procedure';
+    content+= '<div class="ptreSubTitle">0.11.2</div>- Fix Galaxy pushs';
+    content+= '<div class="ptreSubTitle">0.11.1</div>- Add buddies to Friends & Phalanx feature<br>- Add filters to Friends & Phalanx feature';
+    content+= '<div class="ptreSubTitle">0.11.0</div>- Add Friends & Phalanx feature';
+    content+= '<div class="ptreSubTitle">0.10.4</div>- Add Changelog feature<br>- Fix some minor CSS issues';
+    content+= '<div class="ptreSubTitle">0.10.3</div>- Manage moon ID and relocation related to phalanx sharing<br>- Rework global design';
+    content+= '<div class="ptreSubTitle">0.10.2</div>- Fix counter-spy timestamp after V12 update';
+    content+= '<div class="ptreSubTitle">0.10.1</div>- Allow removing TeamKey from settings';
+    content+= '<div class="ptreSubTitle">0.10.0</div>- Add Galaxy events tracking and sharing (same feature as OGL/OGI but for AGR)<br>- Share Phalanx level with PTRE Team (AGR/OGL/OGI)<br>- Add PTRE Toolbar to galaxy view (AGR/OGL/OGI)<br>- New button to fetch events from Galaxy Event Explorer (AGR/OGL/OGI)<br>- New button to fetch closest friend Phalanx (AGR/OGL/OGI)<br>- Save lifeform researchs to PTRE in order to send them from website to simulator (AGR/OGL/OGI)<br>- Rework buttons and UI';
+    content+= '<div class="ptreSubTitle">0.8.0</div>- Send counter spy messages as activities<br>- Fix AGR spy table customization (following message page rework)<br>- Fix send spy report button in message page (following message page rework)';
+    content+= '<div class="ptreSubTitle">0.7.6</div>- Import AGR custom lists to PTRE tracking list (in addition of basic lists)<br>- Improve notification system (keep 5 sec history)';
+    content+= '<div class="ptreSubTitle">0.7.5</div>- Display target top fleet directly into EasyPTRE pannel<br>- [Feature] Add help menu';
+    content+= '<div class="ptreSubTitle">0.7.4</div>- [Feature] Sync AGR/PTRE targets list with teammates via PTRE (non-mandatory)<br>- [Feature] Add a private targets list management system (in order to not share)<br>- [Feature] Add a debug mode option<br>- [Feature] Script will check, once a day, for updates and display a label<br>- [Fix] Fix pushing activities when refreshing same system<br>- [Fix] Remove AGR "Traders" from targets lists ("Friends" were already removed)<br>- [Fix] Fix galaxy page detection (depending on from where player clicks)<br>- [Fix] Add scrollbar to targets list<br>- [Fix] Move EasyPTRE pannel to right side in order to not overlap with AGR</div>';
     document.getElementById('infoBoxContent').innerHTML = content;
 }
 
 function displayUpdateBox(updateMessageShort) {
     setupInfoBox();
     var content = '<div class="ptreBoxTitle">EasyPTRE update</div>' + updateMessageShort;
-    content += '<br><br><br><span class="ptre_tab_title">Automatic updates</span><br><br>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
-    content += '<br><br><br></b><span class="ptre_tab_title">Manual update</span><br><br>If you want to proceed to a manual update here is how to:<br>';
+    content += '<div class="ptreCategoryTitle">Automatic updates</div>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
+    content += '<div class="ptreCategoryTitle">Manual update</div>If you want to proceed to a manual update here is how to:<br>';
     content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
     content += '<br>- Click on "Dashboard"';
     content += '<br>- Click on "Installed Userscripts" tab';
@@ -1692,7 +1693,7 @@ function displayLogs() {
 function displayGalaxyTracking() {
     setupInfoBox();
 
-    var content = '<div class="ptreBoxTitle">Galaxy tracking distribution</div><span class="ptre_tab_title">Distribution</span><br><br>';
+    var content = '<div class="ptreBoxTitle">Galaxy tracking distribution</div><div class="ptreCategoryTitle">Distribution</div>';
     content += 'X => 10/10 systems recently updated<br>+ => some systems recently updated<br><br>';
     content += '<div style="font-family: monospace; white-space: pre;">';
 
@@ -1725,7 +1726,7 @@ function displayGalaxyTracking() {
     }
     content += '</div>';
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
-        content+='<br><br><span class="ptre_tab_title">Galaxy details</span><br><br>';
+        content+='<div class="ptreCategoryTitle">Galaxy details</div>';
         content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 1) + '<br>';
         content+='Galaxy Storage Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
         content+='Galaxy keys:<br>';
@@ -1735,7 +1736,7 @@ function displayGalaxyTracking() {
         content+='<br><span class="ptre_small">If you dont see galaxies from "Galaxy keys" in the "Distribution" tab, you may purge data.</span>';
     }
 
-    content+='<br><br><span class="ptre_tab_title">Reset galaxy data</span><br><br>';
+    content+='<div class="ptreCategoryTitle">Reset galaxy data</div>';
     content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA</div>';
     document.getElementById('infoBoxContent').innerHTML = content;
 
@@ -1766,7 +1767,7 @@ function displayTargetsList() {
         var targetJSON = '';
         var targetList = '';
         content += 'AGR Target List<br><span class="ptre_small">This list is based on your AGR list</span><br><br><table width="90%">';
-        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><span class="ptre_tab_title">Player<br>Name</span></td><td class="td_cell_radius_0" align="center"><span class="ptre_tab_title">Fleet<br>Infos</span></td><td class="td_cell_radius_0" align="center"><span class="ptre_tab_title">PTRE<br>Profile</span></td><td class="td_cell_radius_0" align="center"><span class="ptre_tab_title">Keep<br>Private</span></td><td class="td_cell_radius_0" align="center"><span class="ptre_tab_title">Remove<br>Target</span></td></tr>';
+        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><div class="ptreSubTitle">Player<br>Name</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Fleet<br>Infos</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">PTRE<br>Profile</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Keep<br>Private</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Remove<br>Target</div></td></tr>';
         targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
         if (targetJSON != '') {
             targetList = JSON.parse(targetJSON);
@@ -1795,7 +1796,7 @@ function displayTargetsList() {
     targetJSON = '';
     var targetListPTRE = '';
     content += 'PTRE Team Target List<br><span class="ptre_small">Common list with your Team</span><br><br><table width="90%">';
-    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><span class="ptre_tab_title">Player<br>Name</span></td><td class="td_cell_radius_0" align="center"><span class="ptre_tab_title">Fleet<br>Infos</span></td><td class="td_cell_radius_0" align="center"><span class="ptre_tab_title">PTRE<br>Profile</span></td><td class="td_cell_radius_0" align="center"><span class="ptre_tab_title">Remove<br>Target</span></td></tr>';
+    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><div class="ptreSubTitle">Player<br>Name</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Fleet<br>Infos</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">PTRE<br>Profile</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Remove<br>Target</div></td></tr>';
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     if (targetJSON != '') {
         targetListPTRE = JSON.parse(targetJSON);
@@ -1875,7 +1876,7 @@ function displayTargetsList() {
 function displaySharedData() {
     setupInfoBox();
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var content = '<div style="overflow-y: scroll; max-height: 600px;"><div class="ptreBoxTitle">Shared data</div>';
+    var content = '<div style="overflow-y: scroll; max-height: 600px;"><div class="ptreBoxTitle">Team Shared data</div>';
     var phalanxCount = 0;
     var dataJSON = '';
     var dataList = [];
@@ -1884,7 +1885,7 @@ function displaySharedData() {
     const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
 
     // TODO: [LOW] factorise loops
-    content += '<table><tr><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Phalanx</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td></tr>';
+    content += '<div class="ptreCategoryTitle">Synced data</div><table><tr><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Phalanx</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td></tr>';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
         $.each(dataList, function(i, elem) {
@@ -1896,7 +1897,7 @@ function displaySharedData() {
     }
     content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx (' + undefElem + ')</td></tr></table><br><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>';
 
-    content += '</td><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Hot Targets</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td></tr>';
+    content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Hot Targets</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td></tr>';
     $.each(highlightedPlayersList, function(i, elem) {
         if (elem.status == "hot") {
             content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.name + '</td></tr>';
@@ -1904,7 +1905,7 @@ function displaySharedData() {
     });
     content += '</table><br><br><span class="success_status">Players recently spied</span>';
 
-    content += '</td><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Do Not Probe</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td><td class="td_cell_radius_0" align="center">Duration</td></tr>';
+    content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Do Not Probe</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td><td class="td_cell_radius_0" align="center">Duration</td></tr>';
     $.each(highlightedPlayersList, function(i, elem) {
         if (elem.status == "dnp") {
             var duration = Math.round((elem.ts - currentTime) / 60);
@@ -1914,7 +1915,7 @@ function displaySharedData() {
     content += '</table><br><br><span class="error_status">Do not probe thoses players</span><br>This feature requires Live Update';
 
     const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
-    content += '</td><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Recent Galaxy Events</span><br><br>';
+    content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Recent Galaxy Events</div>';
     content += 'Galaxy Events count:<br><span class="success_status">' + galaEventsList.length + '</span><br><br>';
     content += 'You may display events in<br>the <span class="success_status">PTRE toolbar</span><br><br>(<a href="/game/index.php?page=ingame&component=galaxy">on galaxy page</a>)';
     content += '</td></tr></table>';
@@ -1926,7 +1927,7 @@ function displaySharedData() {
         const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
         const nextGlobalSync = Math.round((GM_getValue(ptreLastGlobalSync, 0) + globalPTRESyncTimeout - currentTime) / 3600);
         const syncTimeout = globalPTRESyncTimeout / 3600;
-        content += '<hr><span class="ptre_tab_title">Debug</span><br><br>';
+        content += '<hr><div class="ptreCategoryTitle">Debug</div>';
         content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + lastGlobalSync + '<br>';
         content += 'Next Global Sync in ' + nextGlobalSync + 'h<br><br>';
 
@@ -2140,7 +2141,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 <td>
                     <hr>
                     <div id="ptreGalaxyActionsContent">
-                        <span class="ptre_tab_title">Informations</span><br><br>
+                        <div class="ptreCategoryTitle">Informations</div>
                         [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br><br>
                         ` + targetComment + `
                     </div>
@@ -2149,7 +2150,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             <tr>
                 <td>
                     <hr>
-                    <span class="ptre_tab_title">New Galaxy Events</span><br><br>
+                    <div class="ptreCategoryTitle">New Galaxy Events</div>
                     <div id="ptreGalaxyPosEvent-` + galaxy + `:` + system + `:` + pos + `"></div><br>
                 </td>
             </tr>`;
@@ -2158,14 +2159,14 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             <tr>
                 <td>
                     <hr>
-                    <span class="ptre_tab_title">Actions</span><br><br>
+                    <div class="ptreCategoryTitle">Actions</div>
                     <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
                 </td>
             </tr>
             <tr>
                 <td>
                     <hr>
-                    <span class="ptre_tab_title">Shared notes (shared with PTRE Team)</span><br><br>
+                    <div class="ptreCategoryTitle">Shared notes (shared with PTRE Team)</div>
                     <div id="ptreGalaxyPlayerNoteStatus-` + playerId + `"></div><br>
                     <textarea name="note" id="ptreGalaxyPlayerNote-` + playerId + `" rows="5" cols="50"></textarea><br>
                     <div id="savePlayerNote" type="button" class="button btn_blue">SAVE NOTE</div>
@@ -2174,7 +2175,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             <tr>
                 <td>
                     <hr>
-                    <span class="ptre_tab_title">Points and Ranks, last days</span><br><br>
+                    <div class="ptreCategoryTitle">Points and Ranks, last days</div>
                     <div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-` + playerId + `">Highscores will be loaded after a 2 secs delay...</div></div>
                 </td>
             </tr>`;
@@ -2183,7 +2184,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             <tr>
                 <td>
                     <hr>
-                    <span class="ptre_tab_title">Deep space</span><br><br>
+                    <div class="ptreCategoryTitle">Deep space</div>
                     Nothing here...
                 </td>
             </tr>`;
