@@ -166,7 +166,7 @@ if (modeEasyPTRE == "ingame") {
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
         if ((lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '')) {
             ptreMenuName = "CLICK ME";
-            updateClass = " error_status";
+            updateClass = " ptreError";
         }
         var aff_option = '<span class="menu_icon"><a id="iconeUpdate" href="https://ptre.chez.gg" target="blank_" ><img id="imgPTREmenu" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
         aff_option += '<a id="affOptionsPTRE" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
@@ -290,36 +290,36 @@ if (modeEasyPTRE == "ptre") {
 // Ugly style... yes!
 // ****************************************
 GM_addStyle(`
-.success_status {
-    color:#99CC00;
+.ptreSuccess {
+    color: #99CC00;
 }
-.error_status {
+.ptreError {
     color: #D43635;
 }
-.warning_status {
-    color:#D29D00;
+.ptreWarning {
+    color: #D29D00;
+}
+.ptreBold {
+    font-weight: bold;
+}
+.ptreSmall {
+    font-size: 8pt;
+    font-weight: normal;
 }
 .ptreBoxTitle {
     color: #6f9fc8;
-    font-weight:bold;
+    font-weight: bold;
     text-decoration: underline;
     margin: 5px;
 }
 .ptreCategoryTitle {
     color: #6f9fc8;
-    font-weight:bold;
+    font-weight: bold;
     margin: 5px;
 }
 .ptreSubTitle {
     color: #6f9fc8;
     margin: 5px;
-}
-.ptre_bold {
-    font-weight:bold;
-}
-.ptre_small {
-    font-size: 8pt;
-    font-weight: normal;
 }
 .td_cell {
     padding: 3px;
@@ -539,7 +539,7 @@ function improvePageGalaxy() {
         tempContent+= '<td valign="top"><div class="ptreBoxTitle">PTRE TOOLBAR</div></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
         tempContent+= '<td valign="top">';
         if (!isOGLorOGIEnabled()) {
-            tempContent+= '<span id="ptreGalaxyActivityCount" class="success_status">???</span> Activities | <span id="ptreGalaxyEventCount" class="success_status">???</span> Galaxy Events';
+            tempContent+= '<span id="ptreGalaxyActivityCount" class="ptreSuccess">???</span> Activities | <span id="ptreGalaxyEventCount" class="ptreSuccess">???</span> Galaxy Events';
         } else {
             tempContent+= '---';
         }
@@ -771,18 +771,18 @@ function setNumber(x) {
 
 function getLastUpdateLabel(lastCheck) {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var temp = '<span class="error_status ptre_small">never updated</span>';
+    var temp = '<span class="ptreError ptreSmall">never updated</span>';
     if (lastCheck > 0) {
         var nb_min = (currentTime - lastCheck) / 60;
         if (nb_min <= 1) {
-            temp = '<span class="success_status ptre_small">updated now</span>';
+            temp = '<span class="ptreSuccess ptreSmall">updated now</span>';
         } else if (nb_min < 60) {
-            temp = '<span class="success_status ptre_small">updated ' + round(nb_min, 0) + ' mins ago</span>';
+            temp = '<span class="ptreSuccess ptreSmall">updated ' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
             var nb_h = (currentTime - lastCheck) / 3600;
-            temp = '<span class="warning_status ptre_small">updated ' + round(nb_h, 0) + ' hours ago</span>';
+            temp = '<span class="ptreWarning ptreSmall">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
-            temp = '<span class="error_status ptre_small">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
+            temp = '<span class="ptreError ptreSmall">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
     }
     return temp;
@@ -1060,20 +1060,20 @@ function displayPTREMenu() {
             isAGROn = true;
         }
 
-        const recommendedLabelOn = '<br><span class="ptre_small warning_status">(recommended: ON)</span>';
-        const recommendedLabelOff = '<br><span class="ptre_small warning_status">(recommended: OFF)</span>';
+        const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">(recommended: ON)</span>';
+        const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">(recommended: OFF)</span>';
         var tdId = 0;
         var divPTRE = '<div id="boxPTRESettings"><table border="1" width="100%">';
         divPTRE += '<tr><td class="td_cell" width="50%"><div class="ptreBoxTitle">EasyPTRE PANNEL</div></td><td class="td_cell" align="right"><div id="btnHelpPTRE" type="button" class="button btn_blue">HELP</div> <div id="btnRefreshOptPTRE" type="button" class="button btn_blue">REFRESH</div> <div id="btnCloseOptPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><div id=messageDivInSettings class="warning_status"></div></td></tr>';
+        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><div id=messageDivInSettings class="ptreWarning"></div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
         // Settings
         divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">SAVE</div></td></tr>';
         divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
         if (ptreStoredTK == '') {
-            divPTRE += '<br><span class="error_status">Add your PTRE TEAM KEY</span><br><span class="ptre_small error_status">Looks like: TM-????-????-????-????</span>';
+            divPTRE += '<br><span class="ptreError">Add your PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
         } else {
-            divPTRE += '<br><span class="ptre_small">Team Name: </span><span class="ptre_small success_status">'+GM_getValue(ptreTeamName, '')+'</span>';
+            divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '')+'</span>';
         }
         divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
         tdId++;
@@ -1094,7 +1094,7 @@ function displayPTREMenu() {
         }
         // Add Buddies to Friends and Phalanx feature
         var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptre_small">List is not shared, nor stored by PTRE</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE</span>';
         if (buddiesOn != 'checked') {
             divPTRE += recommendedLabelOn;
         }
@@ -1106,7 +1106,7 @@ function displayPTREMenu() {
         tdId++;
         // Toogle Events on Overview Page
         var toogleEventsOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptre_small">Works well with option "Always show events" set to "Hide"</span></td>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptreSmall">Works well with option "Always show events" set to "Hide"</span></td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleEventOnOverviewPage" type="checkbox" ';
         divPTRE += toogleEventsOn;
         divPTRE += ' />';
@@ -1114,7 +1114,7 @@ function displayPTREMenu() {
         tdId++;
         // Miner Mode
         var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Miner Mode:<br><span class="ptre_small">I do not want every UX improvements,<br>but I sill want to help my Team</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Miner Mode:<br><span class="ptreSmall">I do not want every UX improvements,<br>but I sill want to help my Team</span>';
         if (MinerModeOn == 'checked') {
             divPTRE += recommendedLabelOff;
         }
@@ -1126,7 +1126,7 @@ function displayPTREMenu() {
         tdId++;
         // Beta Mode
         var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:<br><span class="ptre_small error_status">Enables Beta features that might be unpolished (galaxy)</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:<br><span class="ptreSmall ptreError">Enables Beta features that might be unpolished (galaxy)</span>';
         divPTRE += '</td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleBetaMode" type="checkbox" ';
         divPTRE += BetaModeOn;
@@ -1172,10 +1172,10 @@ function displayPTREMenu() {
         });
         divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" colspan="2">';
-        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br><span class="ptre_small"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + phalanxCount + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptre_small">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + hotCount + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptre_small">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + galaEventsCount + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptre_small">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="success_status">' + dnpCount + '</span></td></tr>';
+        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br><span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
         divPTRE += '</table></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
@@ -1198,18 +1198,18 @@ function displayPTREMenu() {
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
         if (isOGLorOGIEnabled()) {
-            divPTRE += '<tr><td colspan="2" class="td_cell" align="center"><span class="success_status">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
+            divPTRE += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
             divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
         }
 
         // Footer
         //divPTRE += '<tr>';
         divPTRE += '<tr><td class="td_cell" align="right" colspan="2"><div id="displayLogs" type="button" class="button btn_blue">LOGS</div> <div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION</div> <div id="displayChangelog" type="button" class="button btn_blue">CHANGELOG</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="left"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></td><td class="td_cell" align="right"><span class="ptre_bold">EasyPTRE v' + GM_info.script.version + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell" align="left"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></td><td class="td_cell" align="right"><span class="ptreBold">EasyPTRE v' + GM_info.script.version + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><span id="ptreUpdateVersionMessage">';
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
-            var updateMessageShort = '<span class="error_status">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
+            var updateMessageShort = '<span class="ptreError">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
             divPTRE += updateMessageShort;
             displayUpdateBox(updateMessageShort);
         }
@@ -1547,7 +1547,7 @@ function setupInfoBox() {
     if (document.getElementById('divPTREInfos')) {
         document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
     }
-    var divPTRE = '<div id="boxPTREInfos"><table border="1" width="100%"><tr><td align="right"><div id="btnCloseInfosPTRE" type="button" class="button btn_blue">CLOSE</div><hr></td></tr><tr><td><div id="infoBoxContent"><br><br><center><span class="warning_status">LOADING...</span></center><br><br><br></div></td></tr></table>';
+    var divPTRE = '<div id="boxPTREInfos"><table border="1" width="100%"><tr><td align="right"><div id="btnCloseInfosPTRE" type="button" class="button btn_blue">CLOSE</div><hr></td></tr><tr><td><div id="infoBoxContent"><br><br><center><span class="ptreWarning">LOADING...</span></center><br><br><br></div></td></tr></table>';
     var elementSetPTRE = document.createElement("div");
     elementSetPTRE.innerHTML = divPTRE;
     elementSetPTRE.id = 'divPTREInfos';
@@ -1577,11 +1577,11 @@ function getPlayerInfos(playerID, pseudo) {
                     content+= '<tr><td class="td_ship" align="center">[<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PROFILE</a>]</td><td class="td_ship" align="center">[<a href="' + reponse.top_sr_link + '" target="_blank">BEST REPORT</a>]</td></tr>';
                     content+= '<tr><td class="td_ship" colspan="2"><hr></td></tr>';
                     reponse.fleet_json.forEach(function(item, index, object) {
-                        content+= '<tr><td class="td_ship" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></td><td class="td_ship" align="center"></span><span class="ptre_bold">' + setNumber(item.count) + '</span></td></tr>';
+                        content+= '<tr><td class="td_ship" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></td><td class="td_ship" align="center"></span><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
                     });
                     content+= '</table>';
                 } else {
-                    content+= '<span class="error_status">' + reponse.message + '</span>';
+                    content+= '<span class="ptreError">' + reponse.message + '</span>';
                     addToLogs(reponse.message);
                 }
                 content+= '</center>';
@@ -1657,7 +1657,7 @@ function displayUpdateBox(updateMessageShort) {
 
 function displayOGLOGIInfos() {
     setupInfoBox();
-    var content = '<span class="warning_status">OGLight or OGInfinity is enabled: some EasyPTRE features are disabled to leave priority to your favorite tool, OGL / OGI. Please also add your PTRE TeamKey into OGL / OGI.</span>';
+    var content = '<span class="ptreWarning">OGLight or OGInfinity is enabled: some EasyPTRE features are disabled to leave priority to your favorite tool, OGL / OGI. Please also add your PTRE TeamKey into OGL / OGI.</span>';
     content += '<br><br>EasyPTRE is still managing some tasks like:<br>- Galaxy Event Explorer Infos (in galaxy view)<br>- Lifeforms/combat researchs sync (for PTRE spy reports)<br>- Phalanx infos sharing (in galaxy view or Discord)';
 
     document.getElementById('infoBoxContent').innerHTML = content;
@@ -1733,7 +1733,7 @@ function displayGalaxyTracking() {
         GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
             content+='- Found galaxy key: ' + key + '<br>';
         });
-        content+='<br><span class="ptre_small">If you dont see galaxies from "Galaxy keys" in the "Distribution" tab, you may purge data.</span>';
+        content+='<br><span class="ptreSmall">If you dont see galaxies from "Galaxy keys" in the "Distribution" tab, you may purge data.</span>';
     }
 
     content+='<div class="ptreCategoryTitle">Reset galaxy data</div>';
@@ -1761,12 +1761,12 @@ function displayTargetsList() {
     // EasyPTRE enabled (AGR mode or vanilla mode)
     // Targets list
     if (!isAGROn) {
-        content += '<span class="error_status">AGR is not enabled: Only using PTRE list.</span>';
+        content += '<span class="ptreError">AGR is not enabled: Only using PTRE list.</span>';
     } else {
         // Display PTRE list if AGR list setting is disabled OR AGR extension not installed
         var targetJSON = '';
         var targetList = '';
-        content += 'AGR Target List<br><span class="ptre_small">This list is based on your AGR list</span><br><br><table width="90%">';
+        content += 'AGR Target List<br><span class="ptreSmall">This list is based on your AGR list</span><br><br><table width="90%">';
         content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><div class="ptreSubTitle">Player<br>Name</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Fleet<br>Infos</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">PTRE<br>Profile</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Keep<br>Private</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Remove<br>Target</div></td></tr>';
         targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
         if (targetJSON != '') {
@@ -1795,7 +1795,7 @@ function displayTargetsList() {
     // Display PTRE list if AGR list setting is disabled OR AGR extension not installed
     targetJSON = '';
     var targetListPTRE = '';
-    content += 'PTRE Team Target List<br><span class="ptre_small">Common list with your Team</span><br><br><table width="90%">';
+    content += 'PTRE Team Target List<br><span class="ptreSmall">Common list with your Team</span><br><br><table width="90%">';
     content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><div class="ptreSubTitle">Player<br>Name</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Fleet<br>Infos</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">PTRE<br>Profile</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Remove<br>Target</div></td></tr>';
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     if (targetJSON != '') {
@@ -1903,7 +1903,7 @@ function displaySharedData() {
             content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.name + '</td></tr>';
         }
     });
-    content += '</table><br><br><span class="success_status">Players recently spied</span>';
+    content += '</table><br><br><span class="ptreSuccess">Players recently spied</span>';
 
     content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Do Not Probe</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td><td class="td_cell_radius_0" align="center">Duration</td></tr>';
     $.each(highlightedPlayersList, function(i, elem) {
@@ -1912,12 +1912,12 @@ function displaySharedData() {
             content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.name + '</td><td class="td_cell_radius_1" align="center">' + duration + ' min</td></tr>';
         }
     });
-    content += '</table><br><br><span class="error_status">Do not probe thoses players</span><br>This feature requires Live Update';
+    content += '</table><br><br><span class="ptreError">Do not probe thoses players</span><br>This feature requires Live Update';
 
     const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Recent Galaxy Events</div>';
-    content += 'Galaxy Events count:<br><span class="success_status">' + galaEventsList.length + '</span><br><br>';
-    content += 'You may display events in<br>the <span class="success_status">PTRE toolbar</span><br><br>(<a href="/game/index.php?page=ingame&component=galaxy">on galaxy page</a>)';
+    content += 'Galaxy Events count:<br><span class="ptreSuccess">' + galaEventsList.length + '</span><br><br>';
+    content += 'You may display events in<br>the <span class="ptreSuccess">PTRE toolbar</span><br><br>(<a href="/game/index.php?page=ingame&component=galaxy">on galaxy page</a>)';
     content += '</td></tr></table>';
 
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
@@ -1947,7 +1947,7 @@ function displaySharedData() {
 function validatePurgeGalaxyTracking() {
     setupInfoBox();
     var content = '<div class="ptreBoxTitle">Delete Galaxy tracking data ?</div>';
-    content+= '<span class="error_status">This will delete galaxy data from local storage.</span><br><br>';
+    content+= '<span class="ptreError">This will delete galaxy data from local storage.</span><br><br>';
     content+= 'It is recommended to delete thoses data only if you have issues with galaxy feature<br>or if you have not play for a long time this universe.<br><br>';
     content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA, REALLY?</div>';
     document.getElementById('infoBoxContent').innerHTML = content;
@@ -2061,10 +2061,10 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                             var diff = "-";
                             if (previousRank) {
                                 if (Number(rank.total_score) < Number(previousRank.total_score)) {
-                                    classR = "error_status";
+                                    classR = "ptreError";
                                     diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
                                 } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
-                                    classR = "success_status";
+                                    classR = "ptreSuccess";
                                     diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
                                     diff = "+" + diff;
                                 }
@@ -2110,13 +2110,13 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
 
         // If it our player
         if (playerId == Number(currentPlayerID)) {
-            targetComment+= '<span class="success_status">This is you, but you already know that, right?</span><br>';
+            targetComment+= '<span class="ptreSuccess">This is you, but you already know that, right?</span><br>';
         }
 
         // Lookup in galaxy events
         const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
         if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
-            targetComment+= '<span class="warning_status">This position has changed recently!</span><br>';
+            targetComment+= '<span class="ptreWarning">This position has changed recently!</span><br>';
         }
 
         // Get players to highlight
@@ -2124,10 +2124,10 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
         if (highlightedPlayersList[playerId]) {
             if (highlightedPlayersList[playerId]["status"] == "dnp") {
                 const duration = round((highlightedPlayersList[playerId]["ts"] - currentTime) / 60);
-                targetComment+= '<span class="error_status">Do Not Probe ' + playerName + ' for ' + duration + ' min</span><br>';
+                targetComment+= '<span class="ptreError">Do Not Probe ' + playerName + ' for ' + duration + ' min</span><br>';
                 dnpButtonLabel = "DNP (+)";
             } else if (highlightedPlayersList[playerId]["status"] == "hot") {
-                targetComment+= '<span class="success_status">' + playerName + ' Recently spied and shared to PTRE</span><br>';
+                targetComment+= '<span class="ptreSuccess">' + playerName + ' Recently spied and shared to PTRE</span><br>';
             }
         }
 
@@ -2750,21 +2750,21 @@ function updateLastAvailableVersion(force = false) {
                     GM_setValue(ptreLastAvailableVersionRefresh, currentTime);
                     if (availableVersion !== GM_info.script.version) {
                         if (document.getElementById('ptreUpdateVersionMessage')) {
-                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="error_status">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>';
+                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>';
                         }
                         if (document.getElementById('ptreMenuName')) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
-                            document.getElementById('ptreMenuName').classList.add('error_status');
+                            document.getElementById('ptreMenuName').classList.add('ptreError');
                         }
                         displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
                         consoleDebug('Version ' + availableVersion + ' is available');
                     } else {
                         if (document.getElementById('ptreUpdateVersionMessage')) {
-                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="success_status">EasyPTRE is up to date</span>';
+                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreSuccess">EasyPTRE is up to date</span>';
                         }
                     }
                 } else {
-                    document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="error_status">Error ' + result.status + ' (' + result.statusText + ')</span>';
+                    document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
                 }
             }
         });
@@ -2813,17 +2813,17 @@ function parsePlayerResearchs(json, mode) {
                 type = 'def';
             }
             str+= '<tr><td align="center"><img src="/img/ogame/mini/'+type+'_'+key+'.png"></td>';
-            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="success_status">'+round(obj.ships[key].speed*100, 2)+' %<span>'; }
+            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].speed*100, 2)+' %<span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="success_status">'+round(obj.ships[key].armor*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].armor*100, 2)+' %<span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="success_status">'+round(obj.ships[key].shield*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].shield*100, 2)+' %<span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="success_status">'+round(obj.ships[key].weapon*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].weapon*100, 2)+' %<span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="success_status">'+round(obj.ships[key].cargo*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].cargo*100, 2)+' %<span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="success_status">'+round(obj.ships[key].fuel*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].fuel*100, 2)+' %<span>'; }
             str+= '<td align="center">'+temp+'</td></tr>';
         } else {
             out["0"]["lifeformBonuses"]["BaseStatsBooster"][key] = {
@@ -3167,7 +3167,7 @@ function getPhalanxInfosFromGala() {
     const teamKey = GM_getValue(ptreTeamKey, '');
 
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="error_status">' + ptreMissingTKMessage + '</span>');
+        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
         return -1;
     }
 
@@ -3177,13 +3177,13 @@ function getPhalanxInfosFromGala() {
         dataJSON = GM_getValue(ptreBuddiesList, '');
         if (dataJSON != '') {
             if ((currentTime - GM_getValue(ptreBuddiesListLastRefresh, 0)) > 7*24*60*60) {
-                warning = '<span class="warning_status">Buddies list might be outdated: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to update your friends list</a><br><br>';
+                warning = '<span class="ptreWarning">Buddies list might be outdated: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to update your friends list</a><br><br>';
             }
         } else {
-            warning = '<span class="warning_status">Buddies list is empty: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to add your friends to this view</a><br><br>';
+            warning = '<span class="ptreWarning">Buddies list is empty: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to add your friends to this view</a><br><br>';
         }
     } else {
-        warning = '<span class="warning_status">Buddies list is not managed: you may enable it in EasyPTRE settings</span><br><br>';
+        warning = '<span class="ptreWarning">Buddies list is not managed: you may enable it in EasyPTRE settings</span><br><br>';
     }
 
     $.ajax({
@@ -3211,7 +3211,7 @@ function getGEEInfosFromGala() {
     displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="error_status">' + ptreMissingTKMessage + '</span>');
+        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
         return -1;
     }
     $.ajax({
@@ -3242,9 +3242,9 @@ function displayTotalSystemsSaved() {
                 countSsystem = countSsystem + Object.keys(galaxyData).length;
             }
         }
-        return 'Tracked Galaxies: <span class="success_status">'+countGala+'</span> | Tracked Systems: <span class="success_status">'+countSsystem+'</span>';
+        return 'Tracked Galaxies: <span class="ptreSuccess">'+countGala+'</span> | Tracked Systems: <span class="ptreSuccess">'+countSsystem+'</span>';
     } else {
-        return '<span class="error_status">Wrong Galaxy Cache Version</span>';
+        return '<span class="ptreError">Wrong Galaxy Cache Version</span>';
     }
 }
 
