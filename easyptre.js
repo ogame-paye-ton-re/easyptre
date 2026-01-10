@@ -2253,11 +2253,15 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                             var reponseDecode = jQuery.parseJSON(reponse);
                             displayPTREPopUpMessage(reponseDecode.message);
                             if (reponseDecode.updated > 0) {
+                                // Update button color
                                 button.style.border = ptreBorderStyleDnpList;
+                                // Add player to local list (this will be rewritten by the real update after)
                                 const temp = GM_getValue(ptreHighlightedPlayers, {});
                                 const ts_tmp = currentTime + 2*60*60;
                                 temp[String(playerId)] = {name: playerName, status: "dnp", ts: ts_tmp};
                                 GM_setValue(ptreHighlightedPlayers, temp);
+                                // Enable Live
+                                updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
                                 consoleDebug("Added player "+playerName+" to DNP ("+ts_tmp+")");
                             } else {
                                 addToLogs(reponseDecode.message);
@@ -2922,6 +2926,26 @@ function debugSharableData() {
     }
 }
 
+/*
+Cooldown:
+    - 0 => DISABLE
+    - >= 60 => ENABLE
+Last Update:
+    - -1 to not update value (and keep the current one)
+    - >=0 to update
+*/
+function updateLiveCheckConfig(coolddown, last_update = -1) {
+    // 0 to disable
+    if (Number(coolddown) == 0 || Number(coolddown) >= 60) {
+        GM_setValue(ptreCheckForUpdateCooldown, Number(coolddown));
+        consoleDebug('[LIVE] Updated Check Cooldown to ' + coolddown);
+    }
+    if (Number(last_update) >= 0) {
+        GM_setValue(ptreCurrentBackendUpdateTS, Number(last_update));
+        consoleDebug('[LIVE] Updated Backend TS to ' + last_update);
+    }
+}
+
 // Ask PTRE if new data are available
 function checkForPTREUpdate() {
     const TKey = GM_getValue(ptreTeamKey, '');
@@ -2936,10 +2960,8 @@ function checkForPTREUpdate() {
                 success : function(reponse){
                     var reponseDecode = jQuery.parseJSON(reponse);
                     if (reponseDecode.code == 1) {
-                        // Update config
-                        if (Number(reponseDecode.check_for_update_cooldown) == 0 || Number(reponseDecode.check_for_update_cooldown) >= 60) {
-                            GM_setValue(ptreCheckForUpdateCooldown, Number(reponseDecode.check_for_update_cooldown));
-                        }
+                        // Update config (we dont change our current TS)
+                        updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
                         // Is update needed?
                         if (reponseDecode.update == 1) {
                             consoleDebug("Update needed!");
@@ -3021,16 +3043,11 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreGalaxyEventsPos, galaxyEventsList);
 
                 // Update configuration
+                updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, reponseDecode.last_update_ts);
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
-                if (Number(reponseDecode.last_update_ts) >= 0) {
-                    GM_setValue(ptreCurrentBackendUpdateTS, Number(reponseDecode.last_update_ts));
-                }
-                if (Number(reponseDecode.check_for_update_cooldown) == 0 || Number(reponseDecode.check_for_update_cooldown) >= 60) {
-                    GM_setValue(ptreCheckForUpdateCooldown, Number(reponseDecode.check_for_update_cooldown));
-                }
 
-                consoleDebug('[PTRE] ' + reponseDecode.message + " (" + reponseDecode.last_update_ts + " / " + reponseDecode.check_for_update_cooldown + ")");
+                consoleDebug('[PTRE] ' + reponseDecode.message);
 
                 // Update info in menu
                 if (document.getElementById("ptreLastDataSyncField")) {
