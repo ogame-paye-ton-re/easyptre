@@ -2665,7 +2665,6 @@ function processGalaxyDataCallback(data) {
                         var jsonLune = {id:moonId, size:moonSize, activity:moonActvity};
                         //jsonLune = JSON.stringify(jsonLune);
                         //consoleDebug("MOON: " + jsonLune);
-                        ptreGalaxyActivityCount++;
                     }
                     var jsonActiPos = {player_id : playerId,
                                        teamkey : ptreStoredTK,
@@ -2680,7 +2679,6 @@ function processGalaxyDataCallback(data) {
                                        moon : jsonLune};
                     //console.log(jsonActiPos);
                     tabActiPos.push(jsonActiPos);
-                    ptreGalaxyActivityCount++;
                 }
             }
         }
@@ -2711,7 +2709,12 @@ function processGalaxyDataCallback(data) {
                 var reponseDecode = jQuery.parseJSON(reponse);
                 consoleDebug(reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
-                if (reponseDecode.code != 1) {
+                if (reponseDecode.code == 1) {
+                    ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
+                    if (document.getElementById('ptreGalaxyActivityCount')) {
+                        document.getElementById('ptreGalaxyActivityCount').innerHTML = ptreGalaxyActivityCount;
+                    }
+                } else {
                     displayPTREPopUpMessage(reponseDecode.message);
                     addToLogs(reponseDecode.message);
                 }
