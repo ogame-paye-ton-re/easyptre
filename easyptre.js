@@ -299,10 +299,11 @@ GM_addStyle(`
 .warning_status {
     color:#D29D00;
 }
-.ptre_maintitle {
+.ptreBoxTitle {
     color: #6f9fc8;
     font-weight:bold;
     text-decoration: underline;
+    margin: 5px;
 }
 .ptre_title {
     color: #6f9fc8;
@@ -532,7 +533,7 @@ function improvePageGalaxy() {
 
         // Add PTRE Toolbar
         var tempContent = '<table width="100%"><tr>';
-        tempContent+= '<td valign="top"><span class="ptre_maintitle">PTRE TOOLBAR</span></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
+        tempContent+= '<td valign="top"><div class="ptreBoxTitle">PTRE TOOLBAR</div></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
         tempContent+= '<td valign="top">';
         if (!isOGLorOGIEnabled()) {
             tempContent+= '<span id="ptreGalaxyActivityCount" class="success_status">???</span> Activities | <span id="ptreGalaxyEventCount" class="success_status">???</span> Galaxy Events';
@@ -1060,7 +1061,7 @@ function displayPTREMenu() {
         const recommendedLabelOff = '<br><span class="ptre_small warning_status">(recommended: OFF)</span>';
         var tdId = 0;
         var divPTRE = '<div id="boxPTRESettings"><table border="1" width="100%">';
-        divPTRE += '<tr><td class="td_cell" width="50%"><span class="ptre_maintitle">EasyPTRE PANNEL</span></td><td class="td_cell" align="right"><div id="btnHelpPTRE" type="button" class="button btn_blue">HELP</div> <div id="btnRefreshOptPTRE" type="button" class="button btn_blue">REFRESH</div> <div id="btnCloseOptPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell" width="50%"><div class="ptreBoxTitle">EasyPTRE PANNEL</div></td><td class="td_cell" align="right"><div id="btnHelpPTRE" type="button" class="button btn_blue">HELP</div> <div id="btnRefreshOptPTRE" type="button" class="button btn_blue">REFRESH</div> <div id="btnCloseOptPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><div id=messageDivInSettings class="warning_status"></div></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
         // Settings
@@ -1597,7 +1598,7 @@ function getPlayerInfos(playerID, pseudo) {
 
 function displayHelp() {
     setupInfoBox();
-    var content = '<span class="ptre_maintitle">EasyPTRE Help</span><br><br><span class="ptre_tab_title">Purpose</span><br><br>EasyPTRE works as a side-car of AGR in order to enable PTRE basic features. Once configured, you will be able to: <br>- Push and share spy reports<br>- Push counter spy messages as acivities<br>- Track targets galaxy activities and check results on PTRE website<br>- Track galaxy events (new moons, etc)<br>- Display player top fleet from PTRE<br>- Sync targets list with your Team';
+    var content = '<div class="ptreBoxTitle">EasyPTRE Help</div><span class="ptre_tab_title">Purpose</span><br><br>EasyPTRE works as a side-car of AGR in order to enable PTRE basic features. Once configured, you will be able to: <br>- Push and share spy reports<br>- Push counter spy messages as acivities<br>- Track targets galaxy activities and check results on PTRE website<br>- Track galaxy events (new moons, etc)<br>- Display player top fleet from PTRE<br>- Sync targets list with your Team';
     content+= '<br><br><span class="ptre_tab_title">Team Key setting</span><br><br>To use it, you need to create a Team on <a href="https://ptre.chez.gg?page=team" target="_blank">PTRE website</a> and add Team Key to EasyPTRE settings.<br>PTRE Team Key should look like: TM-XXXX-XXXX-XXXX-XXXX. Create your Team or ask your teammates for it.';
     content+= '<br><br><span class="ptre_tab_title">Spy report push</span><br><br>You can push spy reports from the messages page or when opening a spy report. Spy report will be shared to your Team and over Discord (if <a href="https://ptre.chez.gg/?page=discord_integration" target="_blank">configuration</a> is done).';
     content+= '<br><br><span class="ptre_tab_title">Galaxy tracking</span><br><br>EasyPTRE will track galaxy modifications (new moon, destroyed planet, etc) when you browse it and send data to your PTRE Team.<br>You can also enable notifications on Discord (type "!ptre !gala") or check all events on the <a href="https://ptre.chez.gg/?page=galaxy_event_explorer" target="_blank">Galaxy Event Explorer</a>.<br>This feature is disable if you use OGL or OGI, as it is directly integrated to thoses tools.';
@@ -1614,7 +1615,7 @@ function displayHelp() {
 
 function displayChangelog() {
     setupInfoBox();
-    var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Changelog</span><br>(scroll for old versions)';
+    var content = '<div style="overflow-y: scroll; max-height: 600px;"><div class="ptreBoxTitle">EasyPTRE Changelog</div>(scroll for old versions)';
     content+= '<br><br><span class="ptre_tab_title">0.13.0</span><br><br>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
     content+= '<br><br><span class="ptre_tab_title">0.12.2</span><br><br>- [Feature] Add ingame shared notes, linked to targets (beta)';
     content+= '<br><br><span class="ptre_tab_title">0.12.0</span><br><br>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
@@ -1637,7 +1638,7 @@ function displayChangelog() {
 
 function displayUpdateBox(updateMessageShort) {
     setupInfoBox();
-    var content = '<span class="ptre_maintitle">EasyPTRE update</span><br><br><br>' + updateMessageShort;
+    var content = '<div class="ptreBoxTitle">EasyPTRE update</div>' + updateMessageShort;
     content += '<br><br><br><span class="ptre_tab_title">Automatic updates</span><br><br>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
     content += '<br><br><br></b><span class="ptre_tab_title">Manual update</span><br><br>If you want to proceed to a manual update here is how to:<br>';
     content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
@@ -1661,7 +1662,7 @@ function displayOGLOGIInfos() {
 
 function displayLogs() {
     setupInfoBox();
-    var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">EasyPTRE Logs</span><br><br>Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
+    var content = '<div style="overflow-y: scroll; max-height: 600px;"><div class="ptreBoxTitle">EasyPTRE Logs</div>Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
     var currentTime = Math.floor(serverTime.getTime() / 1000);
@@ -1689,7 +1690,7 @@ function displayLogs() {
 function displayGalaxyTracking() {
     setupInfoBox();
 
-    var content = '<span class="ptre_maintitle">Galaxy tracking distribution</span><br><br><br><span class="ptre_tab_title">Distribution</span><br><br>';
+    var content = '<div class="ptreBoxTitle">Galaxy tracking distribution</div><span class="ptre_tab_title">Distribution</span><br><br>';
     content += 'X => 10/10 systems recently updated<br>+ => some systems recently updated<br><br>';
     content += '<div style="font-family: monospace; white-space: pre;">';
 
@@ -1745,7 +1746,7 @@ function displayGalaxyTracking() {
 function displayTargetsList() {
     setupInfoBox();
 
-    var content = '<div style="overflow-y: scroll; max-height: 600px;" id="targetsListDiv"><table width="100%"><tr><td><span class="ptre_maintitle">Targets List</span> <a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">SYNC TARGETS</div></td></tr></table><br><br>';
+    var content = '<div style="overflow-y: scroll; max-height: 600px;" id="targetsListDiv"><table width="100%"><tr><td><div class="ptreBoxTitle">Targets List</div><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">SYNC TARGETS</div></td></tr></table><br><br>';
 
     // Check if AGR is enabled
     var isAGROn = false;
@@ -1872,7 +1873,7 @@ function displayTargetsList() {
 function displaySharedData() {
     setupInfoBox();
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var content = '<div style="overflow-y: scroll; max-height: 600px;"><span class="ptre_maintitle">Shared data</span><br><br>';
+    var content = '<div style="overflow-y: scroll; max-height: 600px;"><div class="ptreBoxTitle">Shared data</div>';
     var phalanxCount = 0;
     var dataJSON = '';
     var dataList = [];
@@ -1942,7 +1943,7 @@ function displaySharedData() {
 
 function validatePurgeGalaxyTracking() {
     setupInfoBox();
-    var content = '<span class="ptre_maintitle">Delete Galaxy tracking data ?</span><br><br><br>';
+    var content = '<div class="ptreBoxTitle">Delete Galaxy tracking data ?</div>';
     content+= '<span class="error_status">This will delete galaxy data from local storage.</span><br><br>';
     content+= 'It is recommended to delete thoses data only if you have issues with galaxy feature<br>or if you have not play for a long time this universe.<br><br>';
     content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA, REALLY?</div>';
@@ -2131,7 +2132,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
         const panel = document.createElement('div');
         panel.id = 'ptreGalaxyPopUp';
         panel.innerHTML = `
-            <table border="1" width="100%"><tr><td><span class="ptre_maintitle">EasyPTRE Galaxy Box</span></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr></table>
+            <table border="1" width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Galaxy Box</div></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr></table>
             <table border="1" width="100%">
             <tr>
                 <td>
