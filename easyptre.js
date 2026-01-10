@@ -1131,7 +1131,7 @@ function displayPTREMenu() {
         tdId++;
         // Console Debug mode
         var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Console Debug:</td>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Debug Mode:</td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREEnableConsoleDebug" type="checkbox" ';
         divPTRE += debugMode;
         divPTRE += ' />';
@@ -1721,16 +1721,19 @@ function displayGalaxyTracking() {
         content += `<div>Galaxy ${String(gala).padStart(2, ' ')} | ${line}</div>`;
     }
     content += '</div>';
-    content+='<br><br><span class="ptre_tab_title">Galaxy details</span><br><br>';
-    content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 1) + '<br>';
-    content+='Galaxy Storage Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
-    content+='Galaxy keys:<br>';
-    GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
-        content+='- Found galaxy key: ' + key + '<br>';
-    });
-    content+='<br><span class="ptre_small">If you dont see galaxies from "Galaxy keys" in the "Distribution" tab, you may purge data.</span>';
+    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+        content+='<br><br><span class="ptre_tab_title">Galaxy details</span><br><br>';
+        content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 1) + '<br>';
+        content+='Galaxy Storage Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
+        content+='Galaxy keys:<br>';
+        GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
+            content+='- Found galaxy key: ' + key + '<br>';
+        });
+        content+='<br><span class="ptre_small">If you dont see galaxies from "Galaxy keys" in the "Distribution" tab, you may purge data.</span>';
+    }
 
-    content+= '<br><br><div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA</div>';
+    content+='<br><br><span class="ptre_tab_title">Reset galaxy data</span><br><br>';
+    content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA</div>';
     document.getElementById('infoBoxContent').innerHTML = content;
 
     // Action: Purge Galaxy Tracking
