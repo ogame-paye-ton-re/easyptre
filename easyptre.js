@@ -552,8 +552,8 @@ function improvePageGalaxy() {
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)
         var tempContent = '<table width="100%"><tr>';
-        tempContent+= '<td valign="top"><div class="ptreBoxTitle">EasyPTRE TOOLBAR</div></td><td valign="top"><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
-        tempContent+= '<td valign="top">';
+        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td><td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
+        tempContent+= '<td>';
         tempContent+= 'Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
