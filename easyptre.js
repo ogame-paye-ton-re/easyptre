@@ -1088,14 +1088,6 @@ function displayPTREMenu() {
             divPTRE += '</td></tr>';
             tdId++;
         }
-        // Console Debug mode
-        var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Console Debug:</td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREEnableConsoleDebug" type="checkbox" ';
-        divPTRE += debugMode;
-        divPTRE += ' />';
-        divPTRE += '</td></tr>';
-        tdId++;
         // Add Buddies to Friends and Phalanx feature
         var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
         divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptre_small">List is not shared, nor stored by PTRE</span>';
@@ -1137,6 +1129,14 @@ function displayPTREMenu() {
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
+        // Console Debug mode
+        var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Console Debug:</td>';
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREEnableConsoleDebug" type="checkbox" ';
+        divPTRE += debugMode;
+        divPTRE += ' />';
+        divPTRE += '</td></tr>';
+        tdId++;
         //
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr></table></td></tr>';
         // End Settings
@@ -1169,8 +1169,8 @@ function displayPTREMenu() {
         divPTRE += '<tr><td class="td_cell"><span class="ptre_title">Team shared data</span> (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" colspan="2">';
         divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br><span class="ptre_small"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + phalanxCount + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptre_small">Recent spy report</span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + hotCount + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptre_small">Changes non-listed in public API</span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + galaEventsCount + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptre_small">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + hotCount + '</span></td></tr>';
+        divPTRE += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptre_small">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="success_status">' + galaEventsCount + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptre_small">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="success_status">' + dnpCount + '</span></td></tr>';
         divPTRE += '</table></td></tr>';
         divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
@@ -1878,12 +1878,12 @@ function displaySharedData() {
     const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
 
     // TODO: [LOW] factorise loops
-    content += '<table><tr><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Phalanx</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td><td class="td_cell_radius_0" align="center">ID</td></tr>';
+    content += '<table><tr><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Phalanx</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td></tr>';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
         $.each(dataList, function(i, elem) {
             if (elem.type == "phalanx") {
-                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + elem.val + '</td><td class="td_cell_radius_1" align="center">' + elem.id + '</td></tr>';
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + elem.val + '</td></tr>';
                 phalanxCount++;
             }
         });
@@ -1896,7 +1896,7 @@ function displaySharedData() {
             content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.name + '</td></tr>';
         }
     });
-    content += '</table>';
+    content += '</table><br><br><span class="success_status">Players recently spied</span>';
 
     content += '</td><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Do Not Probe</span><br><br><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td><td class="td_cell_radius_0" align="center">Duration</td></tr>';
     $.each(highlightedPlayersList, function(i, elem) {
@@ -1905,14 +1905,12 @@ function displaySharedData() {
             content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.name + '</td><td class="td_cell_radius_1" align="center">' + duration + ' min</td></tr>';
         }
     });
-    content += '</table><br><br>This feature requires Live Update';
+    content += '</table><br><br><span class="error_status">Do not probe thoses players</span><br>This feature requires Live Update';
 
     const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     content += '</td><td width="200px" valign="top" align="center"><span class="ptre_tab_title">Recent Galaxy Events</span><br><br>';
-    $.each(galaEventsList, function(i, elem) {
-        const [g, s, p] = elem.split(":");
-        content += buildLinkToGalaxy(g, s, p) + ' ';
-    });
+    content += 'Galaxy Events count:<br><span class="success_status">' + galaEventsList.length + '</span><br><br>';
+    content += 'You may display events in<br>the <span class="success_status">PTRE toolbar</span><br><br>(<a href="/game/index.php?page=ingame&component=galaxy">on galaxy page</a>)';
     content += '</td></tr></table>';
 
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
@@ -1943,8 +1941,7 @@ function validatePurgeGalaxyTracking() {
     setupInfoBox();
     var content = '<span class="ptre_maintitle">Delete Galaxy tracking data ?</span><br><br><br>';
     content+= '<span class="error_status">This will delete galaxy data from local storage.</span><br><br>';
-    content+= 'It is recommended to delete thoses data only if you have issues with galaxy feature or if you have not play for a long time this universe.<br><br>';
-    content+= 'You will have to rebuild it again by browsing galaxies.<br><br>';
+    content+= 'It is recommended to delete thoses data only if you have issues with galaxy feature<br>or if you have not play for a long time this universe.<br><br>';
     content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA, REALLY?</div>';
     document.getElementById('infoBoxContent').innerHTML = content;
 
