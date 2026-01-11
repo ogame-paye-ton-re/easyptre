@@ -2397,6 +2397,51 @@ function improveGalaxyTable() {
                 }
             }
 
+
+            console.log("===> Pos " + pos);
+            console.log("===> Pos " + pos);
+            console.log("===> Pos " + pos);
+            // TIMER / PLANET
+            console.log("PLANET:");
+            const actiElemPlanet = row.querySelector('[data-planet-id] .activity');
+            if (actiElemPlanet) {
+                if (actiElemPlanet.classList.contains('minute15')) {
+                    console.log("[PLANET] ACTI DETECTED");
+                }
+                if (actiElemPlanet.classList.contains('showMinutes')) {
+                    console.log("[PLANET] TIMER DETECTED");
+                    const actiTimerPlanet = actiElemPlanet.textContent.trim();
+                    console.log("[PLANET] Timer " + actiTimerPlanet);
+                }
+            }
+
+
+
+            // TIMER / MOON
+            console.log("MOON:");
+            const actiElemMoon = row.querySelector('[data-moon-id] .activity');
+            if (actiElemMoon) {
+                if (actiElemMoon.classList.contains('minute15')) {
+                    console.log("[MOON] ACTI DETECTED");
+                }
+                if (actiElemMoon.classList.contains('showMinutes')) {
+                    console.log("[MOON] TIMER DETECTED");
+                    const actiTimerMoon = actiElemMoon.textContent.trim();
+                    console.log("[MOON] Timer " + actiTimerMoon);
+                }
+            }
+            console.log("---");
+            console.log("---");
+            console.log("---");
+
+
+
+            // test si il a la classe minute15
+            /*if (row.querySelector('.activity .minute15')) {
+                console.log("ACTIIIIIIIIIIIII");
+            }*/
+
+
             // Check if an event exists for this position
             var galaEventDetected = 0;
             if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
@@ -2686,6 +2731,9 @@ function processGalaxyDataCallback(data) {
             //consoleDebug("===> DEBRIS: "+debrisSize);
 
             // Push players activities
+            //TODO: ICI
+            //TODO: ICI
+            //TODO: ICI
             if (playerId != -1 && !isOGLorOGIEnabled() && isPlayerInLists(playerId)) {
                 // Why this test?
                 var ina = positionContent.positionFilters;
