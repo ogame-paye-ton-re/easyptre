@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.13.3
+// @version      0.14.0
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -19,6 +19,10 @@
 // @grant        GM_listValues
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
+
+// ****************************************
+// INIT
+// ****************************************
 
 // Check current website
 var modeEasyPTRE = "ingame";
@@ -282,7 +286,6 @@ if (modeEasyPTRE == "ptre") {
             console.log("[PTRE] No lifeforms data saved");
         }
     }
-
 }
 
 // ****************************************
@@ -475,6 +478,207 @@ GM_addStyle(`
 // IMPROVE VIEWS
 // ****************************************
 
+/*
+    Function called on each new system displayed in order to:
+    - parse galaxy table
+    - add PTRE elements to galaxy table
+    - prepare galaxy data (and call send function)
+    - prepare activities data (and call send function)
+
+    (This function is NOT called when the galaxy page is displayed, only when the galaxy TABLE is)
+*/
+function improveGalaxyTable() {
+    var systemElem = $("input#system_input")[0];
+    var galaxyElem = $("input#galaxy_input")[0];
+    var galaxy = galaxyElem.value;
+    var system = systemElem.value;
+    var newSystemToStore = {};
+    var additionnalSSInfos = {};
+    var activitiesInfos = {};
+    var trackedPlayerMerged = [];
+    var activitiesToSend = 0;
+
+    const start = performance.now();
+    const currentMiliTime = serverTime.getTime();
+    const currentTime = Math.floor(currentMiliTime / 1000);
+
+    consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
+    cleanGalaxyMiniMessage();
+
+    // Get players to highlight
+    var highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
+    // Get positions to highlight
+    var galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
+    // Get merged Targets
+    var mergedTargetsList = getMergedTargetsList();
+
+    // Go throught galaxy tab
+    for(let pos = 1; pos <= 15 ; pos++) {
+        // Init structures
+        newSystemToStore[pos] = {playerId: -1, planetId: -1, moonId: -1, ts: currentTime};
+        additionnalSSInfos[pos] = {playerName: '', playerStatus: '', playerRank: -1, moonSize: -1, timestamp_ig: currentMiliTime};
+        //activitiesInfos[pos] = {planetActi: '60', moonActi: '60', debris: 0};
+
+        // Browse every rows
+        const row = document.getElementById('galaxyRow' + pos);
+        if (row) {
+            //TODO: GET additionnalSSInfos[pos].playerStatus
+            // Planet ID
+            const planetDiv = row.querySelector('.cellPlanet .microplanet');
+            if (planetDiv) {
+                newSystemToStore[pos].planetId = Number(planetDiv.dataset.planetId);
+            }
+            // Moon ID
+            const moonDiv = row.querySelector('.cellMoon .micromoon');
+            if (moonDiv) {
+                newSystemToStore[pos].moonId = Number(moonDiv.dataset.moonId);
+            }
+            const cellPlayerName = row.querySelector('.cellPlayerName');
+            if (cellPlayerName && cellPlayerName.children.length > 0) {
+                // Get Player
+                const cellPlayerName = row.querySelector('.cellPlayerName');
+                if (cellPlayerName) {
+                    const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
+                    if (playerSpan) {
+                        // Player ID
+                        const rel = playerSpan.getAttribute('rel');
+                        newSystemToStore[pos].playerId = Number(rel.replace(/\D/g, ''));
+                        // Player rank
+                        additionnalSSInfos[pos].playerRank = Number(document.getElementById(playerSpan.getAttribute('rel'))?.querySelector('li.rank a')?.textContent);
+                        // Player name
+                        const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
+                        additionnalSSInfos[pos].playerName = playerSpanName.childNodes[0].textContent.trim();
+                    } else if (cellPlayerName.querySelector('.ownPlayerRow')) {
+                        // This is OUR row. No playerID is provided, we replace it.
+                        newSystemToStore[pos].playerId = Number(currentPlayerID);
+                        additionnalSSInfos[pos].playerName = currentPlayerName;
+                        // TODO: add own rank
+                    }
+                }
+            }
+
+            // Check if an event already exists for this position
+            // We are comparing to already saved events from PTRE DB (saved in local)
+            let galaEventDetected = false;
+            if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
+                galaEventDetected = true;
+            }
+            // We add the button for every player OR for empty position with an event
+            if (newSystemToStore[pos].playerId > -1 || galaEventDetected === true) {
+                var btn = document.createElement("span");
+                btn.dataset.galaxy = galaxy;
+                btn.dataset.system = system;
+                btn.dataset.pos = pos;
+                btn.dataset.playerId = newSystemToStore[pos].playerId;
+                btn.dataset.playerName = additionnalSSInfos[pos].playerName;
+                // We sort status by most important first
+                if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "dnp" && highlightedPlayersList[newSystemToStore[pos].playerId]["ts"] >= currentTime) {
+                    btn.style.border = ptreBorderStyleDnpList;
+                    //consoleDebug("===> "+playerName+" is part of DNP list");
+                } else if (galaEventDetected === true) {
+                    btn.style.border = ptreBorderStyleGalaxyEvent;
+                    //consoleDebug("===> "+galaxy+":"+system+":"+pos+" is a Galaxy Event");
+                } else if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") {
+                    btn.style.border = ptreBorderStyleHotList;
+                    //consoleDebug("===> "+playerName+" is part of HOT list");
+                }
+                // Display button only if settings allow it
+                if (ptreDisplayGalaPopup === true) {
+                    btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
+                    cellPlayerName.appendChild(btn);
+                    // Add action
+                    btn.addEventListener('click', function () {
+                        //openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos);
+                        openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos, this.dataset.playerId, this.dataset.playerName);
+                    });
+                }
+            }
+
+            // Get activities infos
+            if (ptrePushActivities === true) {
+                if (newSystemToStore[pos].playerId > 0) {
+                    if ( (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") || mergedTargetsList.includes(newSystemToStore[pos].playerId) ) {
+                        activitiesToSend++;
+                        // Init structure
+                        const coord = galaxy+":"+system+":"+pos;
+                        activitiesInfos[coord] = {teamkey : ptreStoredTK,
+                                                galaxy: Number(galaxy),
+                                                system: Number(system),
+                                                position: pos,
+                                                player_id: newSystemToStore[pos].playerId,
+                                                activity: '60',
+                                                cdr_total_size: -1,
+                                                main: false,//TODO: useless
+                                                moon: {activity: "60"}};
+                        // Get planet activity
+                        const actiElemPlanet = row.querySelector('[data-planet-id] .activity');
+                        if (actiElemPlanet) {
+                            if (actiElemPlanet.classList.contains('minute15')) {
+                                activitiesInfos[coord].activity = '*';
+                            } else if (actiElemPlanet.classList.contains('showMinutes')) {
+                                const actiTimerPlanet = actiElemPlanet.textContent.trim();
+                                activitiesInfos[coord].activity = actiTimerPlanet;
+                            }
+                        }
+                        // Get moon activity
+                        const actiElemMoon = row.querySelector('[data-moon-id] .activity');
+                        if (actiElemMoon) {
+                            if (actiElemMoon.classList.contains('minute15')) {
+                                activitiesInfos[coord].moon.activity = '*';
+                            } else if (actiElemMoon.classList.contains('showMinutes')) {
+                                const actiTimerMoon = actiElemMoon.textContent.trim();
+                                activitiesInfos[coord].moon.activity = actiTimerMoon;
+                            }
+                        }
+                        // Get debris
+                        let debris = 0;
+                        const debrisElements = row.querySelectorAll('#debris' + pos + ' .ListLinks .debris-content');
+                        debrisElements.forEach((element, index) => {
+                            let splitted = element.textContent.split(':');
+                            let cdr = splitted[1].trim();
+                            cdr = Number(cdr.replace(/[.,]/g, ''));
+                            debris = debris + cdr;
+                            //consoleDebug("Elem "+ index + ": " + cdr + " => " + debris);
+                        });
+                        activitiesInfos[coord].cdr_total_size = debris;
+                        //console.log(activitiesInfos[pos]);
+                    }
+                }
+            }
+        } else {
+            consoleDebug("[GALAXY] No galaxy row " + pos);
+        }
+    }
+
+    // Wait for new SS change
+    const galaxyLoading = document.getElementById('galaxyLoading');
+    const observer = new MutationObserver((mutations, obs) => {
+        if (window.getComputedStyle(galaxyLoading).display !== 'none') {
+            consoleDebug("[GALAXY] Galaxy change triggered");
+            obs.disconnect();
+            waitForGalaxyToBeLoaded();
+        }
+    });
+    observer.observe(galaxyLoading, {
+        childList: true,
+        attributes: true
+    });
+
+    // Manage activities only if configured
+    if (ptrePushActivities === true && activitiesToSend > 0) {
+        processPlayerActivities(galaxy, system, activitiesInfos);
+    }
+
+    // Manage Galaxy updates only if configured
+    if (ptreSendGalaEvents === true) {
+        processGalaxyUpdates(galaxy, system, newSystemToStore, additionnalSSInfos);
+    }
+
+    const end = performance.now();
+    const duration = end - start;
+    consoleDebug("[GALAXY] Galaxy improvement duration: " + duration.toFixed(1) + " ms");
+}
+
 // To run on all pages
 function improvePageAny() {
     console.log("[PTRE] Improving Any Page");
@@ -656,165 +860,467 @@ function improvePageBuddies() {
     displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
 }
 
-// ****************************************
-// NOTIFICATIONS FUNCTIONS
-// ****************************************
-
-// Displays PTRE responses messages
-// Responses from server
-// Displayed on the rigth-bottom corner
-function displayPTREPopUpMessage(message) {
-    var previousContent = '';
-    if (document.getElementById('boxPTREMessage') && document.getElementById("ptreMessage")) {
-        // Get previous content and remove box
-        previousContent = document.getElementById("ptreMessage").innerHTML;
-        document.getElementById('boxPTREMessage').remove();
-    }
-
-    // Recreate box
-    var divPTREMessage = '<div id="boxPTREMessage">PTRE:<span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
-    var boxPTREMessage = document.createElement("div");
-    boxPTREMessage.innerHTML = divPTREMessage;
-    boxPTREMessage.id = 'boxPTREMessage';
-
-    if (document.getElementById('bottom')) {
-        document.getElementById('bottom').appendChild(boxPTREMessage);
-        setTimeout(function() {cleanFirstPTREPopUpMessage();}, ptreMessageDisplayTime);
-    }
-}
-
-// Remove first message in list and remove entire message box if empty
-function cleanFirstPTREPopUpMessage() {
-    if (document.getElementById('fisrtPtreMessage')) {
-        document.getElementById('fisrtPtreMessage').remove();
-        if (document.getElementById("ptreMessage").innerHTML == '') {
-            document.getElementById('boxPTREMessage').remove();
+// This function adds PTRE link to AGR pinned target
+function addPTRELinkToAGRPinnedTarget() {
+    if (document.getElementById('ago_box_title')) {
+        var pseudoAGR = document.getElementById('ago_box_title').innerHTML;
+        updateLocalAGRList();
+        var playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
+        if (playerID != 0) {
+            document.getElementById('ago_box_title').innerHTML = pseudoAGR + ' [<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE</a>]';
         }
     }
 }
 
-// Display message under galaxy view
-function displayGalaxyMiniMessage(message) {
-    if (document.getElementById("fleetstatusrow")) {
-        document.getElementById("fleetstatusrow").innerHTML = '<div class="success">PTRE: ' + message + '</div>';
-    } else {
-        console.log("[PTRE] Error. Cant display: " + message);
-    }
-}
-
-function cleanGalaxyMiniMessage() {
-    if (document.getElementById("fleetstatusrow")) {
-        document.getElementById("fleetstatusrow").innerHTML = '';
-    }
-}
-
-// Display message content on galaxy page
-function displayGalaxyMessageContent(message) {
-    if (document.getElementById("ptreGalaxyMessageBoxContent")) {
-        document.getElementById("ptreGalaxyMessageBoxContent").innerHTML = message;
-    } else {
-        console.log("[PTRE] Error. Cant display: " + message);
-    }
-}
-
-// ****************************************
-// MINI FUNCTIONS
-// ****************************************
-
-// Detects if AGR is enabled
-function isAGREnabled() {
-    if (document.getElementById('ago_panel_Player')) {
-        return true;
-    }
-    return false;
-}
-
-function isOGLEnabled() {
-    if (document.querySelector('body.oglight')) {
-        return true;
-    }
-    return false;
-}
-
-function isOGIEnabled() {
-    if (document.getElementsByClassName('ogl-harvestOptions').length != 0) {
-        return true;
-    }
-    return false;
-}
-
-// Detects if OGL is enabled
-function isOGLorOGIEnabled() {
-    if (isOGLEnabled() || isOGIEnabled()) {
-        return true;
-    }
-    return false;
-}
-
-// Convert planets activities to OGL - PTRE format
-function convertActivityToOGLFormat(showActivity, idleTime) {
-    if (showActivity == '15') {
-        return '*';
-    } else if (showActivity == '60') {
-        return idleTime;
-    } else if (!showActivity) {
-        return '60';
-    }
-    return '60';
-}
-
-function buildPTRELinkToPlayer(playerID) {
-    return 'https://ptre.chez.gg/?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
-}
-
-function buildLinkToGalaxy(galaxy, system, position) {
-    return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=galaxy&galaxy='+galaxy+'&system='+system+'&position='+position+'">['+galaxy+':'+system+':'+position+']</a>';
-}
-
-function consoleDebug(message) {
-    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
-        console.log('[PTRE] ' + message);
-    }
-}
-
-function round(x, y) {
-    return Number.parseFloat(x).toFixed(y);
-}
-
-function displayMessageInSettings(message) {
-    if (document.getElementById('messageDivInSettings')) {
-        document.getElementById('messageDivInSettings').innerHTML = message;
-    } else {
-        displayPTREPopUpMessage(message);
-    }
-}
-
-function setNumber(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-}
-
-function getLastUpdateLabel(lastCheck) {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var temp = '<span class="ptreError ptreSmall">never updated</span>';
-    if (lastCheck > 0) {
-        var nb_min = (currentTime - lastCheck) / 60;
-        if (nb_min <= 1) {
-            temp = '<span class="ptreSuccess ptreSmall">updated now</span>';
-        } else if (nb_min < 60) {
-            temp = '<span class="ptreSuccess ptreSmall">updated ' + round(nb_min, 0) + ' mins ago</span>';
-        } else if (nb_min < 24*60) {
-            var nb_h = (currentTime - lastCheck) / 3600;
-            temp = '<span class="ptreWarning ptreSmall">updated ' + round(nb_h, 0) + ' hours ago</span>';
+// This function adds PTRE send SR button to AGR Spy Table
+function improveAGRSpyTable(mutationList, observer) {
+    if (document.getElementById('agoSpyReportOverview')) {
+        // Stop observer
+        observer.disconnect();
+        var TKey = GM_getValue(ptreTeamKey, '');
+        if (TKey != '') {
+            console.log("[PTRE] Updating AGR Spy Table");
+            var table = document.getElementsByClassName("ago_reports")[0];
+            for (var i = 0, row; row = table.rows[i]; i++) {
+                var nbCol = row.cells.length;
+                if (row.cells[0].tagName == "TD") {
+                    var rowCurrent = table.getElementsByTagName("tr")[i];
+                    var messageID = rowCurrent.id.slice(2);
+                    if (document.getElementById("m"+messageID)) {
+                        // Find API Key in page
+                        var apiKeyRE;
+                        var rawMessageData = document.querySelector('div.msg[data-msg-id="' + messageID + '"] .rawMessageData');
+                        if (rawMessageData) {
+                            // Obtenir la valeur de data-raw-hashcode
+                            apiKeyRE = rawMessageData.getAttribute('data-raw-hashcode');
+                        }
+                        var tdAGRButtons = rowCurrent.getElementsByTagName("td")[nbCol-1];
+                        tdAGRButtons.style.width = "110px";
+                        // Create PTRE button
+                        var PTREbutton = document.createElement('a');
+                        PTREbutton.style.cursor = 'pointer';
+                        PTREbutton.className = "spyTableIcon icon_galaxy mouseSwitch";
+                        PTREbutton.id = "sendSRFromAGRTable-" + apiKeyRE;
+                        PTREbutton.setAttribute('apikey', apiKeyRE);
+                        PTREbutton.innerHTML = "P";
+                        tdAGRButtons.append(PTREbutton);
+                        // Add event to button
+                        document.getElementById('sendSRFromAGRTable-' + apiKeyRE).addEventListener("click", function (event) {
+                            apiKeyRE = this.getAttribute("apikey");
+                            var urlPTRESpy = urlPTREImportSR + '&team_key=' + TKey + '&sr_id=' + apiKeyRE;
+                            $.ajax({
+                                dataType: "json",
+                                url: urlPTRESpy,
+                                success: function(reponse) {
+                                    if (reponse.code == 1) {
+                                        document.getElementById('sendSRFromAGRTable-'+apiKeyRE).remove();
+                                    } else {
+                                        addToLogs(reponse.message_verbose);
+                                    }
+                                    displayPTREPopUpMessage(reponse.message_verbose);
+                                }
+                            });
+                        });
+                    } else {
+                        console.log("[PTRE] Error. Cant find data element: m" + messageID);
+                    }
+                }
+            }
         } else {
-            temp = '<span class="ptreError ptreSmall">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
+            displayPTREPopUpMessage(ptreMissingTKMessage);
         }
     }
-    return temp;
+}
+
+// Add PTRE button to spy reports
+function addPTREStuffsToMessagesPage() {
+
+    // Add PTRE button to messages
+    var TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        if (document.getElementsByClassName('messagesHolder')[0]) {
+            var maxCounterSpyTsSeen = GM_getValue(ptreMaxCounterSpyTsSeen, 0);
+            var maxCounterSpyTsSeenNow = 0;
+            var tabActiPos = [];
+            var messages = document.getElementsByClassName('msgWithFilter');
+            Array.prototype.forEach.call(messages, function(current_message) {
+                var apiKeyRE = "";
+
+                var messageID = current_message.getAttributeNode("data-msg-id").value;
+                var rawMessageData = document.querySelector('div.msg[data-msg-id="' + messageID + '"] .rawMessageData');
+                if (rawMessageData) {
+                    // Obtenir la valeur de data-raw-hashcode
+                    apiKeyRE = rawMessageData.getAttribute('data-raw-hashcode');
+                    if (currentPlayerID !== rawMessageData.getAttribute('data-raw-targetplayerid')) {
+                        // This is a Spy Report
+                        var spanBtnPTRE = document.createElement("span"); // Create new div
+                        spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Send to PTRE"><img id="sendRE-' + apiKeyRE + '" apikey="' + apiKeyRE + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a>';
+                        spanBtnPTRE.id = 'PTREspan';
+                        current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE);
+                        document.getElementById('sendRE-' + apiKeyRE).addEventListener("click", function (event) {
+                            var urlPTRESpy = urlPTREImportSR + '&team_key=' + TKey + '&sr_id=' + apiKeyRE;
+                            $.ajax({
+                                dataType: "json",
+                                url: urlPTRESpy,
+                                success: function(reponse) {
+                                    console.log('[PTRE] ' + reponse);
+                                    if (reponse.code == 1) {
+                                        document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
+                                    } else {
+                                        document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
+                                        addToLogs(reponse.message_verbose);
+                                    }
+                                    displayPTREPopUpMessage(reponse.message_verbose);
+                                }
+                            });
+                        });
+                    } else {
+                        var planet_acti;
+                        var jsonLune;
+                        const message_ts = rawMessageData.dataset.rawTimestamp;
+                        const spy_message_ts = message_ts * 1000;
+                        var alreadySentLabel = "";
+
+                        if (message_ts > maxCounterSpyTsSeen) {
+                            if (message_ts > maxCounterSpyTsSeenNow) {
+                                maxCounterSpyTsSeenNow = message_ts;
+                            }
+                            // Get Spy coords
+                            var temp = current_message.getElementsByClassName("msgTitle")[0].innerHTML;
+                            const regex = /\[(\d+):(\d+):(\d+)\]/;
+                            var coords;
+                            coords = temp.match(regex);
+                            // Set both position as active
+                            // TODO: [LOW] find a way to find out if planet or moon in text :(
+                            planet_acti = "*";
+                            jsonLune = {activity:"*"};
+                            // Find Player ID
+                            const tmpHTML = document.createElement('div');
+                            tmpHTML.insertAdjacentHTML("afterbegin", current_message.querySelector("span.player").dataset.tooltipTitle);
+                            const playerID = tmpHTML.querySelector("[data-playerId]").dataset.playerid;
+
+                            // Send counter-spy messages
+                            var jsonActiPos = {
+                                messageID : messageID,
+                                player_id : playerID,
+                                teamkey : TKey,
+                                coords : coords[1]+':'+coords[2]+':'+coords[3],
+                                galaxy : coords[1],
+                                system : coords[2],
+                                position : coords[3],
+                                main : false,
+                                activity : planet_acti,
+                                moon : jsonLune,
+                                spy_message_ts: spy_message_ts
+                            };
+                            tabActiPos.push(jsonActiPos);
+                        } else {
+                            alreadySentLabel = " already";
+                        }
+
+                        // Add button
+                        var spanBtnPTRE2 = document.createElement("span"); // Create new div
+                        spanBtnPTRE2.innerHTML = '<a class="tooltip" target="ptre" title="Counter Spy' + alreadySentLabel + ' sent to PTRE"><img style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="26" width="26"></a>';
+                        spanBtnPTRE2.id = 'PTREspan';
+                        current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE2);
+                    }
+                }
+            });
+
+            if (tabActiPos.length > 0){
+                // Save New max TS to not re-send same counter spy messages
+                GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
+
+                // Build JSON
+                var jsonSystem = '{';
+                $.each(tabActiPos, function(nb, jsonPos){
+                    jsonSystem += '"'+jsonPos.coords+'-'+jsonPos.messageID+'":'+JSON.stringify(jsonPos)+',';
+                });
+                jsonSystem = jsonSystem.substr(0,jsonSystem.length-1);
+                jsonSystem += '}';
+
+                // Sent to PTRE
+                $.ajax({
+                    url : urlPTREPushActivity,
+                    type : 'POST',
+                    data: jsonSystem,
+                    cache: false,
+                    success : function(reponse){
+                        var reponseDecode = jQuery.parseJSON(reponse);
+                        displayPTREPopUpMessage(reponseDecode.message);
+                        if (reponseDecode.code != 1) {
+                            displayPTREPopUpMessage(reponseDecode.message);
+                            addToLogs(reponseDecode.message);
+                        }
+                    }
+                });
+                console.log('[PTRE] Pushing counter spy messages');
+            }
+        }
+    }
+}
+
+// Called when user clicks on the PTRE icon in galaxy view
+function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
+    consoleDebug("Click on pos " + galaxy + ":" + system + ":" + pos);
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+
+    // Clean previous Galaxy box
+    if (window.ptreGalaxyCleanup) {
+        window.ptreGalaxyCleanup();
+    }
+
+    const button = document.getElementById('ptreActionPos-' + galaxy + ":" + system + ":" + pos);
+    if (button) {
+        var dnpButtonLabel = "DNP";
+        var targetComment = "";
+
+        // If it our player
+        if (playerId == Number(currentPlayerID)) {
+            targetComment+= '<span class="ptreSuccess">This is you, but you already know that, right?</span><br>';
+        }
+
+        // Lookup in galaxy events
+        const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
+        if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
+            targetComment+= '<span class="ptreWarning">This position has changed recently!</span><br>';
+        }
+
+        // Get players to highlight
+        const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
+        if (highlightedPlayersList[playerId]) {
+            if (highlightedPlayersList[playerId]["status"] == "dnp") {
+                const duration = round((highlightedPlayersList[playerId]["ts"] - currentTime) / 60);
+                targetComment+= '<span class="ptreError">Do Not Probe ' + playerName + ' for ' + duration + ' min</span><br>';
+                dnpButtonLabel = "DNP (+)";
+            } else if (highlightedPlayersList[playerId]["status"] == "hot") {
+                targetComment+= '<span class="ptreSuccess">' + playerName + ' Recently spied and shared to PTRE</span><br>';
+            }
+        }
+
+        // Create panel
+        const panel = document.createElement('div');
+        panel.id = 'ptreGalaxyPopUp';
+        panel.innerHTML = `
+            <table border="1" width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Galaxy Box</div></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr></table>
+            <table border="1" width="100%">
+            <tr>
+                <td>
+                    <hr>
+                    <div id="ptreGalaxyActionsContent">
+                        <div class="ptreCategoryTitle">Informations</div>
+                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br><br>
+                        ` + targetComment + `
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <hr>
+                    <div class="ptreCategoryTitle">New Galaxy Events</div>
+                    <div id="ptreGalaxyPosEvent-` + galaxy + `:` + system + `:` + pos + `"></div><br>
+                </td>
+            </tr>`;
+        if (playerId > 0) {
+            panel.innerHTML+= `
+            <tr>
+                <td>
+                    <hr>
+                    <div class="ptreCategoryTitle">Actions</div>
+                    <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <hr>
+                    <div class="ptreCategoryTitle">Shared notes (shared with PTRE Team)</div>
+                    <div id="ptreGalaxyPlayerNoteStatus-` + playerId + `"></div><br>
+                    <textarea name="note" id="ptreGalaxyPlayerNote-` + playerId + `" rows="5" cols="50"></textarea><br>
+                    <div id="savePlayerNote" type="button" class="button btn_blue">SAVE NOTE</div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <hr>
+                    <div class="ptreCategoryTitle">Points and Ranks, last days</div>
+                    <div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-` + playerId + `">Highscores will be loaded after a 2 secs delay...</div></div>
+                </td>
+            </tr>`;
+        } else {
+            panel.innerHTML+= `
+            <tr>
+                <td>
+                    <hr>
+                    <div class="ptreCategoryTitle">Deep space</div>
+                    Nothing here...
+                </td>
+            </tr>`;
+        }
+        panel.innerHTML+= `</table>`;
+
+        // Position panel next to button
+        const planetList = document.getElementById('planetList');
+        const rect = planetList.getBoundingClientRect();
+        panel.style.top = (window.scrollY + rect.top) + 'px';
+        panel.style.left = (window.scrollX + rect.left) + 'px';
+        document.body.appendChild(panel);
+
+        // Close if we click outside the Div
+        const cleanupGalaxyBox = () => {
+            if (panel && panel.parentNode) {
+                panel.parentNode.removeChild(panel);
+            }
+            document.removeEventListener('click', clickHandler);
+        };
+        const clickHandler = (event) => {
+            if (!panel.contains(event.target) && event.target !== button) {
+                cleanupGalaxyBox();
+            }
+        };
+        document.addEventListener('click', clickHandler);
+        window.ptreGalaxyCleanup = cleanupGalaxyBox;
+        // Close button
+        const closeBtn = document.getElementById('btnCloseGalaxyActions');
+        if (closeBtn) {
+            closeBtn.addEventListener("click", cleanupGalaxyBox);
+        }
+
+        if (playerId > 0) {
+            // Target sync button
+            if (document.getElementById('synctTargetsWithPTREViaGalaxy')) {
+                document.getElementById('synctTargetsWithPTREViaGalaxy').addEventListener("click", function (event) {
+                    syncTargets("manual");
+                });
+            }
+            // Target list button
+            const btnManageList = document.getElementById('btnManageList');
+            if (btnManageList) {
+                if (isPlayerInTheList(playerId, 'PTRE')) {
+                    btnManageList.innerHTML = "REMOVE FROM LIST";
+                    btnManageList.addEventListener("click", function (event) {
+                        var retSupp = deletePlayerFromList(playerId, 'PTRE');
+                        displayPTREPopUpMessage(retSupp);
+                        btnManageList.style.display = 'none';
+                    });
+                } else {
+                    btnManageList.addEventListener("click", function (event) {
+                        var retAdd = addPlayerToList(playerId, playerName, 'PTRE');
+                        displayPTREPopUpMessage(retAdd[1]);
+                        btnManageList.style.display = 'none';
+                    });
+                }
+            }
+            // DNP button
+            if (document.getElementById('btnDNP')) {
+                document.getElementById('btnDNP').addEventListener("click", function (event) {
+                    consoleDebug("Adding " + playerId + " to DNP list");
+                    // Push data to PTRE
+                    $.ajax({
+                        url : urlPTREIngameAction + '&team_key=' + GM_getValue(ptreTeamKey, ''),
+                        type : 'POST',
+                        data: JSON.stringify({"0":{type: "dnp", id: playerId, val: 0, name: playerName}}),
+                        cache: false,
+                        success : function(reponse){
+                            var reponseDecode = jQuery.parseJSON(reponse);
+                            displayPTREPopUpMessage(reponseDecode.message);
+                            if (reponseDecode.updated > 0) {
+                                // Update button color
+                                button.style.border = ptreBorderStyleDnpList;
+                                // Add player to local list (this will be rewritten by the real update after)
+                                const temp = GM_getValue(ptreHighlightedPlayers, {});
+                                const ts_tmp = currentTime + 2*60*60;
+                                temp[String(playerId)] = {name: playerName, status: "dnp", ts: ts_tmp};
+                                GM_setValue(ptreHighlightedPlayers, temp);
+                                // Enable Live
+                                updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
+                                consoleDebug("Added player "+playerName+" to DNP ("+ts_tmp+")");
+                            } else {
+                                addToLogs(reponseDecode.message);
+                            }
+                        }
+                    });
+                });
+            }
+            // Note button
+            if (document.getElementById('savePlayerNote')) {
+                document.getElementById('savePlayerNote').addEventListener("click", function (event) {
+                    pushPlayerNote(playerId);
+                });
+            }
+            // Get ranks call
+            // Set a delay, so we dont fetch data if player closes the box too fast
+            // Once function is run, it will check if Pop-up is still waiting
+            setTimeout(function() {updateGalaxyBoxWithPlayerRanks(playerId)}, 2000);
+        }
+        // We still want event for empty positions
+        setTimeout(function() {updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos)}, 200);
+    }
 }
 
 // ****************************************
 // PTRE/AGR LIST RELATED
 // ****************************************
+
+// Add data to sharable structure
+// Element should be like: {type: string_type, id: ID, coords: coords, val: a_value};
+function addDataToPTREData(newData, syncToPTRE = true) {
+    var dataJSON = '';
+    dataJSON = GM_getValue(ptreDataToSync, '');
+    var dataList = [];
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+    }
+
+    // Look for same entry
+    var idASup = -1;
+    $.each(dataList, function(i, elem) {
+        //console.log("[PTRE] Checking elem " + elem.type + " / " + elem.id);
+        if (elem.type == newData.type && elem.id == newData.id) {
+            if (elem.val == newData.val) {
+                consoleDebug("Element " + newData.type + " has not changed. No update.");
+                idASup = -2;
+            } else {
+                consoleDebug("Element " + newData.type + " has changed (" + newData.val + " VS " + elem.val + "). Need to update.");
+                idASup = i;
+            }
+        }
+    });
+    if (idASup == -2) {
+        return -1;
+    } else if (idASup != -1) {
+        // Delete entry if found
+        dataList.splice(idASup, 1);
+    }
+    // Add the new entry
+    console.log("[PTRE] Adding/Updating " + newData.type + " ID:" + newData.id + " / val: " + newData.val, newData);
+    dataList.push(newData);
+
+    // Save list
+    dataJSON = JSON.stringify(dataList);
+    GM_setValue(ptreDataToSync, dataJSON);
+
+    //debugSharableData();
+
+    // Sync data to PTRE
+    if (syncToPTRE === true) {
+        setTimeout(syncDataWithPTRE, dataSharingDelay);
+    }
+}
+
+function debugSharableData() {
+    var dataJSON = '';
+    dataJSON = GM_getValue(ptreDataToSync, '');
+
+    var dataList = [];
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        $.each(dataList, function(i, elem) {
+            console.log("[" + elem.type + "] " + elem.id + " => " + elem.val + " (" + elem.coords + ")");
+        });
+    } else {
+        console.log("[PTRE] No data to display");
+    }
+}
 
 // Remove player from PTRE/AGR list
 function deletePlayerFromList(playerId, type) {
@@ -1083,20 +1589,8 @@ function updateLocalAGRList() {
 }
 
 // ****************************************
-// IMPROVE MAIN VIEWS
+// MENUS
 // ****************************************
-
-// This function adds PTRE link to AGR pinned target
-function addPTRELinkToAGRPinnedTarget() {
-    if (document.getElementById('ago_box_title')) {
-        var pseudoAGR = document.getElementById('ago_box_title').innerHTML;
-        updateLocalAGRList();
-        var playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
-        if (playerID != 0) {
-            document.getElementById('ago_box_title').innerHTML = pseudoAGR + ' [<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE</a>]';
-        }
-    }
-}
 
 // Displays PTRE settings
 function displayPTREMenu() {
@@ -1404,194 +1898,6 @@ function savePTRESettings() {
     setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
 }
 
-// This function adds PTRE send SR button to AGR Spy Table
-function improveAGRSpyTable(mutationList, observer) {
-    if (document.getElementById('agoSpyReportOverview')) {
-        // Stop observer
-        observer.disconnect();
-        var TKey = GM_getValue(ptreTeamKey, '');
-        if (TKey != '') {
-            console.log("[PTRE] Updating AGR Spy Table");
-            var table = document.getElementsByClassName("ago_reports")[0];
-            for (var i = 0, row; row = table.rows[i]; i++) {
-                var nbCol = row.cells.length;
-                if (row.cells[0].tagName == "TD") {
-                    var rowCurrent = table.getElementsByTagName("tr")[i];
-                    var messageID = rowCurrent.id.slice(2);
-                    if (document.getElementById("m"+messageID)) {
-                        // Find API Key in page
-                        var apiKeyRE;
-                        var rawMessageData = document.querySelector('div.msg[data-msg-id="' + messageID + '"] .rawMessageData');
-                        if (rawMessageData) {
-                            // Obtenir la valeur de data-raw-hashcode
-                            apiKeyRE = rawMessageData.getAttribute('data-raw-hashcode');
-                        }
-                        var tdAGRButtons = rowCurrent.getElementsByTagName("td")[nbCol-1];
-                        tdAGRButtons.style.width = "110px";
-                        // Create PTRE button
-                        var PTREbutton = document.createElement('a');
-                        PTREbutton.style.cursor = 'pointer';
-                        PTREbutton.className = "spyTableIcon icon_galaxy mouseSwitch";
-                        PTREbutton.id = "sendSRFromAGRTable-" + apiKeyRE;
-                        PTREbutton.setAttribute('apikey', apiKeyRE);
-                        PTREbutton.innerHTML = "P";
-                        tdAGRButtons.append(PTREbutton);
-                        // Add event to button
-                        document.getElementById('sendSRFromAGRTable-' + apiKeyRE).addEventListener("click", function (event) {
-                            apiKeyRE = this.getAttribute("apikey");
-                            var urlPTRESpy = urlPTREImportSR + '&team_key=' + TKey + '&sr_id=' + apiKeyRE;
-                            $.ajax({
-                                dataType: "json",
-                                url: urlPTRESpy,
-                                success: function(reponse) {
-                                    if (reponse.code == 1) {
-                                        document.getElementById('sendSRFromAGRTable-'+apiKeyRE).remove();
-                                    } else {
-                                        addToLogs(reponse.message_verbose);
-                                    }
-                                    displayPTREPopUpMessage(reponse.message_verbose);
-                                }
-                            });
-                        });
-                    } else {
-                        console.log("[PTRE] Error. Cant find data element: m" + messageID);
-                    }
-                }
-            }
-        } else {
-            displayPTREPopUpMessage(ptreMissingTKMessage);
-        }
-    }
-}
-
-// Add PTRE button to spy reports
-function addPTREStuffsToMessagesPage() {
-
-    // Add PTRE button to messages
-    var TKey = GM_getValue(ptreTeamKey, '');
-    if (TKey != '') {
-        if (document.getElementsByClassName('messagesHolder')[0]) {
-            var maxCounterSpyTsSeen = GM_getValue(ptreMaxCounterSpyTsSeen, 0);
-            var maxCounterSpyTsSeenNow = 0;
-            var tabActiPos = [];
-            var messages = document.getElementsByClassName('msgWithFilter');
-            Array.prototype.forEach.call(messages, function(current_message) {
-                var apiKeyRE = "";
-
-                var messageID = current_message.getAttributeNode("data-msg-id").value;
-                var rawMessageData = document.querySelector('div.msg[data-msg-id="' + messageID + '"] .rawMessageData');
-                if (rawMessageData) {
-                    // Obtenir la valeur de data-raw-hashcode
-                    apiKeyRE = rawMessageData.getAttribute('data-raw-hashcode');
-                    if (currentPlayerID !== rawMessageData.getAttribute('data-raw-targetplayerid')) {
-                        // This is a Spy Report
-                        var spanBtnPTRE = document.createElement("span"); // Create new div
-                        spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Send to PTRE"><img id="sendRE-' + apiKeyRE + '" apikey="' + apiKeyRE + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a>';
-                        spanBtnPTRE.id = 'PTREspan';
-                        current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE);
-                        document.getElementById('sendRE-' + apiKeyRE).addEventListener("click", function (event) {
-                            var urlPTRESpy = urlPTREImportSR + '&team_key=' + TKey + '&sr_id=' + apiKeyRE;
-                            $.ajax({
-                                dataType: "json",
-                                url: urlPTRESpy,
-                                success: function(reponse) {
-                                    console.log('[PTRE] ' + reponse);
-                                    if (reponse.code == 1) {
-                                        document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
-                                    } else {
-                                        document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
-                                        addToLogs(reponse.message_verbose);
-                                    }
-                                    displayPTREPopUpMessage(reponse.message_verbose);
-                                }
-                            });
-                        });
-                    } else {
-                        var planet_acti;
-                        var jsonLune;
-                        const message_ts = rawMessageData.dataset.rawTimestamp;
-                        const spy_message_ts = message_ts * 1000;
-                        var alreadySentLabel = "";
-
-                        if (message_ts > maxCounterSpyTsSeen) {
-                            if (message_ts > maxCounterSpyTsSeenNow) {
-                                maxCounterSpyTsSeenNow = message_ts;
-                            }
-                            // Get Spy coords
-                            var temp = current_message.getElementsByClassName("msgTitle")[0].innerHTML;
-                            const regex = /\[(\d+):(\d+):(\d+)\]/;
-                            var coords;
-                            coords = temp.match(regex);
-                            // Set both position as active
-                            // TODO: [LOW] find a way to find out if planet or moon in text :(
-                            planet_acti = "*";
-                            jsonLune = {activity:"*"};
-                            // Find Player ID
-                            const tmpHTML = document.createElement('div');
-                            tmpHTML.insertAdjacentHTML("afterbegin", current_message.querySelector("span.player").dataset.tooltipTitle);
-                            const playerID = tmpHTML.querySelector("[data-playerId]").dataset.playerid;
-
-                            // Send counter-spy messages
-                            var jsonActiPos = {
-                                messageID : messageID,
-                                player_id : playerID,
-                                teamkey : TKey,
-                                coords : coords[1]+':'+coords[2]+':'+coords[3],
-                                galaxy : coords[1],
-                                system : coords[2],
-                                position : coords[3],
-                                main : false,
-                                activity : planet_acti,
-                                moon : jsonLune,
-                                spy_message_ts: spy_message_ts
-                            };
-                            tabActiPos.push(jsonActiPos);
-                        } else {
-                            alreadySentLabel = " already";
-                        }
-
-                        // Add button
-                        var spanBtnPTRE2 = document.createElement("span"); // Create new div
-                        spanBtnPTRE2.innerHTML = '<a class="tooltip" target="ptre" title="Counter Spy' + alreadySentLabel + ' sent to PTRE"><img style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="26" width="26"></a>';
-                        spanBtnPTRE2.id = 'PTREspan';
-                        current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE2);
-                    }
-                }
-            });
-
-            if (tabActiPos.length > 0){
-                // Save New max TS to not re-send same counter spy messages
-                GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
-
-                // Build JSON
-                var jsonSystem = '{';
-                $.each(tabActiPos, function(nb, jsonPos){
-                    jsonSystem += '"'+jsonPos.coords+'-'+jsonPos.messageID+'":'+JSON.stringify(jsonPos)+',';
-                });
-                jsonSystem = jsonSystem.substr(0,jsonSystem.length-1);
-                jsonSystem += '}';
-
-                // Sent to PTRE
-                $.ajax({
-                    url : urlPTREPushActivity,
-                    type : 'POST',
-                    data: jsonSystem,
-                    cache: false,
-                    success : function(reponse){
-                        var reponseDecode = jQuery.parseJSON(reponse);
-                        displayPTREPopUpMessage(reponseDecode.message);
-                        if (reponseDecode.code != 1) {
-                            displayPTREPopUpMessage(reponseDecode.message);
-                            addToLogs(reponseDecode.message);
-                        }
-                    }
-                });
-                console.log('[PTRE] Pushing counter spy messages');
-            }
-        }
-    }
-}
-
 // This function creates empty Info Box.
 // Its ready to be updated
 function setupInfoBox(title) {
@@ -1611,44 +1917,6 @@ function setupInfoBox(title) {
     document.getElementById('btnCloseInfosPTRE').addEventListener("click", function (event) {
         document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
     });
-}
-
-// This function calls PTRE backend to get player informations
-// And sends results to Info Box
-function getPlayerInfos(playerID, pseudo) {
-    const TKey = GM_getValue(ptreTeamKey, '');
-    if (TKey != '') {
-        setupInfoBox("Player " + pseudo);
-        var content = '<center><div id="backToTargetsList" class="button btn_blue">BACK TO TARGETS LIST</div><br><br>';
-        $.ajax({
-            dataType: "json",
-            url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
-            success: function(reponse) {
-                if (reponse.code == 1) {
-                    content+= '<table width="90%"><tr><td class="td_ship" align="center"><div class="ptreSubTitle">' + pseudo + '</div></td><td class="td_ship" align="center"><div class="ptreSubTitle">' + setNumber(reponse.top_sr_fleet_points) + ' fleet points</div></td></tr>';
-                    content+= '<tr><td class="td_ship" align="center">[<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PROFILE</a>]</td><td class="td_ship" align="center">[<a href="' + reponse.top_sr_link + '" target="_blank">BEST REPORT</a>]</td></tr>';
-                    content+= '<tr><td class="td_ship" colspan="2"><hr></td></tr>';
-                    reponse.fleet_json.forEach(function(item, index, object) {
-                        content+= '<tr><td class="td_ship" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></td><td class="td_ship" align="center"></span><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
-                    });
-                    content+= '</table>';
-                } else {
-                    content+= '<span class="ptreError">' + reponse.message + '</span>';
-                    addToLogs(reponse.message);
-                }
-                content+= '</center>';
-                document.getElementById('infoBoxContent').innerHTML = content;
-                if (document.getElementById('backToTargetsList')) {
-                    document.getElementById('backToTargetsList').addEventListener("click", function (event) {
-                        displayTargetsList();
-                    });
-                }
-            }
-        });
-    } else {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
-        document.getElementById('infoBoxContent').innerHTML = ptreMissingTKMessage;
-    }
 }
 
 function displayHelp() {
@@ -2011,333 +2279,27 @@ function validatePurgeGalaxyTracking() {
     });
 }
 
-// ****************************************
-// GALAXY EXEC STUFFS
-// ****************************************
+function displayTotalSystemsSaved() {
+    var countGala = 0;
+    var countSsystem = 0;
 
-function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
-    const TKey = GM_getValue(ptreTeamKey, '');
-    if (TKey != '') {
-        // Check if Galaxy Box is still waiting the infos
-        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId) || document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-            consoleDebug("Getting Player notes");
-            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
+    if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
+        for(var gala = 1; gala <= 15 ; gala++) {
+            var galaxyData = GM_getValue(ptreGalaxyData+gala, '');
+            if (galaxyData != '') {
+                countGala++;
+                countSsystem = countSsystem + Object.keys(galaxyData).length;
             }
-            if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-                document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).value = "Loading events...";
-            }
-            $.ajax({
-                url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=get&player_id=" + playerId + "&galaxy=" + galaxy + "&system=" + system + "&pos=" + pos,
-                type: 'POST',
-                success: function (reponse) {
-                    var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
-                    if (reponseDecode.code == 1) {
-                        // Message
-                        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-                            document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
-                        }
-                        // Update note content
-                        if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
-                            document.getElementById("ptreGalaxyPlayerNote-" + playerId).value = reponseDecode.note;
-                        }
-                        // Galaxy event
-                        if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-                            document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).innerHTML = atob(reponseDecode.event);
-                        }
-                    }
-                },
-            });
         }
-    }
-}
-
-function pushPlayerNote(playerId) {
-    const TKey = GM_getValue(ptreTeamKey, '');
-    if (TKey != '') {
-        if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
-            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Saving note...";
-            }
-            const note = $("#ptreGalaxyPlayerNote-" + playerId).val();
-            consoleDebug("Saving note for " + playerId);
-            $.ajax({
-                url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=set&player_id=" + playerId,
-                type: 'POST',
-                data: {
-                    note: note
-                },
-                success: function (reponse) {
-                    var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
-                    if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-                        document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
-                    }
-                },
-            });
-        }
-    }
-}
-
-// Get ranks
-function updateGalaxyBoxWithPlayerRanks(playerId) {
-    const TKey = GM_getValue(ptreTeamKey, '');
-    if (TKey != '') {
-        // Check if Galaxy Box is still waiting the infos
-        if (!document.getElementById("ptreGalaxyPlayerRanksPlaceholder-" + playerId)) {
-            consoleDebug("Rank update canceled");
-            return;
-        }
-        if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-            document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Loading ranks...";
-        }
-        $.ajax({
-            url : urlPTREGetRanks + "&team_key=" + TKey + "&player_id=" + playerId,
-            type : 'POST',
-            cache: false,
-            success : function(reponse){
-                var reponseDecode = jQuery.parseJSON(reponse);
-                consoleDebug(reponseDecode.message);
-                displayGalaxyMiniMessage(reponseDecode.message);
-                if (reponseDecode.code == 1) {
-                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
-                        var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
-                        $.each(reponseDecode.ranks_array, function(i, rank) {
-                            const previousRank = reponseDecode.ranks_array[i + 1];
-                            var classR = "";
-                            var diff = "-";
-                            if (previousRank) {
-                                if (Number(rank.total_score) < Number(previousRank.total_score)) {
-                                    classR = "ptreError";
-                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                                } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
-                                    classR = "ptreSuccess";
-                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                                    diff = "+" + diff;
-                                }
-                            }
-                            var when = "";
-                            if (i == 0) {
-                                when = "at midnight";
-                            } else {
-                                when = i + " days ago";
-                            }
-                            content+= '<tr><td class="td_cell_radius_1" align="center">' + when + '</td><td class="td_cell_radius_1" align="center">' + setNumber(rank.total_score) + ' pts</td><td class="td_cell_radius_1" align="center"><span class="' + classR + '">' + diff + '</span></td><td class="td_cell_radius_1" align="center">#' + rank.total_rank + '</td></tr>';
-                        });
-                        content+= '</table>';
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
-                    }
-                } else {
-                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = reponseDecode.message;
-                    }
-                    addToLogs(reponseDecode.message);
-                }
-            }
-        });
+        return 'Tracked Galaxies: <span class="ptreSuccess">'+countGala+'</span> | Tracked Systems: <span class="ptreSuccess">'+countSsystem+'</span>';
     } else {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
+        return '<span class="ptreError">Wrong Galaxy Cache Version</span>';
     }
 }
 
-// Called when user clicks on the PTRE icon in galaxy view
-function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
-    consoleDebug("Click on pos " + galaxy + ":" + system + ":" + pos);
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
-
-    // Clean previous Galaxy box
-    if (window.ptreGalaxyCleanup) {
-        window.ptreGalaxyCleanup();
-    }
-
-    const button = document.getElementById('ptreActionPos-' + galaxy + ":" + system + ":" + pos);
-    if (button) {
-        var dnpButtonLabel = "DNP";
-        var targetComment = "";
-
-        // If it our player
-        if (playerId == Number(currentPlayerID)) {
-            targetComment+= '<span class="ptreSuccess">This is you, but you already know that, right?</span><br>';
-        }
-
-        // Lookup in galaxy events
-        const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
-        if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
-            targetComment+= '<span class="ptreWarning">This position has changed recently!</span><br>';
-        }
-
-        // Get players to highlight
-        const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
-        if (highlightedPlayersList[playerId]) {
-            if (highlightedPlayersList[playerId]["status"] == "dnp") {
-                const duration = round((highlightedPlayersList[playerId]["ts"] - currentTime) / 60);
-                targetComment+= '<span class="ptreError">Do Not Probe ' + playerName + ' for ' + duration + ' min</span><br>';
-                dnpButtonLabel = "DNP (+)";
-            } else if (highlightedPlayersList[playerId]["status"] == "hot") {
-                targetComment+= '<span class="ptreSuccess">' + playerName + ' Recently spied and shared to PTRE</span><br>';
-            }
-        }
-
-        // Create panel
-        const panel = document.createElement('div');
-        panel.id = 'ptreGalaxyPopUp';
-        panel.innerHTML = `
-            <table border="1" width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Galaxy Box</div></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr></table>
-            <table border="1" width="100%">
-            <tr>
-                <td>
-                    <hr>
-                    <div id="ptreGalaxyActionsContent">
-                        <div class="ptreCategoryTitle">Informations</div>
-                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br><br>
-                        ` + targetComment + `
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">New Galaxy Events</div>
-                    <div id="ptreGalaxyPosEvent-` + galaxy + `:` + system + `:` + pos + `"></div><br>
-                </td>
-            </tr>`;
-        if (playerId > 0) {
-            panel.innerHTML+= `
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Actions</div>
-                    <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Shared notes (shared with PTRE Team)</div>
-                    <div id="ptreGalaxyPlayerNoteStatus-` + playerId + `"></div><br>
-                    <textarea name="note" id="ptreGalaxyPlayerNote-` + playerId + `" rows="5" cols="50"></textarea><br>
-                    <div id="savePlayerNote" type="button" class="button btn_blue">SAVE NOTE</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Points and Ranks, last days</div>
-                    <div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-` + playerId + `">Highscores will be loaded after a 2 secs delay...</div></div>
-                </td>
-            </tr>`;
-        } else {
-            panel.innerHTML+= `
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Deep space</div>
-                    Nothing here...
-                </td>
-            </tr>`;
-        }
-        panel.innerHTML+= `</table>`;
-
-        // Position panel next to button
-        const planetList = document.getElementById('planetList');
-        const rect = planetList.getBoundingClientRect();
-        panel.style.top = (window.scrollY + rect.top) + 'px';
-        panel.style.left = (window.scrollX + rect.left) + 'px';
-        document.body.appendChild(panel);
-
-        // Close if we click outside the Div
-        const cleanupGalaxyBox = () => {
-            if (panel && panel.parentNode) {
-                panel.parentNode.removeChild(panel);
-            }
-            document.removeEventListener('click', clickHandler);
-        };
-        const clickHandler = (event) => {
-            if (!panel.contains(event.target) && event.target !== button) {
-                cleanupGalaxyBox();
-            }
-        };
-        document.addEventListener('click', clickHandler);
-        window.ptreGalaxyCleanup = cleanupGalaxyBox;
-        // Close button
-        const closeBtn = document.getElementById('btnCloseGalaxyActions');
-        if (closeBtn) {
-            closeBtn.addEventListener("click", cleanupGalaxyBox);
-        }
-
-        if (playerId > 0) {
-            // Target sync button
-            if (document.getElementById('synctTargetsWithPTREViaGalaxy')) {
-                document.getElementById('synctTargetsWithPTREViaGalaxy').addEventListener("click", function (event) {
-                    syncTargets("manual");
-                });
-            }
-            // Target list button
-            const btnManageList = document.getElementById('btnManageList');
-            if (btnManageList) {
-                if (isPlayerInTheList(playerId, 'PTRE')) {
-                    btnManageList.innerHTML = "REMOVE FROM LIST";
-                    btnManageList.addEventListener("click", function (event) {
-                        var retSupp = deletePlayerFromList(playerId, 'PTRE');
-                        displayPTREPopUpMessage(retSupp);
-                        btnManageList.style.display = 'none';
-                    });
-                } else {
-                    btnManageList.addEventListener("click", function (event) {
-                        var retAdd = addPlayerToList(playerId, playerName, 'PTRE');
-                        displayPTREPopUpMessage(retAdd[1]);
-                        btnManageList.style.display = 'none';
-                    });
-                }
-            }
-            // DNP button
-            if (document.getElementById('btnDNP')) {
-                document.getElementById('btnDNP').addEventListener("click", function (event) {
-                    consoleDebug("Adding " + playerId + " to DNP list");
-                    // Push data to PTRE
-                    $.ajax({
-                        url : urlPTREIngameAction + '&team_key=' + GM_getValue(ptreTeamKey, ''),
-                        type : 'POST',
-                        data: JSON.stringify({"0":{type: "dnp", id: playerId, val: 0, name: playerName}}),
-                        cache: false,
-                        success : function(reponse){
-                            var reponseDecode = jQuery.parseJSON(reponse);
-                            displayPTREPopUpMessage(reponseDecode.message);
-                            if (reponseDecode.updated > 0) {
-                                // Update button color
-                                button.style.border = ptreBorderStyleDnpList;
-                                // Add player to local list (this will be rewritten by the real update after)
-                                const temp = GM_getValue(ptreHighlightedPlayers, {});
-                                const ts_tmp = currentTime + 2*60*60;
-                                temp[String(playerId)] = {name: playerName, status: "dnp", ts: ts_tmp};
-                                GM_setValue(ptreHighlightedPlayers, temp);
-                                // Enable Live
-                                updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
-                                consoleDebug("Added player "+playerName+" to DNP ("+ts_tmp+")");
-                            } else {
-                                addToLogs(reponseDecode.message);
-                            }
-                        }
-                    });
-                });
-            }
-            // Note button
-            if (document.getElementById('savePlayerNote')) {
-                document.getElementById('savePlayerNote').addEventListener("click", function (event) {
-                    pushPlayerNote(playerId);
-                });
-            }
-            // Get ranks call
-            // Set a delay, so we dont fetch data if player closes the box too fast
-            // Once function is run, it will check if Pop-up is still waiting
-            setTimeout(function() {updateGalaxyBoxWithPlayerRanks(playerId)}, 2000);
-        }
-        // We still want event for empty positions
-        setTimeout(function() {updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos)}, 200);
-    }
-}
+// ****************************************
+// CALLS TO PTRE
+// ****************************************
 
 // Process galaxy data
 // Sends player activity and galaxy updates
@@ -2502,514 +2464,244 @@ function processPlayerActivities(galaxy, system, activityTab) {
     console.log('[PTRE] [' + galaxy + ':' + system + '] Pushing Activities');
 }
 
-/*
-    Function called on each new system displayed in order to:
-    - parse galaxy table
-    - add PTRE elements to galaxy table
-    - prepare galaxy data (and call send function)
-    - prepare activities data (and call send function)
+// This function calls PTRE backend to get player informations
+// And sends results to Info Box
+function getPlayerInfos(playerID, pseudo) {
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        setupInfoBox("Player " + pseudo);
+        var content = '<center><div id="backToTargetsList" class="button btn_blue">BACK TO TARGETS LIST</div><br><br>';
+        $.ajax({
+            dataType: "json",
+            url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
+            success: function(reponse) {
+                if (reponse.code == 1) {
+                    content+= '<table width="90%"><tr><td class="td_ship" align="center"><div class="ptreSubTitle">' + pseudo + '</div></td><td class="td_ship" align="center"><div class="ptreSubTitle">' + setNumber(reponse.top_sr_fleet_points) + ' fleet points</div></td></tr>';
+                    content+= '<tr><td class="td_ship" align="center">[<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PROFILE</a>]</td><td class="td_ship" align="center">[<a href="' + reponse.top_sr_link + '" target="_blank">BEST REPORT</a>]</td></tr>';
+                    content+= '<tr><td class="td_ship" colspan="2"><hr></td></tr>';
+                    reponse.fleet_json.forEach(function(item, index, object) {
+                        content+= '<tr><td class="td_ship" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></td><td class="td_ship" align="center"></span><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
+                    });
+                    content+= '</table>';
+                } else {
+                    content+= '<span class="ptreError">' + reponse.message + '</span>';
+                    addToLogs(reponse.message);
+                }
+                content+= '</center>';
+                document.getElementById('infoBoxContent').innerHTML = content;
+                if (document.getElementById('backToTargetsList')) {
+                    document.getElementById('backToTargetsList').addEventListener("click", function (event) {
+                        displayTargetsList();
+                    });
+                }
+            }
+        });
+    } else {
+        displayPTREPopUpMessage(ptreMissingTKMessage);
+        document.getElementById('infoBoxContent').innerHTML = ptreMissingTKMessage;
+    }
+}
 
-    (This function is NOT called when the galaxy page is displayed, only when the galaxy TABLE is)
-*/
-function improveGalaxyTable() {
+function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        // Check if Galaxy Box is still waiting the infos
+        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId) || document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
+            consoleDebug("Getting Player notes");
+            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
+            }
+            if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
+                document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).value = "Loading events...";
+            }
+            $.ajax({
+                url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=get&player_id=" + playerId + "&galaxy=" + galaxy + "&system=" + system + "&pos=" + pos,
+                type: 'POST',
+                success: function (reponse) {
+                    var reponseDecode = jQuery.parseJSON(reponse);
+                    consoleDebug(reponseDecode.message);
+                    if (reponseDecode.code == 1) {
+                        // Message
+                        if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                            document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
+                        }
+                        // Update note content
+                        if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
+                            document.getElementById("ptreGalaxyPlayerNote-" + playerId).value = reponseDecode.note;
+                        }
+                        // Galaxy event
+                        if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
+                            document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).innerHTML = atob(reponseDecode.event);
+                        }
+                    }
+                },
+            });
+        }
+    }
+}
+
+function pushPlayerNote(playerId) {
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
+            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Saving note...";
+            }
+            const note = $("#ptreGalaxyPlayerNote-" + playerId).val();
+            consoleDebug("Saving note for " + playerId);
+            $.ajax({
+                url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=set&player_id=" + playerId,
+                type: 'POST',
+                data: {
+                    note: note
+                },
+                success: function (reponse) {
+                    var reponseDecode = jQuery.parseJSON(reponse);
+                    consoleDebug(reponseDecode.message);
+                    if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
+                        document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
+                    }
+                },
+            });
+        }
+    }
+}
+
+// Get ranks
+function updateGalaxyBoxWithPlayerRanks(playerId) {
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        // Check if Galaxy Box is still waiting the infos
+        if (!document.getElementById("ptreGalaxyPlayerRanksPlaceholder-" + playerId)) {
+            consoleDebug("Rank update canceled");
+            return;
+        }
+        if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+            document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Loading ranks...";
+        }
+        $.ajax({
+            url : urlPTREGetRanks + "&team_key=" + TKey + "&player_id=" + playerId,
+            type : 'POST',
+            cache: false,
+            success : function(reponse){
+                var reponseDecode = jQuery.parseJSON(reponse);
+                consoleDebug(reponseDecode.message);
+                displayGalaxyMiniMessage(reponseDecode.message);
+                if (reponseDecode.code == 1) {
+                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
+                        var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
+                        $.each(reponseDecode.ranks_array, function(i, rank) {
+                            const previousRank = reponseDecode.ranks_array[i + 1];
+                            var classR = "";
+                            var diff = "-";
+                            if (previousRank) {
+                                if (Number(rank.total_score) < Number(previousRank.total_score)) {
+                                    classR = "ptreError";
+                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                                } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
+                                    classR = "ptreSuccess";
+                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                                    diff = "+" + diff;
+                                }
+                            }
+                            var when = "";
+                            if (i == 0) {
+                                when = "at midnight";
+                            } else {
+                                when = i + " days ago";
+                            }
+                            content+= '<tr><td class="td_cell_radius_1" align="center">' + when + '</td><td class="td_cell_radius_1" align="center">' + setNumber(rank.total_score) + ' pts</td><td class="td_cell_radius_1" align="center"><span class="' + classR + '">' + diff + '</span></td><td class="td_cell_radius_1" align="center">#' + rank.total_rank + '</td></tr>';
+                        });
+                        content+= '</table>';
+                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
+                    }
+                } else {
+                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
+                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = reponseDecode.message;
+                    }
+                    addToLogs(reponseDecode.message);
+                }
+            }
+        });
+    } else {
+        displayPTREPopUpMessage(ptreMissingTKMessage);
+    }
+}
+
+// This function fetchs closest friend phalanx
+function getPhalanxInfosFromGala() {
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    var warning = '';
     var systemElem = $("input#system_input")[0];
     var galaxyElem = $("input#galaxy_input")[0];
     var galaxy = galaxyElem.value;
     var system = systemElem.value;
-    var newSystemToStore = {};
-    var additionnalSSInfos = {};
-    var activitiesInfos = {};
-    var trackedPlayerMerged = [];
-    var activitiesToSend = 0;
+    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
+    const teamKey = GM_getValue(ptreTeamKey, '');
 
-    const start = performance.now();
-    const currentMiliTime = serverTime.getTime();
-    const currentTime = Math.floor(currentMiliTime / 1000);
-
-    consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
-    cleanGalaxyMiniMessage();
-
-    // Get players to highlight
-    var highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
-    // Get positions to highlight
-    var galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
-    // Get merged Targets
-    var mergedTargetsList = getMergedTargetsList();
-
-    // Go throught galaxy tab
-    for(let pos = 1; pos <= 15 ; pos++) {
-        // Init structures
-        newSystemToStore[pos] = {playerId: -1, planetId: -1, moonId: -1, ts: currentTime};
-        additionnalSSInfos[pos] = {playerName: '', playerStatus: '', playerRank: -1, moonSize: -1, timestamp_ig: currentMiliTime};
-        //activitiesInfos[pos] = {planetActi: '60', moonActi: '60', debris: 0};
-
-        // Browse every rows
-        const row = document.getElementById('galaxyRow' + pos);
-        if (row) {
-            //TODO: GET additionnalSSInfos[pos].playerStatus
-            // Planet ID
-            const planetDiv = row.querySelector('.cellPlanet .microplanet');
-            if (planetDiv) {
-                newSystemToStore[pos].planetId = Number(planetDiv.dataset.planetId);
-            }
-            // Moon ID
-            const moonDiv = row.querySelector('.cellMoon .micromoon');
-            if (moonDiv) {
-                newSystemToStore[pos].moonId = Number(moonDiv.dataset.moonId);
-            }
-            const cellPlayerName = row.querySelector('.cellPlayerName');
-            if (cellPlayerName && cellPlayerName.children.length > 0) {
-                // Get Player
-                const cellPlayerName = row.querySelector('.cellPlayerName');
-                if (cellPlayerName) {
-                    const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
-                    if (playerSpan) {
-                        // Player ID
-                        const rel = playerSpan.getAttribute('rel');
-                        newSystemToStore[pos].playerId = Number(rel.replace(/\D/g, ''));
-                        // Player rank
-                        additionnalSSInfos[pos].playerRank = Number(document.getElementById(playerSpan.getAttribute('rel'))?.querySelector('li.rank a')?.textContent);
-                        // Player name
-                        const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
-                        additionnalSSInfos[pos].playerName = playerSpanName.childNodes[0].textContent.trim();
-                    } else if (cellPlayerName.querySelector('.ownPlayerRow')) {
-                        // This is OUR row. No playerID is provided, we replace it.
-                        newSystemToStore[pos].playerId = Number(currentPlayerID);
-                        additionnalSSInfos[pos].playerName = currentPlayerName;
-                        // TODO: add own rank
-                    }
-                }
-            }
-
-            // Check if an event already exists for this position
-            // We are comparing to already saved events from PTRE DB (saved in local)
-            let galaEventDetected = false;
-            if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
-                galaEventDetected = true;
-            }
-            // We add the button for every player OR for empty position with an event
-            if (newSystemToStore[pos].playerId > -1 || galaEventDetected === true) {
-                var btn = document.createElement("span");
-                btn.dataset.galaxy = galaxy;
-                btn.dataset.system = system;
-                btn.dataset.pos = pos;
-                btn.dataset.playerId = newSystemToStore[pos].playerId;
-                btn.dataset.playerName = additionnalSSInfos[pos].playerName;
-                // We sort status by most important first
-                if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "dnp" && highlightedPlayersList[newSystemToStore[pos].playerId]["ts"] >= currentTime) {
-                    btn.style.border = ptreBorderStyleDnpList;
-                    //consoleDebug("===> "+playerName+" is part of DNP list");
-                } else if (galaEventDetected === true) {
-                    btn.style.border = ptreBorderStyleGalaxyEvent;
-                    //consoleDebug("===> "+galaxy+":"+system+":"+pos+" is a Galaxy Event");
-                } else if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") {
-                    btn.style.border = ptreBorderStyleHotList;
-                    //consoleDebug("===> "+playerName+" is part of HOT list");
-                }
-                // Display button only if settings allow it
-                if (ptreDisplayGalaPopup === true) {
-                    btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
-                    cellPlayerName.appendChild(btn);
-                    // Add action
-                    btn.addEventListener('click', function () {
-                        //openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos);
-                        openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos, this.dataset.playerId, this.dataset.playerName);
-                    });
-                }
-            }
-
-            // Get activities infos
-            if (ptrePushActivities === true) {
-                if (newSystemToStore[pos].playerId > 0) {
-                    if ( (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") || mergedTargetsList.includes(newSystemToStore[pos].playerId) ) {
-                        activitiesToSend++;
-                        // Init structure
-                        const coord = galaxy+":"+system+":"+pos;
-                        activitiesInfos[coord] = {teamkey : ptreStoredTK,
-                                                galaxy: Number(galaxy),
-                                                system: Number(system),
-                                                position: pos,
-                                                player_id: newSystemToStore[pos].playerId,
-                                                activity: '60',
-                                                cdr_total_size: -1,
-                                                main: false,//TODO: useless
-                                                moon: {activity: "60"}};
-                        // Get planet activity
-                        const actiElemPlanet = row.querySelector('[data-planet-id] .activity');
-                        if (actiElemPlanet) {
-                            if (actiElemPlanet.classList.contains('minute15')) {
-                                activitiesInfos[coord].activity = '*';
-                            } else if (actiElemPlanet.classList.contains('showMinutes')) {
-                                const actiTimerPlanet = actiElemPlanet.textContent.trim();
-                                activitiesInfos[coord].activity = actiTimerPlanet;
-                            }
-                        }
-                        // Get moon activity
-                        const actiElemMoon = row.querySelector('[data-moon-id] .activity');
-                        if (actiElemMoon) {
-                            if (actiElemMoon.classList.contains('minute15')) {
-                                activitiesInfos[coord].moon.activity = '*';
-                            } else if (actiElemMoon.classList.contains('showMinutes')) {
-                                const actiTimerMoon = actiElemMoon.textContent.trim();
-                                activitiesInfos[coord].moon.activity = actiTimerMoon;
-                            }
-                        }
-                        // Get debris
-                        let debris = 0;
-                        const debrisElements = row.querySelectorAll('#debris' + pos + ' .ListLinks .debris-content');
-                        debrisElements.forEach((element, index) => {
-                            let splitted = element.textContent.split(':');
-                            let cdr = splitted[1].trim();
-                            cdr = Number(cdr.replace(/[.,]/g, ''));
-                            debris = debris + cdr;
-                            //consoleDebug("Elem "+ index + ": " + cdr + " => " + debris);
-                        });
-                        activitiesInfos[coord].cdr_total_size = debris;
-                        //console.log(activitiesInfos[pos]);
-                    }
-                }
-            }
-        } else {
-            consoleDebug("[GALAXY] No galaxy row " + pos);
-        }
-    }
-
-    // Wait for new SS change
-    const galaxyLoading = document.getElementById('galaxyLoading');
-    const observer = new MutationObserver((mutations, obs) => {
-        if (window.getComputedStyle(galaxyLoading).display !== 'none') {
-            consoleDebug("[GALAXY] Galaxy change triggered");
-            obs.disconnect();
-            waitForGalaxyToBeLoaded();
-        }
-    });
-    observer.observe(galaxyLoading, {
-        childList: true,
-        attributes: true
-    });
-
-    // Manage activities only if configured
-    if (ptrePushActivities === true && activitiesToSend > 0) {
-        processPlayerActivities(galaxy, system, activitiesInfos);
-    }
-
-    // Manage Galaxy updates only if configured
-    if (ptreSendGalaEvents === true) {
-        processGalaxyUpdates(galaxy, system, newSystemToStore, additionnalSSInfos);
-    }
-
-    const end = performance.now();
-    const duration = end - start;
-    consoleDebug("[GALAXY] Galaxy improvement duration: " + duration.toFixed(1) + " ms");
-}
-
-/*
-    Watches the loading element on the galaxy page
-    Once gone, we can start improving galaxy table
-*/
-function waitForGalaxyToBeLoaded() {
-    consoleDebug("[GALAXY] Waiting for Galaxy content");
-    galaxyInitMiliTS = serverTime.getTime();
-    const galaxyLoading = document.getElementById('galaxyLoading');
-    if (window.getComputedStyle(galaxyLoading).display === 'none') {
-        consoleDebug("[GALAXY] Galaxy is already ready!");
-        improveGalaxyTable();
-    } else {
-        const observer = new MutationObserver((mutations, obs) => {
-            if (window.getComputedStyle(galaxyLoading).display === 'none') {
-                let tempDuration = serverTime.getTime() - galaxyInitMiliTS;
-                consoleDebug("[GALAXY] Galaxy is ready after " + tempDuration + " miliseconds");
-                obs.disconnect();
-                improveGalaxyTable();
-            } else {
-                consoleDebug("[GALAXY] Galaxy is still NOT ready. Waiting...");
-            }
-        });
-        observer.observe(galaxyLoading, {
-            childList: true,
-            attributes: true
-        });
-    }
-}
-
-// ****************************************
-// CORE FUNCTIONS
-// ****************************************
-
-// Check if EasyPTRE needs to be updated
-function updateLastAvailableVersion(force = false) {
-    // Only check once a while
-
-    var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
-
-    if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
-        consoleDebug("Checking last version available");
-        GM_xmlhttpRequest({
-            method:'GET',
-            url:urlToScriptMetaInfos,
-            nocache:true,
-            onload:result => {
-                //consoleDebug(result.responseText);
-                if (result.status == 200) {
-                    var tab = result.responseText.split('//');
-                    var availableVersion = tab[2].match(/\d+\.\d+.\d+/);
-                    availableVersion = availableVersion[0];
-                    consoleDebug("Current version: " + GM_info.script.version);
-                    consoleDebug("Last version: " + availableVersion);
-                    GM_setValue(ptreLastAvailableVersion, availableVersion);
-                    GM_setValue(ptreLastAvailableVersionRefresh, currentTime);
-                    if (availableVersion !== GM_info.script.version) {
-                        if (document.getElementById('ptreUpdateVersionMessage')) {
-                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>';
-                        }
-                        if (document.getElementById('ptreMenuName')) {
-                            document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
-                            document.getElementById('ptreMenuName').classList.add('ptreError');
-                        }
-                        displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
-                        consoleDebug('Version ' + availableVersion + ' is available');
-                    } else {
-                        if (document.getElementById('ptreUpdateVersionMessage')) {
-                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreSuccess">EasyPTRE is up to date</span>';
-                        }
-                    }
-                } else {
-                    document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
-                }
-            }
-        });
-    } else {
-        var temp = lastCheckTime + versionCheckTimeout - currentTime;
-        //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
-    }
-}
-
-// Convert IG API 2 JSON to Prefill format
-// mode can be "prefill" or "tab"
-function parsePlayerResearchs(json, mode) {
-    const obj = JSON.parse(json);
-    const characterClassId = obj.characterClassId;
-    const allianceClassId = obj.allianceClassId;
-    let out = {};
-
-    if (mode == "tab") {
-        var str = '<table width="60%" border="1"><tr><td style="padding: 5px" align="center">Ships</td>';
-        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/speed.png" width="30px"><br>Speed</td>';
-        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/armor.png" width="30px"><br>Armor</td>';
-        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/shield.png" width="30px"><br>Shield</td>';
-        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/weapon.png" width="30px"><br>Weapon</td>';
-        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/cargo.png" width="30px"><br>Cargo</td>';
-        str+='<td style="padding: 5px" align="center"><br>Fuel</td></tr>';
-    } else {
-        out["0"] = {
-            "class": characterClassId,
-            "playerClass": characterClassId,
-            "allianceClass": allianceClassId,
-            "research": {},
-            "lifeformBonuses": {
-                "BaseStatsBooster": {},
-                "CharacterClassBooster": {}
-            }
-        };
-        for (const key in obj.researches) {
-            out["0"]["research"][key] = JSON.parse('{"level":'+obj.researches[key]+'}');
-        }
-    }
-
-    for (const key in obj.ships) {
-        if (mode == "tab") {
-            var type = 'ship';
-            if (key > 400) {
-                type = 'def';
-            }
-            str+= '<tr><td align="center"><img src="/img/ogame/mini/'+type+'_'+key+'.png"></td>';
-            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].speed*100, 2)+' %<span>'; }
-            str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].armor*100, 2)+' %<span>'; }
-            str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].shield*100, 2)+' %<span>'; }
-            str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].weapon*100, 2)+' %<span>'; }
-            str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].cargo*100, 2)+' %<span>'; }
-            str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].fuel*100, 2)+' %<span>'; }
-            str+= '<td align="center">'+temp+'</td></tr>';
-        } else {
-            out["0"]["lifeformBonuses"]["BaseStatsBooster"][key] = {
-                "armor": obj.ships[key].armor,
-                "shield": obj.ships[key].shield,
-                "weapon": obj.ships[key].weapon,
-                "cargo": obj.ships[key].cargo,
-                "speed": obj.ships[key].speed,
-                "fuel": obj.ships[key].fuel
-            };
-        }
-    }
-
-    if (mode == "tab") {
-        str+= '</table>';
-        return str;
-    }
-
-    out["0"]["lifeformBonuses"]["CharacterClassBooster"]["1"] = obj.bonuses.characterClassBooster["1"];
-    out["0"]["lifeformBonuses"]["CharacterClassBooster"]["2"] = obj.bonuses.characterClassBooster["2"];
-    out["0"]["lifeformBonuses"]["CharacterClassBooster"]["3"] = obj.bonuses.characterClassBooster["3"];
-
-    // Hook for simulator
-    let ARR_ATT = [];
-    ARR_ATT.push(out["0"]);
-    const jsonOut = JSON.stringify({ "0": ARR_ATT });
-
-    return btoa(jsonOut);
-}
-
-// Get the content of a system
-function fetchSystemV2(galaxy, system) {
-    const galaxyData = GM_getValue(ptreGalaxyData+galaxy, {});
-    const systemData = galaxyData[String(system)] || null;
-    return systemData;
-}
-
-// Update the content of an entire system
-function updateSystemV2(galaxy, system, newSystemData) {
-    const galaxyData = GM_getValue(ptreGalaxyData+galaxy, {});
-    galaxyData[String(system)] = newSystemData;
-    GM_setValue(ptreGalaxyData+galaxy, galaxyData);
-    consoleDebug(`[GALAXY] Updated Storage for ${galaxy}:${system}`);
-}
-
-// Add data to sharable structure
-// Element should be like: {type: string_type, id: ID, coords: coords, val: a_value};
-function addDataToPTREData(newData, syncToPTRE = true) {
-    var dataJSON = '';
-    dataJSON = GM_getValue(ptreDataToSync, '');
-    var dataList = [];
-    if (dataJSON != '') {
-        dataList = JSON.parse(dataJSON);
-    }
-
-    // Look for same entry
-    var idASup = -1;
-    $.each(dataList, function(i, elem) {
-        //console.log("[PTRE] Checking elem " + elem.type + " / " + elem.id);
-        if (elem.type == newData.type && elem.id == newData.id) {
-            if (elem.val == newData.val) {
-                consoleDebug("Element " + newData.type + " has not changed. No update.");
-                idASup = -2;
-            } else {
-                consoleDebug("Element " + newData.type + " has changed (" + newData.val + " VS " + elem.val + "). Need to update.");
-                idASup = i;
-            }
-        }
-    });
-    if (idASup == -2) {
+    if (teamKey == '') {
+        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
         return -1;
-    } else if (idASup != -1) {
-        // Delete entry if found
-        dataList.splice(idASup, 1);
     }
-    // Add the new entry
-    console.log("[PTRE] Adding/Updating " + newData.type + " ID:" + newData.id + " / val: " + newData.val, newData);
-    dataList.push(newData);
 
-    // Save list
-    dataJSON = JSON.stringify(dataList);
-    GM_setValue(ptreDataToSync, dataJSON);
-
-    //debugSharableData();
-
-    // Sync data to PTRE
-    if (syncToPTRE === true) {
-        setTimeout(syncDataWithPTRE, dataSharingDelay);
-    }
-}
-
-function debugSharableData() {
+    // Buddies List warnings
     var dataJSON = '';
-    dataJSON = GM_getValue(ptreDataToSync, '');
-
-    var dataList = [];
-    if (dataJSON != '') {
-        dataList = JSON.parse(dataJSON);
-        $.each(dataList, function(i, elem) {
-            console.log("[" + elem.type + "] " + elem.id + " => " + elem.val + " (" + elem.coords + ")");
-        });
-    } else {
-        console.log("[PTRE] No data to display");
-    }
-}
-
-/*
-Cooldown:
-    - 0 => DISABLE
-    - >= 60 => ENABLE
-Last Update:
-    - -1 to not update value (and keep the current one)
-    - >=0 to update
-*/
-function updateLiveCheckConfig(coolddown, last_update = -1) {
-    // 0 to disable
-    if (Number(coolddown) == 0 || Number(coolddown) >= 60) {
-        GM_setValue(ptreCheckForUpdateCooldown, Number(coolddown));
-        consoleDebug('[LIVE] Updated Check Cooldown to ' + coolddown);
-    }
-    if (Number(last_update) >= 0) {
-        GM_setValue(ptreCurrentBackendUpdateTS, Number(last_update));
-        consoleDebug('[LIVE] Updated Backend TS to ' + last_update);
-    }
-}
-
-// Ask PTRE if new data are available
-function checkForPTREUpdate() {
-    const TKey = GM_getValue(ptreTeamKey, '');
-    if (TKey != '') {
-        const currentTime = Math.floor(serverTime.getTime() / 1000);
-        if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
-            consoleDebug("Checking for Updates...");
-            $.ajax({
-                url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0),
-                type : 'POST',
-                cache: false,
-                success : function(reponse){
-                    var reponseDecode = jQuery.parseJSON(reponse);
-                    if (reponseDecode.code == 1) {
-                        // Update config (we dont change our current TS)
-                        updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
-                        // Is update needed?
-                        if (reponseDecode.update == 1) {
-                            consoleDebug("Update needed!");
-                            displayPTREPopUpMessage("New update available");
-                            addToLogs("New update available");
-                            setTimeout(syncDataWithPTRE, 100);
-                        } else {
-                            consoleDebug("NO Update needed");
-                        }
-                    }
-                }
-            });
-            GM_setValue(ptreLastUpdateCheck, currentTime);
+    if (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true') {
+        dataJSON = GM_getValue(ptreBuddiesList, '');
+        if (dataJSON != '') {
+            if ((currentTime - GM_getValue(ptreBuddiesListLastRefresh, 0)) > 7*24*60*60) {
+                warning = '<span class="ptreWarning">Buddies list might be outdated: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to update your friends list</a><br><br>';
+            }
+        } else {
+            warning = '<span class="ptreWarning">Buddies list is empty: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to add your friends to this view</a><br><br>';
         }
+    } else {
+        warning = '<span class="ptreWarning">Buddies list is not managed: you may enable it in EasyPTRE settings</span><br><br>';
     }
+
+    $.ajax({
+        url : urlPTREGetPhalanxInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
+        type : 'POST',
+        data: dataJSON,
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = jQuery.parseJSON(reponse);
+            var message = atob(reponseDecode.message);
+            if (reponseDecode.code != 1) {
+                addToLogs(reponseDecode.message_debug);
+            }
+            displayGalaxyMessageContent(warning+message);
+        }
+    });
 }
 
-// Enable auto-check to PTRE
-// This is disabled by default cooldown <= 0
-function runAutoCheckForPTREUpdate() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
-    const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
-    // If Auto-Check is enabled
-    if (cooldown > 0) {
-        // Should we check?
-        if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
-            consoleDebug("Need to Check For Updates");
-            checkForPTREUpdate();
-        }
-        setTimeout(runAutoCheckForPTREUpdate, 10*1000);
-    } else {
-        consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
+// This function fetchs Galaxy Event Explorer infos
+function getGEEInfosFromGala() {
+    var systemElem = $("input#system_input")[0];
+    var galaxyElem = $("input#galaxy_input")[0];
+    var galaxy = galaxyElem.value;
+    var system = systemElem.value;
+    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    if (teamKey == '') {
+        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
+        return -1;
     }
+    $.ajax({
+        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
+        type : 'POST',
+        data: null,
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = jQuery.parseJSON(reponse);
+            var message = atob(reponseDecode.message);
+            if (reponseDecode.code != 1) {
+                addToLogs(reponseDecode.message_debug);
+            }
+            displayGalaxyMessageContent(message);
+        }
+    });
 }
 
 // This function sends commun data to Team
@@ -3155,6 +2847,174 @@ function syncTargets(mode) {
     });
 }
 
+// ****************************************
+// CORE FUNCTIONS
+// ****************************************
+
+/*
+    Watches the loading element on the galaxy page
+    Once gone, we can start improving galaxy table
+*/
+function waitForGalaxyToBeLoaded() {
+    consoleDebug("[GALAXY] Waiting for Galaxy content");
+    galaxyInitMiliTS = serverTime.getTime();
+    const galaxyLoading = document.getElementById('galaxyLoading');
+    if (window.getComputedStyle(galaxyLoading).display === 'none') {
+        consoleDebug("[GALAXY] Galaxy is already ready!");
+        improveGalaxyTable();
+    } else {
+        const observer = new MutationObserver((mutations, obs) => {
+            if (window.getComputedStyle(galaxyLoading).display === 'none') {
+                let tempDuration = serverTime.getTime() - galaxyInitMiliTS;
+                consoleDebug("[GALAXY] Galaxy is ready after " + tempDuration + " miliseconds");
+                obs.disconnect();
+                improveGalaxyTable();
+            } else {
+                consoleDebug("[GALAXY] Galaxy is still NOT ready. Waiting...");
+            }
+        });
+        observer.observe(galaxyLoading, {
+            childList: true,
+            attributes: true
+        });
+    }
+}
+
+// Check if EasyPTRE needs to be updated
+function updateLastAvailableVersion(force = false) {
+    // Only check once a while
+
+    var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
+    var currentTime = Math.floor(serverTime.getTime() / 1000);
+
+    if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
+        consoleDebug("Checking last version available");
+        GM_xmlhttpRequest({
+            method:'GET',
+            url:urlToScriptMetaInfos,
+            nocache:true,
+            onload:result => {
+                //consoleDebug(result.responseText);
+                if (result.status == 200) {
+                    var tab = result.responseText.split('//');
+                    var availableVersion = tab[2].match(/\d+\.\d+.\d+/);
+                    availableVersion = availableVersion[0];
+                    consoleDebug("Current version: " + GM_info.script.version);
+                    consoleDebug("Last version: " + availableVersion);
+                    GM_setValue(ptreLastAvailableVersion, availableVersion);
+                    GM_setValue(ptreLastAvailableVersionRefresh, currentTime);
+                    if (availableVersion !== GM_info.script.version) {
+                        if (document.getElementById('ptreUpdateVersionMessage')) {
+                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>';
+                        }
+                        if (document.getElementById('ptreMenuName')) {
+                            document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
+                            document.getElementById('ptreMenuName').classList.add('ptreError');
+                        }
+                        displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
+                        consoleDebug('Version ' + availableVersion + ' is available');
+                    } else {
+                        if (document.getElementById('ptreUpdateVersionMessage')) {
+                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreSuccess">EasyPTRE is up to date</span>';
+                        }
+                    }
+                } else {
+                    document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
+                }
+            }
+        });
+    } else {
+        var temp = lastCheckTime + versionCheckTimeout - currentTime;
+        //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
+    }
+}
+
+// Get the content of a system
+function fetchSystemV2(galaxy, system) {
+    const galaxyData = GM_getValue(ptreGalaxyData+galaxy, {});
+    const systemData = galaxyData[String(system)] || null;
+    return systemData;
+}
+
+// Update the content of an entire system
+function updateSystemV2(galaxy, system, newSystemData) {
+    const galaxyData = GM_getValue(ptreGalaxyData+galaxy, {});
+    galaxyData[String(system)] = newSystemData;
+    GM_setValue(ptreGalaxyData+galaxy, galaxyData);
+    consoleDebug(`[GALAXY] Updated Storage for ${galaxy}:${system}`);
+}
+
+/*
+Cooldown:
+    - 0 => DISABLE
+    - >= 60 => ENABLE
+Last Update:
+    - -1 to not update value (and keep the current one)
+    - >=0 to update
+*/
+function updateLiveCheckConfig(coolddown, last_update = -1) {
+    // 0 to disable
+    if (Number(coolddown) == 0 || Number(coolddown) >= 60) {
+        GM_setValue(ptreCheckForUpdateCooldown, Number(coolddown));
+        consoleDebug('[LIVE] Updated Check Cooldown to ' + coolddown);
+    }
+    if (Number(last_update) >= 0) {
+        GM_setValue(ptreCurrentBackendUpdateTS, Number(last_update));
+        consoleDebug('[LIVE] Updated Backend TS to ' + last_update);
+    }
+}
+
+// Ask PTRE if new data are available
+function checkForPTREUpdate() {
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey != '') {
+        const currentTime = Math.floor(serverTime.getTime() / 1000);
+        if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
+            consoleDebug("Checking for Updates...");
+            $.ajax({
+                url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0),
+                type : 'POST',
+                cache: false,
+                success : function(reponse){
+                    var reponseDecode = jQuery.parseJSON(reponse);
+                    if (reponseDecode.code == 1) {
+                        // Update config (we dont change our current TS)
+                        updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
+                        // Is update needed?
+                        if (reponseDecode.update == 1) {
+                            consoleDebug("Update needed!");
+                            displayPTREPopUpMessage("New update available");
+                            addToLogs("New update available");
+                            setTimeout(syncDataWithPTRE, 100);
+                        } else {
+                            consoleDebug("NO Update needed");
+                        }
+                    }
+                }
+            });
+            GM_setValue(ptreLastUpdateCheck, currentTime);
+        }
+    }
+}
+
+// Enable auto-check to PTRE
+// This is disabled by default cooldown <= 0
+function runAutoCheckForPTREUpdate() {
+    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
+    // If Auto-Check is enabled
+    if (cooldown > 0) {
+        // Should we check?
+        if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
+            consoleDebug("Need to Check For Updates");
+            checkForPTREUpdate();
+        }
+        setTimeout(runAutoCheckForPTREUpdate, 10*1000);
+    } else {
+        consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
+    }
+}
+
 // Sync all data once a day
 function globalPTRESync() {
     addToLogs("Global Clean & Sync");
@@ -3166,97 +3026,244 @@ function globalPTRESync() {
     GM_setValue(ptreLastGlobalSync, currentTime);
 }
 
-// This function fetchs closest friend phalanx
-function getPhalanxInfosFromGala() {
+// ****************************************
+// MINI FUNCTIONS
+// ****************************************
+
+// Detects if AGR is enabled
+function isAGREnabled() {
+    if (document.getElementById('ago_panel_Player')) {
+        return true;
+    }
+    return false;
+}
+
+function isOGLEnabled() {
+    if (document.querySelector('body.oglight')) {
+        return true;
+    }
+    return false;
+}
+
+function isOGIEnabled() {
+    if (document.getElementsByClassName('ogl-harvestOptions').length != 0) {
+        return true;
+    }
+    return false;
+}
+
+// Detects if OGL is enabled
+function isOGLorOGIEnabled() {
+    if (isOGLEnabled() || isOGIEnabled()) {
+        return true;
+    }
+    return false;
+}
+
+// Convert planets activities to OGL - PTRE format
+function convertActivityToOGLFormat(showActivity, idleTime) {
+    if (showActivity == '15') {
+        return '*';
+    } else if (showActivity == '60') {
+        return idleTime;
+    } else if (!showActivity) {
+        return '60';
+    }
+    return '60';
+}
+
+function buildPTRELinkToPlayer(playerID) {
+    return 'https://ptre.chez.gg/?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
+}
+
+function buildLinkToGalaxy(galaxy, system, position) {
+    return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=galaxy&galaxy='+galaxy+'&system='+system+'&position='+position+'">['+galaxy+':'+system+':'+position+']</a>';
+}
+
+function consoleDebug(message) {
+    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+        console.log('[PTRE] ' + message);
+    }
+}
+
+function round(x, y) {
+    return Number.parseFloat(x).toFixed(y);
+}
+
+function displayMessageInSettings(message) {
+    if (document.getElementById('messageDivInSettings')) {
+        document.getElementById('messageDivInSettings').innerHTML = message;
+    } else {
+        displayPTREPopUpMessage(message);
+    }
+}
+
+function setNumber(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function getLastUpdateLabel(lastCheck) {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var warning = '';
-    var systemElem = $("input#system_input")[0];
-    var galaxyElem = $("input#galaxy_input")[0];
-    var galaxy = galaxyElem.value;
-    var system = systemElem.value;
-    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
-    const teamKey = GM_getValue(ptreTeamKey, '');
-
-    if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
-        return -1;
-    }
-
-    // Buddies List warnings
-    var dataJSON = '';
-    if (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true') {
-        dataJSON = GM_getValue(ptreBuddiesList, '');
-        if (dataJSON != '') {
-            if ((currentTime - GM_getValue(ptreBuddiesListLastRefresh, 0)) > 7*24*60*60) {
-                warning = '<span class="ptreWarning">Buddies list might be outdated: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to update your friends list</a><br><br>';
-            }
+    var temp = '<span class="ptreError ptreSmall">never updated</span>';
+    if (lastCheck > 0) {
+        var nb_min = (currentTime - lastCheck) / 60;
+        if (nb_min <= 1) {
+            temp = '<span class="ptreSuccess ptreSmall">updated now</span>';
+        } else if (nb_min < 60) {
+            temp = '<span class="ptreSuccess ptreSmall">updated ' + round(nb_min, 0) + ' mins ago</span>';
+        } else if (nb_min < 24*60) {
+            var nb_h = (currentTime - lastCheck) / 3600;
+            temp = '<span class="ptreWarning ptreSmall">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
-            warning = '<span class="ptreWarning">Buddies list is empty: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to add your friends to this view</a><br><br>';
+            temp = '<span class="ptreError ptreSmall">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
-    } else {
-        warning = '<span class="ptreWarning">Buddies list is not managed: you may enable it in EasyPTRE settings</span><br><br>';
     }
-
-    $.ajax({
-        url : urlPTREGetPhalanxInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
-        type : 'POST',
-        data: dataJSON,
-        cache: false,
-        success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
-            var message = atob(reponseDecode.message);
-            if (reponseDecode.code != 1) {
-                addToLogs(reponseDecode.message_debug);
-            }
-            displayGalaxyMessageContent(warning+message);
-        }
-    });
+    return temp;
 }
 
-// This function fetchs Galaxy Event Explorer infos
-function getGEEInfosFromGala() {
-    var systemElem = $("input#system_input")[0];
-    var galaxyElem = $("input#galaxy_input")[0];
-    var galaxy = galaxyElem.value;
-    var system = systemElem.value;
-    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
-    const teamKey = GM_getValue(ptreTeamKey, '');
-    if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
-        return -1;
+// ****************************************
+// NOTIFICATIONS FUNCTIONS
+// ****************************************
+
+// Displays PTRE responses messages
+// Responses from server
+// Displayed on the rigth-bottom corner
+function displayPTREPopUpMessage(message) {
+    var previousContent = '';
+    if (document.getElementById('boxPTREMessage') && document.getElementById("ptreMessage")) {
+        // Get previous content and remove box
+        previousContent = document.getElementById("ptreMessage").innerHTML;
+        document.getElementById('boxPTREMessage').remove();
     }
-    $.ajax({
-        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
-        type : 'POST',
-        data: null,
-        cache: false,
-        success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
-            var message = atob(reponseDecode.message);
-            if (reponseDecode.code != 1) {
-                addToLogs(reponseDecode.message_debug);
-            }
-            displayGalaxyMessageContent(message);
-        }
-    });
+
+    // Recreate box
+    var divPTREMessage = '<div id="boxPTREMessage">PTRE:<span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
+    var boxPTREMessage = document.createElement("div");
+    boxPTREMessage.innerHTML = divPTREMessage;
+    boxPTREMessage.id = 'boxPTREMessage';
+
+    if (document.getElementById('bottom')) {
+        document.getElementById('bottom').appendChild(boxPTREMessage);
+        setTimeout(function() {cleanFirstPTREPopUpMessage();}, ptreMessageDisplayTime);
+    }
 }
 
-function displayTotalSystemsSaved() {
-    var countGala = 0;
-    var countSsystem = 0;
-
-    if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
-        for(var gala = 1; gala <= 15 ; gala++) {
-            var galaxyData = GM_getValue(ptreGalaxyData+gala, '');
-            if (galaxyData != '') {
-                countGala++;
-                countSsystem = countSsystem + Object.keys(galaxyData).length;
-            }
+// Remove first message in list and remove entire message box if empty
+function cleanFirstPTREPopUpMessage() {
+    if (document.getElementById('fisrtPtreMessage')) {
+        document.getElementById('fisrtPtreMessage').remove();
+        if (document.getElementById("ptreMessage").innerHTML == '') {
+            document.getElementById('boxPTREMessage').remove();
         }
-        return 'Tracked Galaxies: <span class="ptreSuccess">'+countGala+'</span> | Tracked Systems: <span class="ptreSuccess">'+countSsystem+'</span>';
-    } else {
-        return '<span class="ptreError">Wrong Galaxy Cache Version</span>';
     }
+}
+
+// Display message under galaxy view
+function displayGalaxyMiniMessage(message) {
+    if (document.getElementById("fleetstatusrow")) {
+        document.getElementById("fleetstatusrow").innerHTML = '<div class="success">PTRE: ' + message + '</div>';
+    } else {
+        console.log("[PTRE] Error. Cant display: " + message);
+    }
+}
+
+function cleanGalaxyMiniMessage() {
+    if (document.getElementById("fleetstatusrow")) {
+        document.getElementById("fleetstatusrow").innerHTML = '';
+    }
+}
+
+// Display message content on galaxy page
+function displayGalaxyMessageContent(message) {
+    if (document.getElementById("ptreGalaxyMessageBoxContent")) {
+        document.getElementById("ptreGalaxyMessageBoxContent").innerHTML = message;
+    } else {
+        console.log("[PTRE] Error. Cant display: " + message);
+    }
+}
+
+// ****************************************
+// RUNNING ON WEBSITE
+// ****************************************
+
+// Convert IG API 2 JSON to Prefill format
+// mode can be "prefill" or "tab"
+function parsePlayerResearchs(json, mode) {
+    const obj = JSON.parse(json);
+    const characterClassId = obj.characterClassId;
+    const allianceClassId = obj.allianceClassId;
+    let out = {};
+
+    if (mode == "tab") {
+        var str = '<table width="60%" border="1"><tr><td style="padding: 5px" align="center">Ships</td>';
+        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/speed.png" width="30px"><br>Speed</td>';
+        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/armor.png" width="30px"><br>Armor</td>';
+        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/shield.png" width="30px"><br>Shield</td>';
+        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/weapon.png" width="30px"><br>Weapon</td>';
+        str+='<td style="padding: 5px" align="center"><img src="/img/ogame/cargo.png" width="30px"><br>Cargo</td>';
+        str+='<td style="padding: 5px" align="center"><br>Fuel</td></tr>';
+    } else {
+        out["0"] = {
+            "class": characterClassId,
+            "playerClass": characterClassId,
+            "allianceClass": allianceClassId,
+            "research": {},
+            "lifeformBonuses": {
+                "BaseStatsBooster": {},
+                "CharacterClassBooster": {}
+            }
+        };
+        for (const key in obj.researches) {
+            out["0"]["research"][key] = JSON.parse('{"level":'+obj.researches[key]+'}');
+        }
+    }
+
+    for (const key in obj.ships) {
+        if (mode == "tab") {
+            var type = 'ship';
+            if (key > 400) {
+                type = 'def';
+            }
+            str+= '<tr><td align="center"><img src="/img/ogame/mini/'+type+'_'+key+'.png"></td>';
+            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].speed*100, 2)+' %<span>'; }
+            str+= '<td align="center">'+temp+'</td>';
+            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].armor*100, 2)+' %<span>'; }
+            str+= '<td align="center">'+temp+'</td>';
+            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].shield*100, 2)+' %<span>'; }
+            str+= '<td align="center">'+temp+'</td>';
+            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].weapon*100, 2)+' %<span>'; }
+            str+= '<td align="center">'+temp+'</td>';
+            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].cargo*100, 2)+' %<span>'; }
+            str+= '<td align="center">'+temp+'</td>';
+            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].fuel*100, 2)+' %<span>'; }
+            str+= '<td align="center">'+temp+'</td></tr>';
+        } else {
+            out["0"]["lifeformBonuses"]["BaseStatsBooster"][key] = {
+                "armor": obj.ships[key].armor,
+                "shield": obj.ships[key].shield,
+                "weapon": obj.ships[key].weapon,
+                "cargo": obj.ships[key].cargo,
+                "speed": obj.ships[key].speed,
+                "fuel": obj.ships[key].fuel
+            };
+        }
+    }
+
+    if (mode == "tab") {
+        str+= '</table>';
+        return str;
+    }
+
+    out["0"]["lifeformBonuses"]["CharacterClassBooster"]["1"] = obj.bonuses.characterClassBooster["1"];
+    out["0"]["lifeformBonuses"]["CharacterClassBooster"]["2"] = obj.bonuses.characterClassBooster["2"];
+    out["0"]["lifeformBonuses"]["CharacterClassBooster"]["3"] = obj.bonuses.characterClassBooster["3"];
+
+    // Hook for simulator
+    let ARR_ATT = [];
+    ARR_ATT.push(out["0"]);
+    const jsonOut = JSON.stringify({ "0": ARR_ATT });
+
+    return btoa(jsonOut);
 }
 
 // ****************************************
@@ -3422,3 +3429,4 @@ function garbageCollectGalaxyDataV2(days) {
         addToLogs("[GC] Cleaned " + removedCount + " old positions");
     }
 }
+
