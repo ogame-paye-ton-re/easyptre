@@ -4,8 +4,15 @@ OUTPUT=$(pwd)"/easyptre.js"
 echo $OUTPUT
 
 cd src
+
+cat 00-headers.js > $OUTPUT
+
+echo "// ****************************************" >> $OUTPUT
+echo "// Build date: $(date)" >> $OUTPUT
+echo "// ****************************************" >> $OUTPUT
+echo "" >> $OUTPUT
+
 cat \
-    00-headers.js \
     01-init.js \
     02-styles.js \
     03-improve-view.js \
@@ -17,6 +24,6 @@ cat \
     09-notifications.js \
     10-web.js \
     11-maintenance.js \
-> $OUTPUT
+>> $OUTPUT
 
 echo "Build complete: $OUTPUT"
