@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 13 janv. 2026 22:39:51 CET
+// Build date: mar. 13 janv. 2026 23:20:38 CET
 // ****************************************
 
 // ****************************************
@@ -499,7 +499,6 @@ function improveGalaxyTable() {
     var newSystemToStore = {};
     var additionnalSSInfos = {};
     var activitiesInfos = {};
-    var trackedPlayerMerged = [];
     var activitiesToSend = 0;
 
     const start = performance.now();
@@ -2349,27 +2348,29 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
         // Compare new positions with previous one
         consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player " + additionnalSSInfos[pos].playerName + " ("+additionnalSSInfos[pos].playerRank+"): "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId);
         if (previousSystemFound === false || newSystemInfos[pos].playerId != previousSystem[pos].playerId || newSystemInfos[pos].planetId != previousSystem[pos].planetId || newSystemInfos[pos].moonId != previousSystem[pos].moonId) {
-            consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
-            updatedPositions++;
-            // Build data to send to PTRE
-            // Use Mili-sec TS
-            const jsonLuneG = {id: newSystemInfos[pos].moonId, size: additionnalSSInfos[pos].moonSize};
-            const jsonTemp = {player_id : newSystemInfos[pos].playerId,
-                              teamkey : ptreStoredTK,
-                              timestamp_ig : additionnalSSInfos[pos].timestamp_ig,
-                              id : newSystemInfos[pos].planetId,
-                              coords : galaxy+":"+system+":"+pos,
-                              galaxy : Number(galaxy),
-                              system : Number(system),
-                              position : pos,
-                              name: additionnalSSInfos[pos].playerName,
-                              old_player_id: previousSystem[pos].playerId,
-                              old_name: "",
-                              status: additionnalSSInfos[pos].playerStatus,
-                              rank: additionnalSSInfos[pos].playerRank,
-                              moon : jsonLuneG};
-            //console.log(jsonTemp);
-            newSystemToPush.push(jsonTemp);
+            if (newSystemInfos[pos].playerId != -1 || previousSystem[pos].playerId != -1) {
+                consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
+                updatedPositions++;
+                // Build data to send to PTRE
+                // Use Mili-sec TS
+                const jsonLuneG = {id: newSystemInfos[pos].moonId, size: additionnalSSInfos[pos].moonSize};
+                const jsonTemp = {player_id : newSystemInfos[pos].playerId,
+                                teamkey : ptreStoredTK,
+                                timestamp_ig : additionnalSSInfos[pos].timestamp_ig,
+                                id : newSystemInfos[pos].planetId,
+                                coords : galaxy+":"+system+":"+pos,
+                                galaxy : Number(galaxy),
+                                system : Number(system),
+                                position : pos,
+                                name: additionnalSSInfos[pos].playerName,
+                                old_player_id: previousSystem[pos].playerId,
+                                old_name: "",
+                                status: additionnalSSInfos[pos].playerStatus,
+                                rank: additionnalSSInfos[pos].playerRank,
+                                moon : jsonLuneG};
+                //console.log(jsonTemp);
+                newSystemToPush.push(jsonTemp);
+            }
         }
     }
 

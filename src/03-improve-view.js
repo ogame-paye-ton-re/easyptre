@@ -19,7 +19,6 @@ function improveGalaxyTable() {
     var newSystemToStore = {};
     var additionnalSSInfos = {};
     var activitiesInfos = {};
-    var trackedPlayerMerged = [];
     var activitiesToSend = 0;
 
     const start = performance.now();
