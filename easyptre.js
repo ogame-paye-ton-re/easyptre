@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.13.2
+// @version      0.13.3
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -2388,7 +2388,7 @@ function improveGalaxyTable() {
                         // Player name
                         const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
                         playerName = playerSpanName.childNodes[0].textContent.trim();
-                    } else if (cellPlayerName.firstElementChild.classList.contains('ownPlayerRow')) {
+                    } else if (cellPlayerName.querySelector('.ownPlayerRow')) {
                         // This is OUR row. No playerID is provided, we replace it.
                         // peut-etre qu'il faudrait parcourir tous les child, si l'ordre change for (const child of parent.children) console.log(child.tagName);
                         playerId = Number(currentPlayerID);
