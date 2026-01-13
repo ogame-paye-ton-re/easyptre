@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OUTPUT=$(pwd)"/easyptre.js"
+OUTPUT=$(pwd)"/dist/easyptre.js"
 echo $OUTPUT
 
 cd src
