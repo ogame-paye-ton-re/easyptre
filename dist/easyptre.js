@@ -21,13 +21,14 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 14 janv. 2026 18:55:13 CET
+// Build date: mer. 14 janv. 2026 19:07:29 CET
 // ****************************************
 
 // ****************************************
 // INIT
 // ****************************************
 
+console.log("[EasyPTRE] Version " + GM_info.script.version);
 // Check current website
 var modeEasyPTRE = "ingame";
 if (/ptre.chez.gg/.test(location.href)) {
@@ -2346,7 +2347,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
     // Go throught gala pos
     for(let pos = 1; pos <= 15 ; pos++) {
         // Compare new positions with previous one
-        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player " + additionnalSSInfos[pos].playerName + " ("+additionnalSSInfos[pos].playerRank+"): "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId);
+        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
         if (previousSystemFound === false || newSystemInfos[pos].playerId != previousSystem[pos].playerId || newSystemInfos[pos].planetId != previousSystem[pos].planetId || newSystemInfos[pos].moonId != previousSystem[pos].moonId) {
             if (newSystemInfos[pos].playerId != -1 || previousSystem[pos].playerId != -1) {
                 consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
@@ -2395,7 +2396,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             success : function(reponse){
                 let reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    consoleDebug("[GALAXY] [FROM PTRE]" + reponseDecode.message);
+                    consoleDebug("[GALAXY] [FROM PTRE] " + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
