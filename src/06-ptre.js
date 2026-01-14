@@ -93,7 +93,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             success : function(reponse){
                 let reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    consoleDebug("[GALAXY] [FROM PTRE] " + reponseDecode.message);
+                    console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
@@ -151,7 +151,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         cache: false,
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug("[GALAXY] [FROM PTRE] " + reponseDecode.message);
+            console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
@@ -222,7 +222,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 type: 'POST',
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
@@ -260,7 +260,7 @@ function pushPlayerNote(playerId) {
                 },
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
                     }
@@ -288,7 +288,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             cache: false,
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
-                consoleDebug(reponseDecode.message);
+                consoleDebug("[FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
@@ -457,7 +457,7 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
 
-                consoleDebug('[EasyPTRE] ' + reponseDecode.message);
+                consoleDebug('[FROM PTRE] ' + reponseDecode.message);
 
                 // Update info in menu
                 if (document.getElementById("ptreLastDataSyncField")) {

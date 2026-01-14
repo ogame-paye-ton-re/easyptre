@@ -498,7 +498,7 @@ function addPTREStuffsToMessagesPage() {
                                 dataType: "json",
                                 url: urlPTRESpy,
                                 success: function(reponse) {
-                                    console.log('[EasyPTRE] ' + reponse);
+                                    console.log('[EasyPTRE] [FROM PTRE] ' + reponse);
                                     if (reponse.code == 1) {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {

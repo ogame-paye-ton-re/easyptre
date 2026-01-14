@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 14 janv. 2026 23:09:41 CET
+// Build date: mer. 14 janv. 2026 23:40:21 CET
 // ****************************************
 
 // ****************************************
@@ -979,7 +979,7 @@ function addPTREStuffsToMessagesPage() {
                                 dataType: "json",
                                 url: urlPTRESpy,
                                 success: function(reponse) {
-                                    console.log('[EasyPTRE] ' + reponse);
+                                    console.log('[EasyPTRE] [FROM PTRE] ' + reponse);
                                     if (reponse.code == 1) {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
@@ -1965,21 +1965,27 @@ function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.13.3 (jan 2026)</div>- Several bugfix and polish';
     content+= '<div class="ptreSubTitle">0.13.0 (jan 2026)</div>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.12.2 (jan 2026)</div>- [Feature] Add ingame shared notes, linked to targets (beta)';
     content+= '<div class="ptreSubTitle">0.12.0 (jan 2026)</div>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.11.4 (oct 2025)</div>- Fix phalanx purge and update';
     content+= '<div class="ptreSubTitle">0.11.3</div>- Improve update visibility<br>- Add manual update procedure';
     content+= '<div class="ptreSubTitle">0.11.2</div>- Fix Galaxy pushs';
     content+= '<div class="ptreSubTitle">0.11.1</div>- Add buddies to Friends & Phalanx feature<br>- Add filters to Friends & Phalanx feature';
     content+= '<div class="ptreSubTitle">0.11.0</div>- Add Friends & Phalanx feature';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.10.4</div>- Add Changelog feature<br>- Fix some minor CSS issues';
     content+= '<div class="ptreSubTitle">0.10.3</div>- Manage moon ID and relocation related to phalanx sharing<br>- Rework global design';
     content+= '<div class="ptreSubTitle">0.10.2</div>- Fix counter-spy timestamp after V12 update';
     content+= '<div class="ptreSubTitle">0.10.1</div>- Allow removing TeamKey from settings';
     content+= '<div class="ptreSubTitle">0.10.0</div>- Add Galaxy events tracking and sharing (same feature as OGL/OGI but for AGR)<br>- Share Phalanx level with PTRE Team (AGR/OGL/OGI)<br>- Add PTRE Toolbar to galaxy view (AGR/OGL/OGI)<br>- New button to fetch events from Galaxy Event Explorer (AGR/OGL/OGI)<br>- New button to fetch closest friend Phalanx (AGR/OGL/OGI)<br>- Save lifeform researchs to PTRE in order to send them from website to simulator (AGR/OGL/OGI)<br>- Rework buttons and UI';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.8.0</div>- Send counter spy messages as activities<br>- Fix AGR spy table customization (following message page rework)<br>- Fix send spy report button in message page (following message page rework)';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.7.6</div>- Import AGR custom lists to PTRE tracking list (in addition of basic lists)<br>- Improve notification system (keep 5 sec history)';
     content+= '<div class="ptreSubTitle">0.7.5</div>- Display target top fleet directly into EasyPTRE pannel<br>- [Feature] Add help menu';
     content+= '<div class="ptreSubTitle">0.7.4</div>- [Feature] Sync AGR/PTRE targets list with teammates via PTRE (non-mandatory)<br>- [Feature] Add a private targets list management system (in order to not share)<br>- [Feature] Add a debug mode option<br>- [Feature] Script will check, once a day, for updates and display a label<br>- [Fix] Fix pushing activities when refreshing same system<br>- [Fix] Remove AGR "Traders" from targets lists ("Friends" were already removed)<br>- [Fix] Fix galaxy page detection (depending on from where player clicks)<br>- [Fix] Add scrollbar to targets list<br>- [Fix] Move EasyPTRE pannel to right side in order to not overlap with AGR';
@@ -2420,7 +2426,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             success : function(reponse){
                 let reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    consoleDebug("[GALAXY] [FROM PTRE] " + reponseDecode.message);
+                    console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
@@ -2478,7 +2484,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         cache: false,
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug("[GALAXY] [FROM PTRE] " + reponseDecode.message);
+            console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
@@ -2549,7 +2555,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 type: 'POST',
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
@@ -2587,7 +2593,7 @@ function pushPlayerNote(playerId) {
                 },
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
                     }
@@ -2615,7 +2621,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             cache: false,
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
-                consoleDebug(reponseDecode.message);
+                consoleDebug("[FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
@@ -2784,7 +2790,7 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
 
-                consoleDebug('[EasyPTRE] ' + reponseDecode.message);
+                consoleDebug('[FROM PTRE] ' + reponseDecode.message);
 
                 // Update info in menu
                 if (document.getElementById("ptreLastDataSyncField")) {
