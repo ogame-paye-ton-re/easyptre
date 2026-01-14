@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 14 janv. 2026 23:40:21 CET
+// Build date: mer. 14 janv. 2026 23:58:40 CET
 // ****************************************
 
 // ****************************************
@@ -747,16 +747,21 @@ function improvePageGalaxy() {
     console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
-    let toolComment = "";
+    let toolComment = "Detected tool: ";
 
     // Update status once for the gala browsing session
     if (isAGREnabled()) {
-        toolComment+= " - AGR detected";
+        toolComment+= "AGR ";
     }
-    if (isOGLorOGIEnabled()) {
+    if (isOGLEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment+= " - OGL/OGI detected";
+        toolComment+= "OGL ";
+    }
+    if (isOGIEnabled()) {
+        ptreSendGalaEvents = false;
+        ptrePushActivities = false;
+        toolComment+= "OGI ";
     }
     //TODO: remove after Beta
     if (betaMode == 'true') {
@@ -787,7 +792,7 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + toolComment;
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
         if (ptrePushActivities === true) {
             tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
         }
