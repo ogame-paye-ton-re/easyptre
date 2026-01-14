@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 14 janv. 2026 22:22:31 CET
+// Build date: mer. 14 janv. 2026 23:09:41 CET
 // ****************************************
 
 // ****************************************
@@ -750,11 +750,6 @@ function improvePageGalaxy() {
     let toolComment = "";
 
     // Update status once for the gala browsing session
-    if (minerMode == 'false') {
-        if (betaMode == 'true') { //TODO: remove after Beta
-            ptreDisplayGalaPopup = true;
-        }
-    }
     if (isAGREnabled()) {
         toolComment+= " - AGR detected";
     }
@@ -762,6 +757,10 @@ function improvePageGalaxy() {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
         toolComment+= " - OGL/OGI detected";
+    }
+    //TODO: remove after Beta
+    if (betaMode == 'true') {
+        ptreDisplayGalaPopup = true;
     }
 
     // Prepare galaxy check and update
