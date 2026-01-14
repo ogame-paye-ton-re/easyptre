@@ -151,7 +151,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         cache: false,
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug("[GALAXY] [FROM PTRE]" + reponseDecode.message);
+            consoleDebug("[GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;

@@ -34,6 +34,10 @@ function improveGalaxyTable() {
     var galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     // Get merged Targets
     var mergedTargetsList = getMergedTargetsList();
+    const ptreTrackedPlayerCount = document.getElementById("ptreTrackedPlayerCount");
+    if (ptreTrackedPlayerCount) {
+        ptreTrackedPlayerCount.innerHTML = mergedTargetsList.length + Object.keys(highlightedPlayersList).length;
+    }
 
     // Go throught galaxy tab
     for(let pos = 1; pos <= 15 ; pos++) {
@@ -270,10 +274,13 @@ function improvePageGalaxy() {
             ptreDisplayGalaPopup = true;
         }
     }
+    if (isAGREnabled()) {
+        toolComment+= " - AGR detected.";
+    }
     if (isOGLorOGIEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment = " - OGL/OGI detected."
+        toolComment+= " - OGL/OGI detected.";
     }
 
     // Prepare galaxy check and update
@@ -281,10 +288,11 @@ function improvePageGalaxy() {
 
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)
+        //TODO:   a udatder quand la fct AGR passe
         var tempContent = '<table width="100%"><tr>';
-        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td><td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
-        tempContent+= '<td>';
-        tempContent+= 'Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
+        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
+        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENTS</div></td>';
+        tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
         } else {
@@ -299,7 +307,12 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + toolComment + '</div></td></tr></table>';
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + toolComment;
+        if (ptrePushActivities === true) {
+            tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+        }
+        tempContent+= '</div></td></tr></table>';
+
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
         tempDiv.id = 'ptreGalaxyToolBar';

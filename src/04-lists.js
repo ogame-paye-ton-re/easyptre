@@ -223,7 +223,6 @@ function debugListContent() {
 
 // Check is player is in list
 function isPlayerInLists(playerId) {
-    console.log("Asking for " + playerId);
     if (isPlayerInTheList(playerId, 'AGR') || isPlayerInTheList(playerId, 'PTRE')) {
         return true;
     }

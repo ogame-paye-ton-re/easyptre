@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 14 janv. 2026 19:07:29 CET
+// Build date: mer. 14 janv. 2026 21:52:02 CET
 // ****************************************
 
 // ****************************************
@@ -460,7 +460,7 @@ GM_addStyle(`
 #ptreGalaxyToolBar {
     background-color: #171d22;
     font-weight: revert;
-    padding-top: 10px;
+    padding: 5px;
 }
 #ptreGalaxyMessageBoxContent {
     padding-left: 10px;
@@ -515,6 +515,10 @@ function improveGalaxyTable() {
     var galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     // Get merged Targets
     var mergedTargetsList = getMergedTargetsList();
+    const ptreTrackedPlayerCount = document.getElementById("ptreTrackedPlayerCount");
+    if (ptreTrackedPlayerCount) {
+        ptreTrackedPlayerCount.innerHTML = mergedTargetsList.length + Object.keys(highlightedPlayersList).length;
+    }
 
     // Go throught galaxy tab
     for(let pos = 1; pos <= 15 ; pos++) {
@@ -751,10 +755,13 @@ function improvePageGalaxy() {
             ptreDisplayGalaPopup = true;
         }
     }
+    if (isAGREnabled()) {
+        toolComment+= " - AGR detected.";
+    }
     if (isOGLorOGIEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment = " - OGL/OGI detected."
+        toolComment+= " - OGL/OGI detected.";
     }
 
     // Prepare galaxy check and update
@@ -762,10 +769,11 @@ function improvePageGalaxy() {
 
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)
+        //TODO:   a udatder quand la fct AGR passe
         var tempContent = '<table width="100%"><tr>';
-        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td><td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
-        tempContent+= '<td>';
-        tempContent+= 'Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
+        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
+        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENTS</div></td>';
+        tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
         } else {
@@ -780,7 +788,12 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + toolComment + '</div></td></tr></table>';
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + toolComment;
+        if (ptrePushActivities === true) {
+            tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+        }
+        tempContent+= '</div></td></tr></table>';
+
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
         tempDiv.id = 'ptreGalaxyToolBar';
@@ -1486,7 +1499,6 @@ function debugListContent() {
 
 // Check is player is in list
 function isPlayerInLists(playerId) {
-    console.log("Asking for " + playerId);
     if (isPlayerInTheList(playerId, 'AGR') || isPlayerInTheList(playerId, 'PTRE')) {
         return true;
     }
@@ -1942,10 +1954,13 @@ function displayHelp() {
 
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
-    var content = '<div class="ptreSubTitle">0.13.0</div>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
-    content+= '<div class="ptreSubTitle">0.12.2</div>- [Feature] Add ingame shared notes, linked to targets (beta)';
-    content+= '<div class="ptreSubTitle">0.12.0</div>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
-    content+= '<div class="ptreSubTitle">0.11.4</div>- Fix phalanx purge and update';
+    var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
+    content+= '<div class="ptreSubTitle">0.13.3 (jan 2026)</div>- Several bugfix and polish';
+    content+= '<div class="ptreSubTitle">0.13.0 (jan 2026)</div>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
+    content+= '<div class="ptreSubTitle">0.12.2 (jan 2026)</div>- [Feature] Add ingame shared notes, linked to targets (beta)';
+    content+= '<div class="ptreSubTitle">0.12.0 (jan 2026)</div>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
+    content+= '<div class="ptreSubTitle">0.11.4 (oct 2025)</div>- Fix phalanx purge and update';
     content+= '<div class="ptreSubTitle">0.11.3</div>- Improve update visibility<br>- Add manual update procedure';
     content+= '<div class="ptreSubTitle">0.11.2</div>- Fix Galaxy pushs';
     content+= '<div class="ptreSubTitle">0.11.1</div>- Add buddies to Friends & Phalanx feature<br>- Add filters to Friends & Phalanx feature';
@@ -2454,7 +2469,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         cache: false,
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug("[GALAXY] [FROM PTRE]" + reponseDecode.message);
+            consoleDebug("[GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
