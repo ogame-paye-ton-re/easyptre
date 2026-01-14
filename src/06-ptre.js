@@ -523,6 +523,8 @@ function syncTargets(mode) {
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
             if (reponseDecode.code == 1) {
+                // Reset local list, as we update the entire list
+                GM_setValue(ptrePTREPlayerListJSON, '');
                 var count = 0;
                 var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
                 $.each(newTargetList, function(i, incomingPlayer) {

@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 14 janv. 2026 22:17:00 CET
+// Build date: mer. 14 janv. 2026 22:22:31 CET
 // ****************************************
 
 // ****************************************
@@ -2851,6 +2851,8 @@ function syncTargets(mode) {
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
             if (reponseDecode.code == 1) {
+                // Reset local list, as we update the entire list
+                GM_setValue(ptrePTREPlayerListJSON, '');
                 var count = 0;
                 var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
                 $.each(newTargetList, function(i, incomingPlayer) {
