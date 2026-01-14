@@ -204,7 +204,7 @@ function improveGalaxyTable() {
 
 // To run on all pages
 function improvePageAny() {
-    console.log("[PTRE] Improving Any Page");
+    console.log("[EasyPTRE] Improving Any Page");
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         if (document.getElementById('ago_panel_Player')) {
             let observer2 = new MutationObserver(updateLocalAGRList);
@@ -234,7 +234,7 @@ function improvePageAny() {
 
 // Add PTRE buttons to messages page
 function improvePageMessages() {
-    console.log("[PTRE] Improving Messages Page");
+    console.log("[EasyPTRE] Improving Messages Page");
     if (!isOGLorOGIEnabled() && !isOGLorOGIEnabled()) {
         if (GM_getValue(ptreTeamKey) != '') {
             // Update Message Page (spy report part)
@@ -259,7 +259,7 @@ function improvePageMessages() {
     - setup the wait for the galaxy to be displayed
 */
 function improvePageGalaxy() {
-    console.log("[PTRE] Improving Galaxy Page");
+    console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
     let toolComment = "";
@@ -322,7 +322,7 @@ function improvePageGalaxy() {
 // Save lifeforms researchs
 // Save JSON "API 2" from fleet page
 function improvePageFleet() {
-    console.log("[PTRE] Improving Fleet Page");
+    console.log("[EasyPTRE] Improving Fleet Page");
     var currentTime = Math.floor(serverTime.getTime() / 1000);
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
@@ -343,14 +343,14 @@ function improvePageFleet() {
                 document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
             }
         } else {
-            console.log("[PTRE] Cant find Techs!");
+            console.log("[EasyPTRE] Cant find Techs!");
         }
     }
 }
 
 // Update Phalanx data
 function improvePageFacilities() {
-    console.log("[PTRE] Improving Facilities Page");
+    console.log("[EasyPTRE] Improving Facilities Page");
     if (document.getElementById('technologies')) {
         const technologiesDiv = document.getElementById('technologies');
         if (technologiesDiv.querySelector('li.sensorPhalanx')) {
@@ -372,7 +372,7 @@ function improvePageFacilities() {
 
 // Parse Buddies page
 function improvePageBuddies() {
-    console.log("[PTRE] Improving Buddies Page");
+    console.log("[EasyPTRE] Improving Buddies Page");
     const currentTime = Math.floor(serverTime.getTime() / 1000);
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
@@ -402,7 +402,7 @@ function improveAGRSpyTable(mutationList, observer) {
         observer.disconnect();
         var TKey = GM_getValue(ptreTeamKey, '');
         if (TKey != '') {
-            console.log("[PTRE] Updating AGR Spy Table");
+            console.log("[EasyPTRE] Updating AGR Spy Table");
             var table = document.getElementsByClassName("ago_reports")[0];
             for (var i = 0, row; row = table.rows[i]; i++) {
                 var nbCol = row.cells.length;
@@ -445,7 +445,7 @@ function improveAGRSpyTable(mutationList, observer) {
                             });
                         });
                     } else {
-                        console.log("[PTRE] Error. Cant find data element: m" + messageID);
+                        console.log("[EasyPTRE] Error. Cant find data element: m" + messageID);
                     }
                 }
             }
@@ -486,7 +486,7 @@ function addPTREStuffsToMessagesPage() {
                                 dataType: "json",
                                 url: urlPTRESpy,
                                 success: function(reponse) {
-                                    console.log('[PTRE] ' + reponse);
+                                    console.log('[EasyPTRE] ' + reponse);
                                     if (reponse.code == 1) {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
@@ -577,7 +577,7 @@ function addPTREStuffsToMessagesPage() {
                         }
                     }
                 });
-                console.log('[PTRE] Pushing counter spy messages');
+                console.log('[EasyPTRE] Pushing counter spy messages');
             }
         }
     }

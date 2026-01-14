@@ -22,7 +22,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
         return;
     }
 
-    consoleDebug("[GALAXY] processGalaxyUpdates");
+    consoleDebug("[GALAXY] Process Galaxy Updates");
     // Get LOCAL Galaxy content from Storage
     var previousSystem = null;
     previousSystem = fetchSystemV2(galaxy, system);
@@ -93,7 +93,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             success : function(reponse){
                 let reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[GALAXY] [FROM PTRE]" + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
@@ -122,7 +122,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                         // Store new list
                         if (updated > 0) {
                             GM_setValue(ptreGalaxyEventsPos, list);
-                            consoleDebug("Galaxy Events Storage updated");
+                            consoleDebug("[GALAXY] Galaxy Events list updated");
                         }
                     }
                 } else {
@@ -143,7 +143,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
     if (ptreStoredTK == '') {
         return;
     }
-    // Sent to PTRE
+    // Send to PTRE
     $.ajax({
         url : urlPTREPushActivity,
         type : 'POST',
@@ -151,7 +151,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         cache: false,
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug(reponseDecode.message);
+            consoleDebug("[GALAXY] [FROM PTRE]" + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
@@ -164,7 +164,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
             }
         }
     });
-    console.log('[PTRE] [' + galaxy + ':' + system + '] Pushing Activities');
+    consoleDebug('[GALAXY] [' + galaxy + ':' + system + '] Pushing Activities to PTRE');
 }
 
 // This function calls PTRE backend to get player informations
@@ -412,7 +412,7 @@ function getGEEInfosFromGala() {
 // - Phalanx levels
 function syncDataWithPTRE(mode = "auto") {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    console.log("[PTRE] Syncing data "+currentTime);
+    console.log("[EasyPTRE] Syncing data "+currentTime);
     const hot_ts_max = currentTime + 24*3600;
     const teamKey = GM_getValue(ptreTeamKey, "notk");
     var addParams = "";
@@ -457,7 +457,7 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
 
-                consoleDebug('[PTRE] ' + reponseDecode.message);
+                consoleDebug('[EasyPTRE] ' + reponseDecode.message);
 
                 // Update info in menu
                 if (document.getElementById("ptreLastDataSyncField")) {

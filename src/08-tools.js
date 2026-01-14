@@ -54,7 +54,7 @@ function buildLinkToGalaxy(galaxy, system, position) {
 
 function consoleDebug(message) {
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
-        console.log('[PTRE] ' + message);
+        console.log('[EasyPTRE] ' + message);
     }
 }
 

@@ -6,7 +6,7 @@
 var modeEasyPTRE = "ingame";
 if (/ptre.chez.gg/.test(location.href)) {
     modeEasyPTRE = "ptre";
-    console.log("[PTRE] EasyPTRE: Mode PTRE");
+    console.log("[EasyPTRE] Mode PTRE");
 }
 
 // Settings
@@ -236,21 +236,21 @@ if (modeEasyPTRE == "ptre") {
     // Display Lifeforms research on PTRE Lifeforms page
     if (/ptre.chez.gg\/\?page=lifeforms_researchs/.test(location.href)){
         if (universe != 0) {
-            console.log("[PTRE] PTRE Lifeforms page detected: "+country+"-"+universe);
+            console.log("[EasyPTRE] PTRE Lifeforms page detected: "+country+"-"+universe);
             const json = GM_getValue(ptreTechnosJSON, '');
             if (json != '') {
                 tab = parsePlayerResearchs(json, "tab");
                 document.getElementById("tech_from_easyptre").innerHTML = tab;
-                console.log("[PTRE] Updating lifeforms page");
+                console.log("[EasyPTRE] Updating lifeforms page");
             } else {
-                console.log("[PTRE] No lifeforms data saved");
+                console.log("[EasyPTRE] No lifeforms data saved");
             }
         }
     }
 
     // Update PTRE Spy Report Pages
     if (/ptre.chez.gg\/\?iid/.test(location.href)){
-        console.log("[PTRE] PTRE Spy Report page detected: "+country+"-"+universe);
+        console.log("[EasyPTRE] PTRE Spy Report page detected: "+country+"-"+universe);
         const json = GM_getValue(ptreTechnosJSON, '');
         if (json != '') {
             const linkElement = document.getElementById("simulate_link");
@@ -259,9 +259,9 @@ if (modeEasyPTRE == "ptre") {
             hrefValue = hrefValue.replace("replaceme", prefill);
             linkElement.setAttribute("href", hrefValue);
             document.getElementById("simulator_comment").innerHTML = "This link contains your LF techs";
-            console.log("[PTRE] Updating simulator link");
+            console.log("[EasyPTRE] Updating simulator link");
         } else {
-            console.log("[PTRE] No lifeforms data saved");
+            console.log("[EasyPTRE] No lifeforms data saved");
         }
     }
 }

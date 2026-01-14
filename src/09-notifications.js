@@ -40,7 +40,7 @@ function displayGalaxyMiniMessage(message) {
     if (document.getElementById("fleetstatusrow")) {
         document.getElementById("fleetstatusrow").innerHTML = '<div class="success">PTRE: ' + message + '</div>';
     } else {
-        console.log("[PTRE] Error. Cant display: " + message);
+        console.log("[EasyPTRE] Error. Cant display: " + message);
     }
 }
 
@@ -55,7 +55,7 @@ function displayGalaxyMessageContent(message) {
     if (document.getElementById("ptreGalaxyMessageBoxContent")) {
         document.getElementById("ptreGalaxyMessageBoxContent").innerHTML = message;
     } else {
-        console.log("[PTRE] Error. Cant display: " + message);
+        console.log("[EasyPTRE] Error. Cant display: " + message);
     }
 }
 
