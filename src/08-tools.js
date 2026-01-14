@@ -48,6 +48,10 @@ function buildPTRELinkToPlayer(playerID) {
     return 'https://ptre.chez.gg/?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
 }
 
+function buildPTRELinkToAdvancedActivityTable(playerID) {
+    return 'https://ptre.chez.gg/advanced_activity_table.php?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
+}
+
 function buildLinkToGalaxy(galaxy, system, position) {
     return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=galaxy&galaxy='+galaxy+'&system='+system+'&position='+position+'">['+galaxy+':'+system+':'+position+']</a>';
 }

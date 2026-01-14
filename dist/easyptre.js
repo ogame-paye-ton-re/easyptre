@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 14 janv. 2026 21:52:02 CET
+// Build date: mer. 14 janv. 2026 22:17:00 CET
 // ****************************************
 
 // ****************************************
@@ -756,12 +756,12 @@ function improvePageGalaxy() {
         }
     }
     if (isAGREnabled()) {
-        toolComment+= " - AGR detected.";
+        toolComment+= " - AGR detected";
     }
     if (isOGLorOGIEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment+= " - OGL/OGI detected.";
+        toolComment+= " - OGL/OGI detected";
     }
 
     // Prepare galaxy check and update
@@ -1126,7 +1126,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                     <hr>
                     <div id="ptreGalaxyActionsContent">
                         <div class="ptreCategoryTitle">Informations</div>
-                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br><br>
+                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a> - <a href="` + buildPTRELinkToAdvancedActivityTable(playerId) + `" target="_blank">Activity Table</a><br><br>
                         ` + targetComment + `
                     </div>
                 </td>
@@ -1144,7 +1144,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 <td>
                     <hr>
                     <div class="ptreCategoryTitle">Actions</div>
-                    <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
+                    <div id="btnGetPlayerInfos2`+playerId+`" type="button" class="button btn_blue">FLEET</div> <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
                 </td>
             </tr>
             <tr>
@@ -1188,6 +1188,10 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 panel.parentNode.removeChild(panel);
             }
             document.removeEventListener('click', clickHandler);
+            // If fleet menu was open
+            if (document.getElementById('divPTREInfos')) {
+                document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
+            }
         };
         const clickHandler = (event) => {
             if (!panel.contains(event.target) && event.target !== button) {
@@ -1262,6 +1266,12 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             if (document.getElementById('savePlayerNote')) {
                 document.getElementById('savePlayerNote').addEventListener("click", function (event) {
                     pushPlayerNote(playerId);
+                });
+            }
+            // Fleet button
+            if (document.getElementById('btnGetPlayerInfos2'+playerId)) {
+                document.getElementById('btnGetPlayerInfos2'+playerId).addEventListener("click", function (event) {
+                    getPlayerInfos(playerId, playerName);
                 });
             }
             // Get ranks call
@@ -3095,6 +3105,10 @@ function convertActivityToOGLFormat(showActivity, idleTime) {
 
 function buildPTRELinkToPlayer(playerID) {
     return 'https://ptre.chez.gg/?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
+}
+
+function buildPTRELinkToAdvancedActivityTable(playerID) {
+    return 'https://ptre.chez.gg/advanced_activity_table.php?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
 }
 
 function buildLinkToGalaxy(galaxy, system, position) {
