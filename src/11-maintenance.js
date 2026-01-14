@@ -4,7 +4,7 @@
 
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
-    console.log("[PTRE] Migrate Data and clean storage");
+    console.log("[EasyPTRE] Migrate Data and clean storage");
     const currentTime = Math.floor(serverTime.getTime() / 1000);
 
     // Clean logs
@@ -116,7 +116,7 @@ function dropGalaxyCacheStorageV1() {
 
 function addToLogs(message) {
     var currentTime = Math.floor(serverTime.getTime() / 1000);
-    consoleDebug(message);
+    console.log(message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {

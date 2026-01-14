@@ -15,7 +15,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
     // Look for same entry
     var idASup = -1;
     $.each(dataList, function(i, elem) {
-        //console.log("[PTRE] Checking elem " + elem.type + " / " + elem.id);
+        //console.log("[EasyPTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
                 consoleDebug("Element " + newData.type + " has not changed. No update.");
@@ -33,7 +33,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
         dataList.splice(idASup, 1);
     }
     // Add the new entry
-    console.log("[PTRE] Adding/Updating " + newData.type + " ID:" + newData.id + " / val: " + newData.val, newData);
+    console.log("[EasyPTRE] Adding/Updating " + newData.type + " ID:" + newData.id + " / val: " + newData.val, newData);
     dataList.push(newData);
 
     // Save list
@@ -59,7 +59,7 @@ function debugSharableData() {
             console.log("[" + elem.type + "] " + elem.id + " => " + elem.val + " (" + elem.coords + ")");
         });
     } else {
-        console.log("[PTRE] No data to display");
+        console.log("[EasyPTRE] No data to display");
     }
 }
 
@@ -212,18 +212,17 @@ function debugListContent() {
 
     targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var targetList = JSON.parse(targetJSON);
-    console.log("[PTRE] AGR list: ");
+    console.log("[EasyPTRE] AGR list: ");
     console.log(targetList);
 
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     targetList = JSON.parse(targetJSON);
-    console.log("[PTRE] PTRE list: ");
+    console.log("[EasyPTRE] PTRE list: ");
     console.log(targetList);
 }
 
 // Check is player is in list
 function isPlayerInLists(playerId) {
-    console.log("Asking for " + playerId);
     if (isPlayerInTheList(playerId, 'AGR') || isPlayerInTheList(playerId, 'PTRE')) {
         return true;
     }

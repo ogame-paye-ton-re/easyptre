@@ -22,7 +22,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
         return;
     }
 
-    consoleDebug("[GALAXY] processGalaxyUpdates");
+    consoleDebug("[GALAXY] Process Galaxy Updates");
     // Get LOCAL Galaxy content from Storage
     var previousSystem = null;
     previousSystem = fetchSystemV2(galaxy, system);
@@ -44,7 +44,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
     // Go throught gala pos
     for(let pos = 1; pos <= 15 ; pos++) {
         // Compare new positions with previous one
-        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player " + additionnalSSInfos[pos].playerName + " ("+additionnalSSInfos[pos].playerRank+"): "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId);
+        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
         if (previousSystemFound === false || newSystemInfos[pos].playerId != previousSystem[pos].playerId || newSystemInfos[pos].planetId != previousSystem[pos].planetId || newSystemInfos[pos].moonId != previousSystem[pos].moonId) {
             if (newSystemInfos[pos].playerId != -1 || previousSystem[pos].playerId != -1) {
                 consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
@@ -93,7 +93,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             success : function(reponse){
                 let reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    consoleDebug(reponseDecode.message);
+                    console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
@@ -122,7 +122,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                         // Store new list
                         if (updated > 0) {
                             GM_setValue(ptreGalaxyEventsPos, list);
-                            consoleDebug("Galaxy Events Storage updated");
+                            consoleDebug("[GALAXY] Galaxy Events list updated");
                         }
                     }
                 } else {
@@ -143,7 +143,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
     if (ptreStoredTK == '') {
         return;
     }
-    // Sent to PTRE
+    // Send to PTRE
     $.ajax({
         url : urlPTREPushActivity,
         type : 'POST',
@@ -151,7 +151,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         cache: false,
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug(reponseDecode.message);
+            console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
@@ -164,7 +164,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
             }
         }
     });
-    console.log('[PTRE] [' + galaxy + ':' + system + '] Pushing Activities');
+    consoleDebug('[GALAXY] [' + galaxy + ':' + system + '] Pushing Activities to PTRE');
 }
 
 // This function calls PTRE backend to get player informations
@@ -222,7 +222,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 type: 'POST',
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
@@ -260,7 +260,7 @@ function pushPlayerNote(playerId) {
                 },
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
                     }
@@ -288,7 +288,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             cache: false,
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
-                consoleDebug(reponseDecode.message);
+                consoleDebug("[FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
@@ -412,7 +412,7 @@ function getGEEInfosFromGala() {
 // - Phalanx levels
 function syncDataWithPTRE(mode = "auto") {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    console.log("[PTRE] Syncing data "+currentTime);
+    console.log("[EasyPTRE] Syncing data "+currentTime);
     const hot_ts_max = currentTime + 24*3600;
     const teamKey = GM_getValue(ptreTeamKey, "notk");
     var addParams = "";
@@ -457,7 +457,7 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
 
-                consoleDebug('[PTRE] ' + reponseDecode.message);
+                consoleDebug('[FROM PTRE] ' + reponseDecode.message);
 
                 // Update info in menu
                 if (document.getElementById("ptreLastDataSyncField")) {
@@ -523,6 +523,8 @@ function syncTargets(mode) {
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
             if (reponseDecode.code == 1) {
+                // Reset local list, as we update the entire list
+                GM_setValue(ptrePTREPlayerListJSON, '');
                 var count = 0;
                 var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
                 $.each(newTargetList, function(i, incomingPlayer) {

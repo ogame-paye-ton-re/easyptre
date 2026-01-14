@@ -34,6 +34,10 @@ function improveGalaxyTable() {
     var galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     // Get merged Targets
     var mergedTargetsList = getMergedTargetsList();
+    const ptreTrackedPlayerCount = document.getElementById("ptreTrackedPlayerCount");
+    if (ptreTrackedPlayerCount) {
+        ptreTrackedPlayerCount.innerHTML = mergedTargetsList.length + Object.keys(highlightedPlayersList).length;
+    }
 
     // Go throught galaxy tab
     for(let pos = 1; pos <= 15 ; pos++) {
@@ -204,7 +208,7 @@ function improveGalaxyTable() {
 
 // To run on all pages
 function improvePageAny() {
-    console.log("[PTRE] Improving Any Page");
+    console.log("[EasyPTRE] Improving Any Page");
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         if (document.getElementById('ago_panel_Player')) {
             let observer2 = new MutationObserver(updateLocalAGRList);
@@ -234,7 +238,7 @@ function improvePageAny() {
 
 // Add PTRE buttons to messages page
 function improvePageMessages() {
-    console.log("[PTRE] Improving Messages Page");
+    console.log("[EasyPTRE] Improving Messages Page");
     if (!isOGLorOGIEnabled() && !isOGLorOGIEnabled()) {
         if (GM_getValue(ptreTeamKey) != '') {
             // Update Message Page (spy report part)
@@ -259,21 +263,28 @@ function improvePageMessages() {
     - setup the wait for the galaxy to be displayed
 */
 function improvePageGalaxy() {
-    console.log("[PTRE] Improving Galaxy Page");
+    console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
-    let toolComment = "";
+    let toolComment = "Detected tool: ";
 
     // Update status once for the gala browsing session
-    if (minerMode == 'false') {
-        if (betaMode == 'true') { //TODO: remove after Beta
-            ptreDisplayGalaPopup = true;
-        }
+    if (isAGREnabled()) {
+        toolComment+= "AGR ";
     }
-    if (isOGLorOGIEnabled()) {
+    if (isOGLEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment = " - OGL/OGI detected."
+        toolComment+= "OGL ";
+    }
+    if (isOGIEnabled()) {
+        ptreSendGalaEvents = false;
+        ptrePushActivities = false;
+        toolComment+= "OGI ";
+    }
+    //TODO: remove after Beta
+    if (betaMode == 'true') {
+        ptreDisplayGalaPopup = true;
     }
 
     // Prepare galaxy check and update
@@ -281,10 +292,11 @@ function improvePageGalaxy() {
 
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)
+        //TODO:   a udatder quand la fct AGR passe
         var tempContent = '<table width="100%"><tr>';
-        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td><td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
-        tempContent+= '<td>';
-        tempContent+= 'Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
+        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
+        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENTS</div></td>';
+        tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
         } else {
@@ -299,7 +311,12 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + toolComment + '</div></td></tr></table>';
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
+        if (ptrePushActivities === true) {
+            tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+        }
+        tempContent+= '</div></td></tr></table>';
+
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
         tempDiv.id = 'ptreGalaxyToolBar';
@@ -322,7 +339,7 @@ function improvePageGalaxy() {
 // Save lifeforms researchs
 // Save JSON "API 2" from fleet page
 function improvePageFleet() {
-    console.log("[PTRE] Improving Fleet Page");
+    console.log("[EasyPTRE] Improving Fleet Page");
     var currentTime = Math.floor(serverTime.getTime() / 1000);
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
@@ -343,14 +360,14 @@ function improvePageFleet() {
                 document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
             }
         } else {
-            console.log("[PTRE] Cant find Techs!");
+            console.log("[EasyPTRE] Cant find Techs!");
         }
     }
 }
 
 // Update Phalanx data
 function improvePageFacilities() {
-    console.log("[PTRE] Improving Facilities Page");
+    console.log("[EasyPTRE] Improving Facilities Page");
     if (document.getElementById('technologies')) {
         const technologiesDiv = document.getElementById('technologies');
         if (technologiesDiv.querySelector('li.sensorPhalanx')) {
@@ -372,7 +389,7 @@ function improvePageFacilities() {
 
 // Parse Buddies page
 function improvePageBuddies() {
-    console.log("[PTRE] Improving Buddies Page");
+    console.log("[EasyPTRE] Improving Buddies Page");
     const currentTime = Math.floor(serverTime.getTime() / 1000);
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
@@ -402,7 +419,7 @@ function improveAGRSpyTable(mutationList, observer) {
         observer.disconnect();
         var TKey = GM_getValue(ptreTeamKey, '');
         if (TKey != '') {
-            console.log("[PTRE] Updating AGR Spy Table");
+            console.log("[EasyPTRE] Updating AGR Spy Table");
             var table = document.getElementsByClassName("ago_reports")[0];
             for (var i = 0, row; row = table.rows[i]; i++) {
                 var nbCol = row.cells.length;
@@ -445,7 +462,7 @@ function improveAGRSpyTable(mutationList, observer) {
                             });
                         });
                     } else {
-                        console.log("[PTRE] Error. Cant find data element: m" + messageID);
+                        console.log("[EasyPTRE] Error. Cant find data element: m" + messageID);
                     }
                 }
             }
@@ -486,7 +503,7 @@ function addPTREStuffsToMessagesPage() {
                                 dataType: "json",
                                 url: urlPTRESpy,
                                 success: function(reponse) {
-                                    console.log('[PTRE] ' + reponse);
+                                    console.log('[EasyPTRE] [FROM PTRE] ' + reponse);
                                     if (reponse.code == 1) {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
@@ -577,7 +594,7 @@ function addPTREStuffsToMessagesPage() {
                         }
                     }
                 });
-                console.log('[PTRE] Pushing counter spy messages');
+                console.log('[EasyPTRE] Pushing counter spy messages');
             }
         }
     }
@@ -632,7 +649,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                     <hr>
                     <div id="ptreGalaxyActionsContent">
                         <div class="ptreCategoryTitle">Informations</div>
-                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br><br>
+                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a> - <a href="` + buildPTRELinkToAdvancedActivityTable(playerId) + `" target="_blank">Activity Table</a><br><br>
                         ` + targetComment + `
                     </div>
                 </td>
@@ -650,7 +667,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 <td>
                     <hr>
                     <div class="ptreCategoryTitle">Actions</div>
-                    <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
+                    <div id="btnGetPlayerInfos2`+playerId+`" type="button" class="button btn_blue">FLEET</div> <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
                 </td>
             </tr>
             <tr>
@@ -694,6 +711,10 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 panel.parentNode.removeChild(panel);
             }
             document.removeEventListener('click', clickHandler);
+            // If fleet menu was open
+            if (document.getElementById('divPTREInfos')) {
+                document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
+            }
         };
         const clickHandler = (event) => {
             if (!panel.contains(event.target) && event.target !== button) {
@@ -768,6 +789,12 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             if (document.getElementById('savePlayerNote')) {
                 document.getElementById('savePlayerNote').addEventListener("click", function (event) {
                     pushPlayerNote(playerId);
+                });
+            }
+            // Fleet button
+            if (document.getElementById('btnGetPlayerInfos2'+playerId)) {
+                document.getElementById('btnGetPlayerInfos2'+playerId).addEventListener("click", function (event) {
+                    getPlayerInfos(playerId, playerName);
                 });
             }
             // Get ranks call

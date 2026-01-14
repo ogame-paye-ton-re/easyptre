@@ -165,7 +165,7 @@ GM_addStyle(`
 #ptreGalaxyToolBar {
     background-color: #171d22;
     font-weight: revert;
-    padding-top: 10px;
+    padding: 5px;
 }
 #ptreGalaxyMessageBoxContent {
     padding-left: 10px;

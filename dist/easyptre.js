@@ -21,18 +21,19 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 13 janv. 2026 23:21:41 CET
+// Build date: mer. 14 janv. 2026 23:58:40 CET
 // ****************************************
 
 // ****************************************
 // INIT
 // ****************************************
 
+console.log("[EasyPTRE] Version " + GM_info.script.version);
 // Check current website
 var modeEasyPTRE = "ingame";
 if (/ptre.chez.gg/.test(location.href)) {
     modeEasyPTRE = "ptre";
-    console.log("[PTRE] EasyPTRE: Mode PTRE");
+    console.log("[EasyPTRE] Mode PTRE");
 }
 
 // Settings
@@ -262,21 +263,21 @@ if (modeEasyPTRE == "ptre") {
     // Display Lifeforms research on PTRE Lifeforms page
     if (/ptre.chez.gg\/\?page=lifeforms_researchs/.test(location.href)){
         if (universe != 0) {
-            console.log("[PTRE] PTRE Lifeforms page detected: "+country+"-"+universe);
+            console.log("[EasyPTRE] PTRE Lifeforms page detected: "+country+"-"+universe);
             const json = GM_getValue(ptreTechnosJSON, '');
             if (json != '') {
                 tab = parsePlayerResearchs(json, "tab");
                 document.getElementById("tech_from_easyptre").innerHTML = tab;
-                console.log("[PTRE] Updating lifeforms page");
+                console.log("[EasyPTRE] Updating lifeforms page");
             } else {
-                console.log("[PTRE] No lifeforms data saved");
+                console.log("[EasyPTRE] No lifeforms data saved");
             }
         }
     }
 
     // Update PTRE Spy Report Pages
     if (/ptre.chez.gg\/\?iid/.test(location.href)){
-        console.log("[PTRE] PTRE Spy Report page detected: "+country+"-"+universe);
+        console.log("[EasyPTRE] PTRE Spy Report page detected: "+country+"-"+universe);
         const json = GM_getValue(ptreTechnosJSON, '');
         if (json != '') {
             const linkElement = document.getElementById("simulate_link");
@@ -285,9 +286,9 @@ if (modeEasyPTRE == "ptre") {
             hrefValue = hrefValue.replace("replaceme", prefill);
             linkElement.setAttribute("href", hrefValue);
             document.getElementById("simulator_comment").innerHTML = "This link contains your LF techs";
-            console.log("[PTRE] Updating simulator link");
+            console.log("[EasyPTRE] Updating simulator link");
         } else {
-            console.log("[PTRE] No lifeforms data saved");
+            console.log("[EasyPTRE] No lifeforms data saved");
         }
     }
 }
@@ -459,7 +460,7 @@ GM_addStyle(`
 #ptreGalaxyToolBar {
     background-color: #171d22;
     font-weight: revert;
-    padding-top: 10px;
+    padding: 5px;
 }
 #ptreGalaxyMessageBoxContent {
     padding-left: 10px;
@@ -514,6 +515,10 @@ function improveGalaxyTable() {
     var galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     // Get merged Targets
     var mergedTargetsList = getMergedTargetsList();
+    const ptreTrackedPlayerCount = document.getElementById("ptreTrackedPlayerCount");
+    if (ptreTrackedPlayerCount) {
+        ptreTrackedPlayerCount.innerHTML = mergedTargetsList.length + Object.keys(highlightedPlayersList).length;
+    }
 
     // Go throught galaxy tab
     for(let pos = 1; pos <= 15 ; pos++) {
@@ -684,7 +689,7 @@ function improveGalaxyTable() {
 
 // To run on all pages
 function improvePageAny() {
-    console.log("[PTRE] Improving Any Page");
+    console.log("[EasyPTRE] Improving Any Page");
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         if (document.getElementById('ago_panel_Player')) {
             let observer2 = new MutationObserver(updateLocalAGRList);
@@ -714,7 +719,7 @@ function improvePageAny() {
 
 // Add PTRE buttons to messages page
 function improvePageMessages() {
-    console.log("[PTRE] Improving Messages Page");
+    console.log("[EasyPTRE] Improving Messages Page");
     if (!isOGLorOGIEnabled() && !isOGLorOGIEnabled()) {
         if (GM_getValue(ptreTeamKey) != '') {
             // Update Message Page (spy report part)
@@ -739,21 +744,28 @@ function improvePageMessages() {
     - setup the wait for the galaxy to be displayed
 */
 function improvePageGalaxy() {
-    console.log("[PTRE] Improving Galaxy Page");
+    console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
-    let toolComment = "";
+    let toolComment = "Detected tool: ";
 
     // Update status once for the gala browsing session
-    if (minerMode == 'false') {
-        if (betaMode == 'true') { //TODO: remove after Beta
-            ptreDisplayGalaPopup = true;
-        }
+    if (isAGREnabled()) {
+        toolComment+= "AGR ";
     }
-    if (isOGLorOGIEnabled()) {
+    if (isOGLEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment = " - OGL/OGI detected."
+        toolComment+= "OGL ";
+    }
+    if (isOGIEnabled()) {
+        ptreSendGalaEvents = false;
+        ptrePushActivities = false;
+        toolComment+= "OGI ";
+    }
+    //TODO: remove after Beta
+    if (betaMode == 'true') {
+        ptreDisplayGalaPopup = true;
     }
 
     // Prepare galaxy check and update
@@ -761,10 +773,11 @@ function improvePageGalaxy() {
 
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)
+        //TODO:   a udatder quand la fct AGR passe
         var tempContent = '<table width="100%"><tr>';
-        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td><td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENT EXPLORER</div></td>';
-        tempContent+= '<td>';
-        tempContent+= 'Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
+        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
+        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENTS</div></td>';
+        tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
         } else {
@@ -779,7 +792,12 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + toolComment + '</div></td></tr></table>';
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
+        if (ptrePushActivities === true) {
+            tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+        }
+        tempContent+= '</div></td></tr></table>';
+
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
         tempDiv.id = 'ptreGalaxyToolBar';
@@ -802,7 +820,7 @@ function improvePageGalaxy() {
 // Save lifeforms researchs
 // Save JSON "API 2" from fleet page
 function improvePageFleet() {
-    console.log("[PTRE] Improving Fleet Page");
+    console.log("[EasyPTRE] Improving Fleet Page");
     var currentTime = Math.floor(serverTime.getTime() / 1000);
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
@@ -823,14 +841,14 @@ function improvePageFleet() {
                 document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
             }
         } else {
-            console.log("[PTRE] Cant find Techs!");
+            console.log("[EasyPTRE] Cant find Techs!");
         }
     }
 }
 
 // Update Phalanx data
 function improvePageFacilities() {
-    console.log("[PTRE] Improving Facilities Page");
+    console.log("[EasyPTRE] Improving Facilities Page");
     if (document.getElementById('technologies')) {
         const technologiesDiv = document.getElementById('technologies');
         if (technologiesDiv.querySelector('li.sensorPhalanx')) {
@@ -852,7 +870,7 @@ function improvePageFacilities() {
 
 // Parse Buddies page
 function improvePageBuddies() {
-    console.log("[PTRE] Improving Buddies Page");
+    console.log("[EasyPTRE] Improving Buddies Page");
     const currentTime = Math.floor(serverTime.getTime() / 1000);
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
@@ -882,7 +900,7 @@ function improveAGRSpyTable(mutationList, observer) {
         observer.disconnect();
         var TKey = GM_getValue(ptreTeamKey, '');
         if (TKey != '') {
-            console.log("[PTRE] Updating AGR Spy Table");
+            console.log("[EasyPTRE] Updating AGR Spy Table");
             var table = document.getElementsByClassName("ago_reports")[0];
             for (var i = 0, row; row = table.rows[i]; i++) {
                 var nbCol = row.cells.length;
@@ -925,7 +943,7 @@ function improveAGRSpyTable(mutationList, observer) {
                             });
                         });
                     } else {
-                        console.log("[PTRE] Error. Cant find data element: m" + messageID);
+                        console.log("[EasyPTRE] Error. Cant find data element: m" + messageID);
                     }
                 }
             }
@@ -966,7 +984,7 @@ function addPTREStuffsToMessagesPage() {
                                 dataType: "json",
                                 url: urlPTRESpy,
                                 success: function(reponse) {
-                                    console.log('[PTRE] ' + reponse);
+                                    console.log('[EasyPTRE] [FROM PTRE] ' + reponse);
                                     if (reponse.code == 1) {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
@@ -1057,7 +1075,7 @@ function addPTREStuffsToMessagesPage() {
                         }
                     }
                 });
-                console.log('[PTRE] Pushing counter spy messages');
+                console.log('[EasyPTRE] Pushing counter spy messages');
             }
         }
     }
@@ -1112,7 +1130,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                     <hr>
                     <div id="ptreGalaxyActionsContent">
                         <div class="ptreCategoryTitle">Informations</div>
-                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a><br><br>
+                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a> - <a href="` + buildPTRELinkToAdvancedActivityTable(playerId) + `" target="_blank">Activity Table</a><br><br>
                         ` + targetComment + `
                     </div>
                 </td>
@@ -1130,7 +1148,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 <td>
                     <hr>
                     <div class="ptreCategoryTitle">Actions</div>
-                    <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
+                    <div id="btnGetPlayerInfos2`+playerId+`" type="button" class="button btn_blue">FLEET</div> <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
                 </td>
             </tr>
             <tr>
@@ -1174,6 +1192,10 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 panel.parentNode.removeChild(panel);
             }
             document.removeEventListener('click', clickHandler);
+            // If fleet menu was open
+            if (document.getElementById('divPTREInfos')) {
+                document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
+            }
         };
         const clickHandler = (event) => {
             if (!panel.contains(event.target) && event.target !== button) {
@@ -1250,6 +1272,12 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                     pushPlayerNote(playerId);
                 });
             }
+            // Fleet button
+            if (document.getElementById('btnGetPlayerInfos2'+playerId)) {
+                document.getElementById('btnGetPlayerInfos2'+playerId).addEventListener("click", function (event) {
+                    getPlayerInfos(playerId, playerName);
+                });
+            }
             // Get ranks call
             // Set a delay, so we dont fetch data if player closes the box too fast
             // Once function is run, it will check if Pop-up is still waiting
@@ -1277,7 +1305,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
     // Look for same entry
     var idASup = -1;
     $.each(dataList, function(i, elem) {
-        //console.log("[PTRE] Checking elem " + elem.type + " / " + elem.id);
+        //console.log("[EasyPTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
                 consoleDebug("Element " + newData.type + " has not changed. No update.");
@@ -1295,7 +1323,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
         dataList.splice(idASup, 1);
     }
     // Add the new entry
-    console.log("[PTRE] Adding/Updating " + newData.type + " ID:" + newData.id + " / val: " + newData.val, newData);
+    console.log("[EasyPTRE] Adding/Updating " + newData.type + " ID:" + newData.id + " / val: " + newData.val, newData);
     dataList.push(newData);
 
     // Save list
@@ -1321,7 +1349,7 @@ function debugSharableData() {
             console.log("[" + elem.type + "] " + elem.id + " => " + elem.val + " (" + elem.coords + ")");
         });
     } else {
-        console.log("[PTRE] No data to display");
+        console.log("[EasyPTRE] No data to display");
     }
 }
 
@@ -1474,18 +1502,17 @@ function debugListContent() {
 
     targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var targetList = JSON.parse(targetJSON);
-    console.log("[PTRE] AGR list: ");
+    console.log("[EasyPTRE] AGR list: ");
     console.log(targetList);
 
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     targetList = JSON.parse(targetJSON);
-    console.log("[PTRE] PTRE list: ");
+    console.log("[EasyPTRE] PTRE list: ");
     console.log(targetList);
 }
 
 // Check is player is in list
 function isPlayerInLists(playerId) {
-    console.log("Asking for " + playerId);
     if (isPlayerInTheList(playerId, 'AGR') || isPlayerInTheList(playerId, 'PTRE')) {
         return true;
     }
@@ -1941,20 +1968,29 @@ function displayHelp() {
 
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
-    var content = '<div class="ptreSubTitle">0.13.0</div>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
-    content+= '<div class="ptreSubTitle">0.12.2</div>- [Feature] Add ingame shared notes, linked to targets (beta)';
-    content+= '<div class="ptreSubTitle">0.12.0</div>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
-    content+= '<div class="ptreSubTitle">0.11.4</div>- Fix phalanx purge and update';
+    var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
+    content+= '<div><hr></div>';
+    content+= '<div class="ptreSubTitle">0.13.3 (jan 2026)</div>- Several bugfix and polish';
+    content+= '<div class="ptreSubTitle">0.13.0 (jan 2026)</div>- [Feature] Sync galaxy events and recents targets from PTRE<br>- [Feature] Highlight galaxy events and targets in galaxy view (beta)<br>- [Feature] Improve galaxy pop-up (beta)<br>- [Feature] Send debris fields alongside activities<br>- Improve galaxy info storage';
+    content+= '<div><hr></div>';
+    content+= '<div class="ptreSubTitle">0.12.2 (jan 2026)</div>- [Feature] Add ingame shared notes, linked to targets (beta)';
+    content+= '<div class="ptreSubTitle">0.12.0 (jan 2026)</div>- [Feature] Improve galaxy view with recents targets highlighting and ranks (beta)<br>- [Feature] Implement Do Not Probe feature (beta)<br>- [Feature] Setting: Toogle events on Overview page<br>- [Feature] Setting: Add Miner mode (if you want to help Team without every UX improvements)<br>- [Feature] Setting: Add Beta mode (to get Tech Preview features in advance)<br>- Add logs system (for debug)<br>- Refacto targets display<br>- A lot of background improvements';
+    content+= '<div><hr></div>';
+    content+= '<div class="ptreSubTitle">0.11.4 (oct 2025)</div>- Fix phalanx purge and update';
     content+= '<div class="ptreSubTitle">0.11.3</div>- Improve update visibility<br>- Add manual update procedure';
     content+= '<div class="ptreSubTitle">0.11.2</div>- Fix Galaxy pushs';
     content+= '<div class="ptreSubTitle">0.11.1</div>- Add buddies to Friends & Phalanx feature<br>- Add filters to Friends & Phalanx feature';
     content+= '<div class="ptreSubTitle">0.11.0</div>- Add Friends & Phalanx feature';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.10.4</div>- Add Changelog feature<br>- Fix some minor CSS issues';
     content+= '<div class="ptreSubTitle">0.10.3</div>- Manage moon ID and relocation related to phalanx sharing<br>- Rework global design';
     content+= '<div class="ptreSubTitle">0.10.2</div>- Fix counter-spy timestamp after V12 update';
     content+= '<div class="ptreSubTitle">0.10.1</div>- Allow removing TeamKey from settings';
     content+= '<div class="ptreSubTitle">0.10.0</div>- Add Galaxy events tracking and sharing (same feature as OGL/OGI but for AGR)<br>- Share Phalanx level with PTRE Team (AGR/OGL/OGI)<br>- Add PTRE Toolbar to galaxy view (AGR/OGL/OGI)<br>- New button to fetch events from Galaxy Event Explorer (AGR/OGL/OGI)<br>- New button to fetch closest friend Phalanx (AGR/OGL/OGI)<br>- Save lifeform researchs to PTRE in order to send them from website to simulator (AGR/OGL/OGI)<br>- Rework buttons and UI';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.8.0</div>- Send counter spy messages as activities<br>- Fix AGR spy table customization (following message page rework)<br>- Fix send spy report button in message page (following message page rework)';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.7.6</div>- Import AGR custom lists to PTRE tracking list (in addition of basic lists)<br>- Improve notification system (keep 5 sec history)';
     content+= '<div class="ptreSubTitle">0.7.5</div>- Display target top fleet directly into EasyPTRE pannel<br>- [Feature] Add help menu';
     content+= '<div class="ptreSubTitle">0.7.4</div>- [Feature] Sync AGR/PTRE targets list with teammates via PTRE (non-mandatory)<br>- [Feature] Add a private targets list management system (in order to not share)<br>- [Feature] Add a debug mode option<br>- [Feature] Script will check, once a day, for updates and display a label<br>- [Fix] Fix pushing activities when refreshing same system<br>- [Fix] Remove AGR "Traders" from targets lists ("Friends" were already removed)<br>- [Fix] Fix galaxy page detection (depending on from where player clicks)<br>- [Fix] Add scrollbar to targets list<br>- [Fix] Move EasyPTRE pannel to right side in order to not overlap with AGR';
@@ -2324,7 +2360,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
         return;
     }
 
-    consoleDebug("[GALAXY] processGalaxyUpdates");
+    consoleDebug("[GALAXY] Process Galaxy Updates");
     // Get LOCAL Galaxy content from Storage
     var previousSystem = null;
     previousSystem = fetchSystemV2(galaxy, system);
@@ -2346,7 +2382,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
     // Go throught gala pos
     for(let pos = 1; pos <= 15 ; pos++) {
         // Compare new positions with previous one
-        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player " + additionnalSSInfos[pos].playerName + " ("+additionnalSSInfos[pos].playerRank+"): "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId);
+        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
         if (previousSystemFound === false || newSystemInfos[pos].playerId != previousSystem[pos].playerId || newSystemInfos[pos].planetId != previousSystem[pos].planetId || newSystemInfos[pos].moonId != previousSystem[pos].moonId) {
             if (newSystemInfos[pos].playerId != -1 || previousSystem[pos].playerId != -1) {
                 consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
@@ -2395,7 +2431,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             success : function(reponse){
                 let reponseDecode = jQuery.parseJSON(reponse);
                 if (reponseDecode.code == 1) {
-                    consoleDebug(reponseDecode.message);
+                    console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
@@ -2424,7 +2460,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                         // Store new list
                         if (updated > 0) {
                             GM_setValue(ptreGalaxyEventsPos, list);
-                            consoleDebug("Galaxy Events Storage updated");
+                            consoleDebug("[GALAXY] Galaxy Events list updated");
                         }
                     }
                 } else {
@@ -2445,7 +2481,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
     if (ptreStoredTK == '') {
         return;
     }
-    // Sent to PTRE
+    // Send to PTRE
     $.ajax({
         url : urlPTREPushActivity,
         type : 'POST',
@@ -2453,7 +2489,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         cache: false,
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
-            consoleDebug(reponseDecode.message);
+            console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
@@ -2466,7 +2502,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
             }
         }
     });
-    console.log('[PTRE] [' + galaxy + ':' + system + '] Pushing Activities');
+    consoleDebug('[GALAXY] [' + galaxy + ':' + system + '] Pushing Activities to PTRE');
 }
 
 // This function calls PTRE backend to get player informations
@@ -2524,7 +2560,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 type: 'POST',
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
@@ -2562,7 +2598,7 @@ function pushPlayerNote(playerId) {
                 },
                 success: function (reponse) {
                     var reponseDecode = jQuery.parseJSON(reponse);
-                    consoleDebug(reponseDecode.message);
+                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
                     }
@@ -2590,7 +2626,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             cache: false,
             success : function(reponse){
                 var reponseDecode = jQuery.parseJSON(reponse);
-                consoleDebug(reponseDecode.message);
+                consoleDebug("[FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
@@ -2714,7 +2750,7 @@ function getGEEInfosFromGala() {
 // - Phalanx levels
 function syncDataWithPTRE(mode = "auto") {
     const currentTime = Math.floor(serverTime.getTime() / 1000);
-    console.log("[PTRE] Syncing data "+currentTime);
+    console.log("[EasyPTRE] Syncing data "+currentTime);
     const hot_ts_max = currentTime + 24*3600;
     const teamKey = GM_getValue(ptreTeamKey, "notk");
     var addParams = "";
@@ -2759,7 +2795,7 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
 
-                consoleDebug('[PTRE] ' + reponseDecode.message);
+                consoleDebug('[FROM PTRE] ' + reponseDecode.message);
 
                 // Update info in menu
                 if (document.getElementById("ptreLastDataSyncField")) {
@@ -2825,6 +2861,8 @@ function syncTargets(mode) {
         success : function(reponse){
             var reponseDecode = jQuery.parseJSON(reponse);
             if (reponseDecode.code == 1) {
+                // Reset local list, as we update the entire list
+                GM_setValue(ptrePTREPlayerListJSON, '');
                 var count = 0;
                 var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
                 $.each(newTargetList, function(i, incomingPlayer) {
@@ -3081,13 +3119,17 @@ function buildPTRELinkToPlayer(playerID) {
     return 'https://ptre.chez.gg/?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
 }
 
+function buildPTRELinkToAdvancedActivityTable(playerID) {
+    return 'https://ptre.chez.gg/advanced_activity_table.php?country=' + country + '&univers=' + universe + '&player_id=' + playerID;
+}
+
 function buildLinkToGalaxy(galaxy, system, position) {
     return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=galaxy&galaxy='+galaxy+'&system='+system+'&position='+position+'">['+galaxy+':'+system+':'+position+']</a>';
 }
 
 function consoleDebug(message) {
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
-        console.log('[PTRE] ' + message);
+        console.log('[EasyPTRE] ' + message);
     }
 }
 
@@ -3168,7 +3210,7 @@ function displayGalaxyMiniMessage(message) {
     if (document.getElementById("fleetstatusrow")) {
         document.getElementById("fleetstatusrow").innerHTML = '<div class="success">PTRE: ' + message + '</div>';
     } else {
-        console.log("[PTRE] Error. Cant display: " + message);
+        console.log("[EasyPTRE] Error. Cant display: " + message);
     }
 }
 
@@ -3183,7 +3225,7 @@ function displayGalaxyMessageContent(message) {
     if (document.getElementById("ptreGalaxyMessageBoxContent")) {
         document.getElementById("ptreGalaxyMessageBoxContent").innerHTML = message;
     } else {
-        console.log("[PTRE] Error. Cant display: " + message);
+        console.log("[EasyPTRE] Error. Cant display: " + message);
     }
 }
 
@@ -3277,7 +3319,7 @@ function parsePlayerResearchs(json, mode) {
 
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
-    console.log("[PTRE] Migrate Data and clean storage");
+    console.log("[EasyPTRE] Migrate Data and clean storage");
     const currentTime = Math.floor(serverTime.getTime() / 1000);
 
     // Clean logs
@@ -3389,7 +3431,7 @@ function dropGalaxyCacheStorageV1() {
 
 function addToLogs(message) {
     var currentTime = Math.floor(serverTime.getTime() / 1000);
-    consoleDebug(message);
+    console.log(message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {
