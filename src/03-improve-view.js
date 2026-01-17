@@ -28,6 +28,7 @@ function improveGalaxyTable() {
     consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
     cleanGalaxyMiniMessage();
 
+    var ptreStoredTK = GM_getValue(ptreTeamKey, '');
     // Get players to highlight
     var highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
     // Get positions to highlight
@@ -122,7 +123,7 @@ function improveGalaxyTable() {
             }
 
             // Get activities infos
-            if (ptrePushActivities === true) {
+            if (ptrePushActivities === true && ptreStoredTK != '') {
                 if (newSystemToStore[pos].playerId > 0) {
                     if ( (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") || mergedTargetsList.includes(newSystemToStore[pos].playerId) ) {
                         activitiesToSend++;
