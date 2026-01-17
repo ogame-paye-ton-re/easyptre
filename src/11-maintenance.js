@@ -82,9 +82,10 @@ function migrateDataAndCleanStorage() {
     // End: Clean LastAvailableVersion Keys
 
     // Check TS
-    if (GM_getValue(ptreLastGlobalSync, 0) > currentTime) {
+    lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
+    if (lastGlobalSyncTemp > currentTime) {
         GM_setValue(ptreLastGlobalSync, currentTime);
-        addToLogs("Fixed bad TS ptreLastGlobalSync");
+        addToLogs("Fixed bad TS ptreLastGlobalSync (" + lastGlobalSyncTemp + '/' + currentTime + ')');
     }
 }
 
@@ -116,7 +117,7 @@ function dropGalaxyCacheStorageV1() {
 
 function addToLogs(message) {
     var currentTime = Math.floor(serverTime.getTime() / 1000);
-    console.log(message);
+    console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {

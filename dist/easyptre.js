@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 17 janv. 2026 22:48:58 CET
+// Build date: sam. 17 janv. 2026 23:18:06 CET
 // ****************************************
 
 // ****************************************
@@ -2294,7 +2294,7 @@ function displaySharedData() {
         const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
         const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
         const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
-        const nextGlobalSync = Math.round((GM_getValue(ptreLastGlobalSync, 0) + globalPTRESyncTimeout - currentTime) / 3600);
+        const nextGlobalSync = Math.round((lastGlobalSync + globalPTRESyncTimeout - currentTime) / 3600);
         const syncTimeout = globalPTRESyncTimeout / 3600;
         content += '<hr><div class="ptreCategoryTitle">Debug</div>';
         content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + lastGlobalSync + '<br>';
@@ -3408,9 +3408,10 @@ function migrateDataAndCleanStorage() {
     // End: Clean LastAvailableVersion Keys
 
     // Check TS
-    if (GM_getValue(ptreLastGlobalSync, 0) > currentTime) {
+    lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
+    if (lastGlobalSyncTemp > currentTime) {
         GM_setValue(ptreLastGlobalSync, currentTime);
-        addToLogs("Fixed bad TS ptreLastGlobalSync");
+        addToLogs("Fixed bad TS ptreLastGlobalSync (" + lastGlobalSyncTemp + '/' + currentTime + ')');
     }
 }
 
@@ -3442,7 +3443,7 @@ function dropGalaxyCacheStorageV1() {
 
 function addToLogs(message) {
     var currentTime = Math.floor(serverTime.getTime() / 1000);
-    console.log(message);
+    console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {

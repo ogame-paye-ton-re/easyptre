@@ -663,7 +663,7 @@ function displaySharedData() {
         const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
         const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
         const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
-        const nextGlobalSync = Math.round((GM_getValue(ptreLastGlobalSync, 0) + globalPTRESyncTimeout - currentTime) / 3600);
+        const nextGlobalSync = Math.round((lastGlobalSync + globalPTRESyncTimeout - currentTime) / 3600);
         const syncTimeout = globalPTRESyncTimeout / 3600;
         content += '<hr><div class="ptreCategoryTitle">Debug</div>';
         content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + lastGlobalSync + '<br>';
