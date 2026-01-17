@@ -11,7 +11,7 @@
 // @updateURL    https://openuserjs.org/meta/GeGe_GM/EasyPTRE.meta.js
 // @downloadURL  https://openuserjs.org/install/GeGe_GM/EasyPTRE.user.js
 // @require      http://code.jquery.com/jquery-3.4.1.min.js
-// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @icon         https://ptre.chez.gg/img/easyptre/easyptre_icon.png
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_setValue
