@@ -10,18 +10,23 @@
 // @match        https://ptre.chez.gg/*
 // @updateURL    https://openuserjs.org/meta/GeGe_GM/EasyPTRE.meta.js
 // @downloadURL  https://openuserjs.org/install/GeGe_GM/EasyPTRE.user.js
-// @require      http://code.jquery.com/jquery-3.4.1.min.js
+// @require      https://code.jquery.com/jquery-3.4.1.min.js
 // @icon         https://ptre.chez.gg/img/easyptre/easyptre_icon.png
+// @run-at       document-end
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
 // @grant        GM_listValues
 // @grant        GM_xmlhttpRequest
+// @connect      www.tampermonkey.net
+// @connect      ogame.gameforge.com
+// @connect      ptre.chez.gg
+// @supportURL   https://discord.gg/WsJGC9G
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 17 janv. 2026 21:02:44 CET
+// Build date: sam. 17 janv. 2026 22:48:58 CET
 // ****************************************
 
 // ****************************************
