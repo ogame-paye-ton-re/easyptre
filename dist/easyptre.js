@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.14.0
+// @version      0.14.1
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -21,7 +21,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 17 janv. 2026 20:33:42 CET
+// Build date: sam. 17 janv. 2026 20:56:19 CET
 // ****************************************
 
 // ****************************************
@@ -748,8 +748,13 @@ function improvePageGalaxy() {
     console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
+    const ptreStoredTK = GM_getValue(ptreTeamKey, '');
+    let tkComment = "";
     let toolComment = "Detected tool: ";
 
+    if (ptreStoredTK == '') {
+        tkComment = '<span class="ptreError">Missing Team Key</span> - ';
+    }
     // Update status once for the gala browsing session
     if (isAGREnabled()) {
         toolComment+= "AGR ";
@@ -793,7 +798,7 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
         if (ptrePushActivities === true) {
             tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
         }
