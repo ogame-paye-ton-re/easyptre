@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: lun. 19 janv. 2026 22:00:01 CET
+// Build date: lun. 19 janv. 2026 22:07:26 CET
 // ****************************************
 
 // ****************************************
@@ -1424,6 +1424,8 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
                     consoleDebug("[Phalanx] Drop: Cant find this moon " + elem.id);
                 }
             } else {
+                // Mark current moon as listed
+                existingMoons[elem.id] = -1;
                 consoleDebug("[Phalanx] Skipping current moon (added after)");
             }
         }

@@ -125,6 +125,8 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
                     consoleDebug("[Phalanx] Drop: Cant find this moon " + elem.id);
                 }
             } else {
+                // Mark current moon as listed
+                existingMoons[elem.id] = -1;
                 consoleDebug("[Phalanx] Skipping current moon (added after)");
             }
         }
