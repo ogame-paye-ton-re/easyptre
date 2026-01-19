@@ -78,22 +78,33 @@ function setNumber(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-function getLastUpdateLabel(lastCheck) {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var temp = '<span class="ptreError ptreSmall">never updated</span>';
-    if (lastCheck > 0) {
-        var nb_min = (currentTime - lastCheck) / 60;
+function getLastUpdateLabel(ts) {
+    var temp = "";
+    const currentTime = getIGCurrentTS();
+
+    if (ts == 0) {
+        return '<span class="ptreError ptreSmall">never updated</span>';
+    } else if (currentTime >= ts) {
+        var nb_min = (currentTime - ts) / 60;
         if (nb_min <= 1) {
             temp = '<span class="ptreSuccess ptreSmall">updated now</span>';
         } else if (nb_min < 60) {
             temp = '<span class="ptreSuccess ptreSmall">updated ' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
-            var nb_h = (currentTime - lastCheck) / 3600;
+            var nb_h = (currentTime - ts) / 3600;
             temp = '<span class="ptreWarning ptreSmall">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
             temp = '<span class="ptreError ptreSmall">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
+        return temp;
+    } else {
+        let inSec = ts - currentTime;
+        return "In " + inSec + " secs";
     }
     return temp;
+}
+
+function getIGCurrentTS() {
+    return Math.floor(serverTime.getTime() / 1000);
 }
 

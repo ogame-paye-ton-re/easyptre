@@ -5,7 +5,7 @@
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
     console.log("[EasyPTRE] Migrate Data and clean storage");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -83,9 +83,11 @@ function migrateDataAndCleanStorage() {
 
     // Check TS
     lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
-    if (lastGlobalSyncTemp > currentTime) {
-        GM_setValue(ptreLastGlobalSync, currentTime);
-        addToLogs("Fixed bad TS ptreLastGlobalSync (" + lastGlobalSyncTemp + '/' + currentTime + ')');
+    if (ptreLastGlobalSync != 0) {
+        if (ptreLastGlobalSync > currentTime || Math.abs(lastGlobalSyncTemp - currentTime) > 24*60*60) {
+            GM_setValue(ptreLastGlobalSync, currentTime);
+            addToLogs("Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+        }
     }
 }
 
@@ -116,7 +118,7 @@ function dropGalaxyCacheStorageV1() {
 }
 
 function addToLogs(message) {
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
@@ -136,7 +138,7 @@ function addToLogs(message) {
 function garbageCollectGalaxyDataV2(days) {
     var removedCount = 0;
     if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
-        const currentTime = Math.floor(serverTime.getTime() / 1000);
+        const currentTime = getIGCurrentTS();
         const limitTS = currentTime - days*24*60*60;
         for(var gala = 1; gala <= 15 ; gala++) {
             const galaxyData = GM_getValue(ptreGalaxyData+gala, '');

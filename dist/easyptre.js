@@ -26,14 +26,15 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 17 janv. 2026 23:18:06 CET
+// Build date: lun. 19 janv. 2026 19:26:13 CET
 // ****************************************
 
 // ****************************************
 // INIT
 // ****************************************
 
-console.log("[EasyPTRE] Version " + GM_info.script.version);
+const startTime = getIGCurrentTS();
+console.log("[EasyPTRE] Version " + GM_info.script.version + " (TS: " + startTime + ")");
 // Check current website
 var modeEasyPTRE = "ingame";
 if (/ptre.chez.gg/.test(location.href)) {
@@ -241,7 +242,7 @@ if (modeEasyPTRE == "ingame") {
     }
 
     // Global Sync
-    if ((Math.floor(serverTime.getTime()) / 1000) > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
+    if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
         setTimeout(globalPTRESync, 3000);
     }
 
@@ -832,7 +833,7 @@ function improvePageGalaxy() {
 // Save JSON "API 2" from fleet page
 function improvePageFleet() {
     console.log("[EasyPTRE] Improving Fleet Page");
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    var currentTime = getIGCurrentTS();
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
         var tooltipContent = spanElement.getAttribute('data-tooltip-title');
@@ -882,7 +883,7 @@ function improvePageFacilities() {
 // Parse Buddies page
 function improvePageBuddies() {
     console.log("[EasyPTRE] Improving Buddies Page");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
     consoleDebug(playerIds);
@@ -1095,7 +1096,7 @@ function addPTREStuffsToMessagesPage() {
 // Called when user clicks on the PTRE icon in galaxy view
 function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
     consoleDebug("Click on pos " + galaxy + ":" + system + ":" + pos);
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
 
     // Clean previous Galaxy box
     if (window.ptreGalaxyCleanup) {
@@ -1635,7 +1636,7 @@ function updateLocalAGRList() {
 
 // Displays PTRE settings
 function displayPTREMenu() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
 
     if (!document.getElementById('btnSaveOptPTRE')) {
         migrateDataAndCleanStorage();
@@ -2037,7 +2038,6 @@ function displayLogs() {
     var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {
@@ -2244,7 +2244,7 @@ function displayTargetsList() {
 
 function displaySharedData() {
     setupInfoBox("Team Shared data");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     var content = '';
     var phalanxCount = 0;
     var dataJSON = '';
@@ -2291,19 +2291,19 @@ function displaySharedData() {
 
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
         const updateCooldown = GM_getValue(ptreCheckForUpdateCooldown, 0);
-        const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
-        const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
-        const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
+        const lastDataSync = GM_getValue(ptreLastDataSync, 0);
+        const lastCheck = GM_getValue(ptreLastUpdateCheck, 0);
+        const lastGlobalSync = GM_getValue(ptreLastGlobalSync, 0);
         const nextGlobalSync = Math.round((lastGlobalSync + globalPTRESyncTimeout - currentTime) / 3600);
         const syncTimeout = globalPTRESyncTimeout / 3600;
         content += '<hr><div class="ptreCategoryTitle">Debug</div>';
-        content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + lastGlobalSync + '<br>';
+        content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + getLastUpdateLabel(lastGlobalSync) + '<br>';
         content += 'Next Global Sync in ' + nextGlobalSync + 'h<br><br>';
 
         if (updateCooldown > 0) {
             content += 'Live Auto-Update is enabled<br>';
-            content += 'Last Check (every ' + updateCooldown + ' sec): ' + lastCheck + '<br>';
-            content += 'Last Data Sync: ' + lastDataSync + '<br>';
+            content += 'Last Check (every ' + updateCooldown + ' sec): ' + getLastUpdateLabel(lastCheck) + '<br>';
+            content += 'Last Data Sync: ' + getLastUpdateLabel(lastDataSync) + '<br>';
         } else {
             content += 'Auto-Update is disabled<br>';
         }
@@ -2683,7 +2683,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
 
 // This function fetchs closest friend phalanx
 function getPhalanxInfosFromGala() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     var warning = '';
     var systemElem = $("input#system_input")[0];
     var galaxyElem = $("input#galaxy_input")[0];
@@ -2760,7 +2760,7 @@ function getGEEInfosFromGala() {
 // Like:
 // - Phalanx levels
 function syncDataWithPTRE(mode = "auto") {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     console.log("[EasyPTRE] Syncing data "+currentTime);
     const hot_ts_max = currentTime + 24*3600;
     const teamKey = GM_getValue(ptreTeamKey, "notk");
@@ -2824,7 +2824,7 @@ function syncDataWithPTRE(mode = "auto") {
 
 // Action: Sync targets
 function syncTargets(mode) {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
     var AGRJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var PTREJSON = GM_getValue(ptrePTREPlayerListJSON, '');
@@ -2939,7 +2939,7 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    var currentTime = getIGCurrentTS();
 
     if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
         consoleDebug("Checking last version available");
@@ -3022,7 +3022,7 @@ function updateLiveCheckConfig(coolddown, last_update = -1) {
 function checkForPTREUpdate() {
     const TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
-        const currentTime = Math.floor(serverTime.getTime() / 1000);
+        const currentTime = getIGCurrentTS();
         if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
             consoleDebug("Checking for Updates...");
             $.ajax({
@@ -3054,7 +3054,7 @@ function checkForPTREUpdate() {
 // Enable auto-check to PTRE
 // This is disabled by default cooldown <= 0
 function runAutoCheckForPTREUpdate() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
     // If Auto-Check is enabled
     if (cooldown > 0) {
@@ -3072,7 +3072,7 @@ function runAutoCheckForPTREUpdate() {
 // Sync all data once a day
 function globalPTRESync() {
     addToLogs("Global Clean & Sync");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     migrateDataAndCleanStorage();
     garbageCollectGalaxyDataV2(ptreGalaxyStorageRetention);
     syncTargets();
@@ -3160,23 +3160,34 @@ function setNumber(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-function getLastUpdateLabel(lastCheck) {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
-    var temp = '<span class="ptreError ptreSmall">never updated</span>';
-    if (lastCheck > 0) {
-        var nb_min = (currentTime - lastCheck) / 60;
+function getLastUpdateLabel(ts) {
+    var temp = "";
+    const currentTime = getIGCurrentTS();
+
+    if (ts == 0) {
+        return '<span class="ptreError ptreSmall">never updated</span>';
+    } else if (currentTime >= ts) {
+        var nb_min = (currentTime - ts) / 60;
         if (nb_min <= 1) {
             temp = '<span class="ptreSuccess ptreSmall">updated now</span>';
         } else if (nb_min < 60) {
             temp = '<span class="ptreSuccess ptreSmall">updated ' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
-            var nb_h = (currentTime - lastCheck) / 3600;
+            var nb_h = (currentTime - ts) / 3600;
             temp = '<span class="ptreWarning ptreSmall">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
             temp = '<span class="ptreError ptreSmall">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
+        return temp;
+    } else {
+        let inSec = ts - currentTime;
+        return "In " + inSec + " secs";
     }
     return temp;
+}
+
+function getIGCurrentTS() {
+    return Math.floor(serverTime.getTime() / 1000);
 }
 
 // ****************************************
@@ -3331,7 +3342,7 @@ function parsePlayerResearchs(json, mode) {
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
     console.log("[EasyPTRE] Migrate Data and clean storage");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -3409,9 +3420,11 @@ function migrateDataAndCleanStorage() {
 
     // Check TS
     lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
-    if (lastGlobalSyncTemp > currentTime) {
-        GM_setValue(ptreLastGlobalSync, currentTime);
-        addToLogs("Fixed bad TS ptreLastGlobalSync (" + lastGlobalSyncTemp + '/' + currentTime + ')');
+    if (ptreLastGlobalSync != 0) {
+        if (ptreLastGlobalSync > currentTime || Math.abs(lastGlobalSyncTemp - currentTime) > 24*60*60) {
+            GM_setValue(ptreLastGlobalSync, currentTime);
+            addToLogs("Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+        }
     }
 }
 
@@ -3442,7 +3455,7 @@ function dropGalaxyCacheStorageV1() {
 }
 
 function addToLogs(message) {
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
@@ -3462,7 +3475,7 @@ function addToLogs(message) {
 function garbageCollectGalaxyDataV2(days) {
     var removedCount = 0;
     if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
-        const currentTime = Math.floor(serverTime.getTime() / 1000);
+        const currentTime = getIGCurrentTS();
         const limitTS = currentTime - days*24*60*60;
         for(var gala = 1; gala <= 15 ; gala++) {
             const galaxyData = GM_getValue(ptreGalaxyData+gala, '');

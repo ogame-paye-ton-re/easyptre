@@ -346,7 +346,7 @@ function improvePageGalaxy() {
 // Save JSON "API 2" from fleet page
 function improvePageFleet() {
     console.log("[EasyPTRE] Improving Fleet Page");
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    var currentTime = getIGCurrentTS();
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
         var tooltipContent = spanElement.getAttribute('data-tooltip-title');
@@ -396,7 +396,7 @@ function improvePageFacilities() {
 // Parse Buddies page
 function improvePageBuddies() {
     console.log("[EasyPTRE] Improving Buddies Page");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
     consoleDebug(playerIds);
@@ -609,7 +609,7 @@ function addPTREStuffsToMessagesPage() {
 // Called when user clicks on the PTRE icon in galaxy view
 function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
     consoleDebug("Click on pos " + galaxy + ":" + system + ":" + pos);
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
 
     // Clean previous Galaxy box
     if (window.ptreGalaxyCleanup) {

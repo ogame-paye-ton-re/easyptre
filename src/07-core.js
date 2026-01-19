@@ -36,7 +36,7 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
+    var currentTime = getIGCurrentTS();
 
     if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
         consoleDebug("Checking last version available");
@@ -119,7 +119,7 @@ function updateLiveCheckConfig(coolddown, last_update = -1) {
 function checkForPTREUpdate() {
     const TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
-        const currentTime = Math.floor(serverTime.getTime() / 1000);
+        const currentTime = getIGCurrentTS();
         if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
             consoleDebug("Checking for Updates...");
             $.ajax({
@@ -151,7 +151,7 @@ function checkForPTREUpdate() {
 // Enable auto-check to PTRE
 // This is disabled by default cooldown <= 0
 function runAutoCheckForPTREUpdate() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
     // If Auto-Check is enabled
     if (cooldown > 0) {
@@ -169,7 +169,7 @@ function runAutoCheckForPTREUpdate() {
 // Sync all data once a day
 function globalPTRESync() {
     addToLogs("Global Clean & Sync");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     migrateDataAndCleanStorage();
     garbageCollectGalaxyDataV2(ptreGalaxyStorageRetention);
     syncTargets();

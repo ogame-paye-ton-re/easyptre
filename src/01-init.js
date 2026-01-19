@@ -2,7 +2,8 @@
 // INIT
 // ****************************************
 
-console.log("[EasyPTRE] Version " + GM_info.script.version);
+const startTime = getIGCurrentTS();
+console.log("[EasyPTRE] Version " + GM_info.script.version + " (TS: " + startTime + ")");
 // Check current website
 var modeEasyPTRE = "ingame";
 if (/ptre.chez.gg/.test(location.href)) {
@@ -210,7 +211,7 @@ if (modeEasyPTRE == "ingame") {
     }
 
     // Global Sync
-    if ((Math.floor(serverTime.getTime()) / 1000) > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
+    if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
         setTimeout(globalPTRESync, 3000);
     }
 

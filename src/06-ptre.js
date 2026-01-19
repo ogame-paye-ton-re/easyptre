@@ -334,7 +334,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
 
 // This function fetchs closest friend phalanx
 function getPhalanxInfosFromGala() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     var warning = '';
     var systemElem = $("input#system_input")[0];
     var galaxyElem = $("input#galaxy_input")[0];
@@ -411,7 +411,7 @@ function getGEEInfosFromGala() {
 // Like:
 // - Phalanx levels
 function syncDataWithPTRE(mode = "auto") {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     console.log("[EasyPTRE] Syncing data "+currentTime);
     const hot_ts_max = currentTime + 24*3600;
     const teamKey = GM_getValue(ptreTeamKey, "notk");
@@ -475,7 +475,7 @@ function syncDataWithPTRE(mode = "auto") {
 
 // Action: Sync targets
 function syncTargets(mode) {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
     var AGRJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var PTREJSON = GM_getValue(ptrePTREPlayerListJSON, '');

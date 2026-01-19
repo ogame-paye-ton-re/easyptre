@@ -4,7 +4,7 @@
 
 // Displays PTRE settings
 function displayPTREMenu() {
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
 
     if (!document.getElementById('btnSaveOptPTRE')) {
         migrateDataAndCleanStorage();
@@ -406,7 +406,6 @@ function displayLogs() {
     var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
-    var currentTime = Math.floor(serverTime.getTime() / 1000);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {
@@ -613,7 +612,7 @@ function displayTargetsList() {
 
 function displaySharedData() {
     setupInfoBox("Team Shared data");
-    const currentTime = Math.floor(serverTime.getTime() / 1000);
+    const currentTime = getIGCurrentTS();
     var content = '';
     var phalanxCount = 0;
     var dataJSON = '';
@@ -660,19 +659,19 @@ function displaySharedData() {
 
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
         const updateCooldown = GM_getValue(ptreCheckForUpdateCooldown, 0);
-        const lastDataSync = getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0));
-        const lastCheck = getLastUpdateLabel(GM_getValue(ptreLastUpdateCheck, 0));
-        const lastGlobalSync = getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0));
+        const lastDataSync = GM_getValue(ptreLastDataSync, 0);
+        const lastCheck = GM_getValue(ptreLastUpdateCheck, 0);
+        const lastGlobalSync = GM_getValue(ptreLastGlobalSync, 0);
         const nextGlobalSync = Math.round((lastGlobalSync + globalPTRESyncTimeout - currentTime) / 3600);
         const syncTimeout = globalPTRESyncTimeout / 3600;
         content += '<hr><div class="ptreCategoryTitle">Debug</div>';
-        content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + lastGlobalSync + '<br>';
+        content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + getLastUpdateLabel(lastGlobalSync) + '<br>';
         content += 'Next Global Sync in ' + nextGlobalSync + 'h<br><br>';
 
         if (updateCooldown > 0) {
             content += 'Live Auto-Update is enabled<br>';
-            content += 'Last Check (every ' + updateCooldown + ' sec): ' + lastCheck + '<br>';
-            content += 'Last Data Sync: ' + lastDataSync + '<br>';
+            content += 'Last Check (every ' + updateCooldown + ' sec): ' + getLastUpdateLabel(lastCheck) + '<br>';
+            content += 'Last Data Sync: ' + getLastUpdateLabel(lastDataSync) + '<br>';
         } else {
             content += 'Auto-Update is disabled<br>';
         }
