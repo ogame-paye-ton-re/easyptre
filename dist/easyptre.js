@@ -26,15 +26,14 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: lun. 19 janv. 2026 23:46:10 CET
+// Build date: lun. 19 janv. 2026 23:52:14 CET
 // ****************************************
 
 // ****************************************
 // INIT
 // ****************************************
 
-const startTime = getIGCurrentTS();
-console.log("[EasyPTRE] Version " + GM_info.script.version + " (TS: " + startTime + ")");
+console.log("[EasyPTRE] Version " + GM_info.script.version);
 // Check current website
 var modeEasyPTRE = "ingame";
 if (/ptre.chez.gg/.test(location.href)) {

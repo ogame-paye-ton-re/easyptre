@@ -2,8 +2,7 @@
 // INIT
 // ****************************************
 
-const startTime = getIGCurrentTS();
-console.log("[EasyPTRE] Version " + GM_info.script.version + " (TS: " + startTime + ")");
+console.log("[EasyPTRE] Version " + GM_info.script.version);
 // Check current website
 var modeEasyPTRE = "ingame";
 if (/ptre.chez.gg/.test(location.href)) {
