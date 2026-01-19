@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: lun. 19 janv. 2026 19:26:13 CET
+// Build date: lun. 19 janv. 2026 23:16:24 CET
 // ****************************************
 
 // ****************************************
@@ -866,14 +866,11 @@ function improvePageFacilities() {
         if (technologiesDiv.querySelector('li.sensorPhalanx')) {
             const sensorPhalanxLi = technologiesDiv.querySelector('li.sensorPhalanx');
             const levelSpan = sensorPhalanxLi.querySelector('span.level');
-            var phalanx_level = levelSpan.getAttribute('data-value');
+            var phalanxLevel = levelSpan.getAttribute('data-value');
             var coords = document.getElementsByName('ogame-planet-coordinates')[0].content;
             var moonID = document.getElementsByName('ogame-planet-id')[0].content;
-            consoleDebug(coords + ': Found Phalanx level '+phalanx_level);
-
-            //var moon = {type: "moon", id: coords, val: {pha_lvl: phalanx_level, toto: "titi", tata: "tutu"}};
-            var phalanx = {type: "phalanx", id: moonID, coords: coords, val: phalanx_level};
-            addDataToPTREData(phalanx);
+            consoleDebug(coords + ': Found Phalanx level '+phalanxLevel);
+            refreshPhalanxStorage(moonID, coords, phalanxLevel);
         }
     } else {
         consoleDebug("Cant find technologies element");
@@ -1350,6 +1347,124 @@ function addDataToPTREData(newData, syncToPTRE = true) {
     }
 }
 
+function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE = true) {
+    consoleDebug("[Phalanx] Refresh Moons and Phalanx");
+    let existingMoons = {};
+    let planetFound = 0;
+    let moonFound = 0;
+    let missingPhalanxMessage = "";
+
+    //debugSharableData();
+
+    // Get current planet and moon list (from planet menu)
+    const planetListFromDOM = document.getElementById('planetList');
+    for (const child of planetListFromDOM.children) {
+        if (child.classList.contains("smallplanet")) {
+            let splitted = child.id.split('-');
+            let planetId = Number(splitted[1]);
+            let coords = "";
+            let moonID = 0;
+            //consoleDebug("[Phalanx] Planet ID: " + planetId);
+            const planetElem = child.querySelectorAll('.planet-koords');
+            if (planetElem) {
+                planetFound++;
+                //coords = planetElem[0].innerHTML;
+                //coords = coords.replace(/[\[\]]/g, "");
+                //consoleDebug("[Phalanx] Coords: " + coords);
+                const regex = /\d+:\d+:\d+/;
+                const match = planetElem[0].innerHTML.match(regex);
+                if (match) {
+                    coords = match[0];
+                }
+            }
+            const moonElem = child.querySelectorAll('.icon-moon');
+            if (moonElem && moonElem[0]) {
+                splitted = moonElem[0].id.split('_');
+                moonID = Number(splitted[1]);
+                //consoleDebug("[Phalanx] moonId: " + moonID);
+            }
+            if (coords != "" && moonID != 0) {
+                consoleDebug("[Phalanx] Found current Moon " + moonID + " at " + coords);
+                existingMoons[String(moonID)] = coords;
+                moonFound++;
+            }
+        }
+    }
+    // Mark current moon as listed
+    existingMoons[moonIdNew] = -1;
+    consoleDebug("[Phalanx] Found " + planetFound + " planets and " + moonFound + " moons");
+
+    // Update current data
+    var dataJSON = GM_getValue(ptreDataToSync, '');
+    var dataList = [];
+    var dataListNew = [];
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+    }
+    dataList.forEach((elem, index) => {
+        if (elem.type != "phalanx") {
+            // Keep non-phalanx elements
+            dataListNew.push(elem);
+            consoleDebug("[Phalanx] Keep non-phalanx element");
+        } else {
+            // If it's a phalanx
+            consoleDebug("[Phalanx] Found stored Moon " + elem.id + " (" + elem.coords + ")");
+            // Skip moon to add (we add it at the end)
+            if (elem.id != moonIdNew) {
+                // Check if moon is really existing
+                if (existingMoons[elem.id] && existingMoons[elem.id] != -1) {
+                    if (elem.coords == existingMoons[elem.id]) {
+                        // If the moon is still at the same place
+                        consoleDebug("[Phalanx] Keep: This moon exists and is at the same spot");
+                        dataListNew.push(elem);
+                    } else {
+                        // If moon moved, we update the coords
+                        consoleDebug("[Phalanx] Update: This moon exists BUT has been moved from "+elem.coords+" to "+existingMoons[elem.id]);
+                        let phalanx = {type: "phalanx", id: elem.id, coords: existingMoons[elem.id], val: elem.val};
+                        dataListNew.push(phalanx);
+                    }
+                    // Mark this moon as listed
+                    existingMoons[elem.id] = -1;
+                    // Generate message to an missing phalanx
+                    if (elem.val == -1) {
+                        missingPhalanxMessage = " - Missing phalanx: "+buildLinkToMoonBuilding(elem.id);
+                    }
+                } else {
+                    consoleDebug("[Phalanx] Drop: Cant find this moon " + elem.id);
+                }
+            } else {
+                consoleDebug("[Phalanx] Skipping current moon (added after)");
+            }
+        }
+    });
+    // This is the moon to update
+    //consoleDebug("[Phalanx] Update: This is the moon to update");
+    let phalanx = {type: "phalanx", id: moonIdNew, coords: coordsNew, val: phalanxLevelNew};
+    dataListNew.push(phalanx);
+
+    // Adding moons not listed
+    Object.entries(existingMoons).forEach(([key, value]) => {
+        if (value != -1) {
+            consoleDebug("[Phalanx] Moon " + key + " at " + value + " is missing from list: adding it!");
+            let phalanx = {type: "phalanx", id: key, coords: value, val: -1};
+            dataListNew.push(phalanx);
+        }
+    });
+
+    // Save list
+    dataJSON = JSON.stringify(dataListNew);
+    GM_setValue(ptreDataToSync, dataJSON);
+
+    //debugSharableData();
+
+    displayPTREPopUpMessage("Phalanx updated" + missingPhalanxMessage);
+
+    // Sync data to PTRE
+    if (syncToPTRE === true) {
+        setTimeout(syncDataWithPTRE, dataSharingDelay);
+    }
+}
+
 function debugSharableData() {
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
@@ -1737,17 +1852,27 @@ function displayPTREMenu() {
         // Shared data
         var dataJSON = '';
         dataJSON = GM_getValue(ptreDataToSync, '');
+        var phalanxCountTotal = 0;
         var phalanxCount = 0;
         var dnpCount = 0;
         var hotCount = 0;
         var dataList = [];
+        var phalanxAdditionnalMessage = '';
         if (dataJSON != '') {
             dataList = JSON.parse(dataJSON);
             $.each(dataList, function(i, elem) {
                 if (elem.type == "phalanx") {
-                    phalanxCount++;
+                    phalanxCountTotal++;
+                    if (elem.val != -1) {
+                        phalanxCount++;
+                    } else if (phalanxAdditionnalMessage == "") {
+                        phalanxAdditionnalMessage = '<span class="ptreSmall ptreError">Missing phalanx: '+buildLinkToMoonBuilding(elem.id)+'</span>';
+                    }
                 }
             });
+        }
+        if (phalanxAdditionnalMessage == "") {
+            phalanxAdditionnalMessage = '<span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span>';
         }
         const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
         const galaEventsCount = galaEventsList.length;
@@ -1761,7 +1886,7 @@ function displayPTREMenu() {
         });
         divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" colspan="2">';
-        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br><span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '</span></td></tr>';
+        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br>'+phalanxAdditionnalMessage+'</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
@@ -2259,7 +2384,11 @@ function displaySharedData() {
         dataList = JSON.parse(dataJSON);
         $.each(dataList, function(i, elem) {
             if (elem.type == "phalanx") {
-                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + elem.val + '</td></tr>';
+                let val = elem.val;
+                if (val == -1) {
+                    val = '<span class="ptreWarning">???</span>';
+                }
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + val + '</td></tr>';
                 phalanxCount++;
             }
         });
@@ -3136,6 +3265,10 @@ function buildPTRELinkToAdvancedActivityTable(playerID) {
 
 function buildLinkToGalaxy(galaxy, system, position) {
     return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=galaxy&galaxy='+galaxy+'&system='+system+'&position='+position+'">['+galaxy+':'+system+':'+position+']</a>';
+}
+
+function buildLinkToMoonBuilding(moonID) {
+    return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=facilities&cp='+moonID+'">Visit Moon buildings</a>';
 }
 
 function consoleDebug(message) {

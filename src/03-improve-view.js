@@ -379,14 +379,11 @@ function improvePageFacilities() {
         if (technologiesDiv.querySelector('li.sensorPhalanx')) {
             const sensorPhalanxLi = technologiesDiv.querySelector('li.sensorPhalanx');
             const levelSpan = sensorPhalanxLi.querySelector('span.level');
-            var phalanx_level = levelSpan.getAttribute('data-value');
+            var phalanxLevel = levelSpan.getAttribute('data-value');
             var coords = document.getElementsByName('ogame-planet-coordinates')[0].content;
             var moonID = document.getElementsByName('ogame-planet-id')[0].content;
-            consoleDebug(coords + ': Found Phalanx level '+phalanx_level);
-
-            //var moon = {type: "moon", id: coords, val: {pha_lvl: phalanx_level, toto: "titi", tata: "tutu"}};
-            var phalanx = {type: "phalanx", id: moonID, coords: coords, val: phalanx_level};
-            addDataToPTREData(phalanx);
+            consoleDebug(coords + ': Found Phalanx level '+phalanxLevel);
+            refreshPhalanxStorage(moonID, coords, phalanxLevel);
         }
     } else {
         consoleDebug("Cant find technologies element");
