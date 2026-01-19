@@ -90,6 +90,8 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
             }
         }
     }
+    // Mark current moon as listed
+    existingMoons[moonIdNew] = -1;
     consoleDebug("[Phalanx] Found " + planetFound + " planets and " + moonFound + " moons");
 
     // Update current data
@@ -101,9 +103,11 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
     }
     dataList.forEach((elem, index) => {
         if (elem.type != "phalanx") {
+            // Keep non-phalanx elements
             dataListNew.push(elem);
             consoleDebug("[Phalanx] Keep non-phalanx element");
         } else {
+            // If it's a phalanx
             consoleDebug("[Phalanx] Found stored Moon " + elem.id + " (" + elem.coords + ")");
             // Skip moon to add (we add it at the end)
             if (elem.id != moonIdNew) {
@@ -125,8 +129,6 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
                     consoleDebug("[Phalanx] Drop: Cant find this moon " + elem.id);
                 }
             } else {
-                // Mark current moon as listed
-                existingMoons[elem.id] = -1;
                 consoleDebug("[Phalanx] Skipping current moon (added after)");
             }
         }
