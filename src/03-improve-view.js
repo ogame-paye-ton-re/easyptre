@@ -377,6 +377,7 @@ function improvePageFacilities() {
     if (document.getElementById('technologies')) {
         const technologiesDiv = document.getElementById('technologies');
         if (technologiesDiv.querySelector('li.sensorPhalanx')) {
+            initPTREDataWithMoonSlots();
             const sensorPhalanxLi = technologiesDiv.querySelector('li.sensorPhalanx');
             const levelSpan = sensorPhalanxLi.querySelector('span.level');
             var phalanx_level = levelSpan.getAttribute('data-value');

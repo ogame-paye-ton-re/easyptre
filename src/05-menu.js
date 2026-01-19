@@ -627,7 +627,11 @@ function displaySharedData() {
         dataList = JSON.parse(dataJSON);
         $.each(dataList, function(i, elem) {
             if (elem.type == "phalanx") {
-                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + elem.val + '</td></tr>';
+                let val = elem.val;
+                if (val == -1) {
+                    val = '<span class="ptreWarning">???</span>';
+                }
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + val + '</td></tr>';
                 phalanxCount++;
             }
         });
