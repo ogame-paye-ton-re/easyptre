@@ -56,6 +56,10 @@ function buildLinkToGalaxy(galaxy, system, position) {
     return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=galaxy&galaxy='+galaxy+'&system='+system+'&position='+position+'">['+galaxy+':'+system+':'+position+']</a>';
 }
 
+function buildLinkToMoonBuilding(moonID) {
+    return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=facilities&cp='+moonID+'">Visit Moon buildings</a>';
+}
+
 function consoleDebug(message) {
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
         console.log('[EasyPTRE] ' + message);

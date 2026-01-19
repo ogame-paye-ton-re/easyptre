@@ -110,6 +110,7 @@ function displayPTREMenu() {
         var dnpCount = 0;
         var hotCount = 0;
         var dataList = [];
+        var phalanxAdditionnalMessage = '';
         if (dataJSON != '') {
             dataList = JSON.parse(dataJSON);
             $.each(dataList, function(i, elem) {
@@ -117,9 +118,14 @@ function displayPTREMenu() {
                     phalanxCountTotal++;
                     if (elem.val != -1) {
                         phalanxCount++;
+                    } else if (phalanxAdditionnalMessage == "") {
+                        phalanxAdditionnalMessage = '<span class="ptreSmall ptreError">Missing phalanx: '+buildLinkToMoonBuilding(elem.id)+'</span>';
                     }
                 }
             });
+        }
+        if (phalanxAdditionnalMessage == "") {
+            phalanxAdditionnalMessage = '<span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span>';
         }
         const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
         const galaEventsCount = galaEventsList.length;
@@ -133,7 +139,7 @@ function displayPTREMenu() {
         });
         divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" colspan="2">';
-        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br><span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
+        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br>'+phalanxAdditionnalMessage+'</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
         divPTRE += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';

@@ -53,6 +53,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
     let existingMoons = {};
     let planetFound = 0;
     let moonFound = 0;
+    let missingPhalanxMessage = "";
 
     //debugSharableData();
 
@@ -125,6 +126,10 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
                     }
                     // Mark this moon as listed
                     existingMoons[elem.id] = -1;
+                    // Generate message to an missing phalanx
+                    if (elem.val == -1) {
+                        missingPhalanxMessage = " - Missing phalanx: "+buildLinkToMoonBuilding(elem.id);
+                    }
                 } else {
                     consoleDebug("[Phalanx] Drop: Cant find this moon " + elem.id);
                 }
@@ -152,6 +157,8 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
     GM_setValue(ptreDataToSync, dataJSON);
 
     //debugSharableData();
+
+    displayPTREPopUpMessage("Phalanx updated" + missingPhalanxMessage);
 
     // Sync data to PTRE
     if (syncToPTRE === true) {
