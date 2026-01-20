@@ -82,9 +82,9 @@ function migrateDataAndCleanStorage() {
     // End: Clean LastAvailableVersion Keys
 
     // Check TS
-    lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
-    if (ptreLastGlobalSync != 0) {
-        if (ptreLastGlobalSync > currentTime) {
+    const lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
+    if (lastGlobalSyncTemp != 0) {
+        if (lastGlobalSyncTemp > currentTime) {
             GM_setValue(ptreLastGlobalSync, currentTime);
             addToLogs("Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
         }
