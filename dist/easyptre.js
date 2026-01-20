@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: lun. 19 janv. 2026 23:52:14 CET
+// Build date: mar. 20 janv. 2026 08:11:04 CET
 // ****************************************
 
 // ****************************************
@@ -3553,7 +3553,7 @@ function migrateDataAndCleanStorage() {
     // Check TS
     lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
     if (ptreLastGlobalSync != 0) {
-        if (ptreLastGlobalSync > currentTime || Math.abs(lastGlobalSyncTemp - currentTime) > 24*60*60) {
+        if (ptreLastGlobalSync > currentTime) {
             GM_setValue(ptreLastGlobalSync, currentTime);
             addToLogs("Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
         }
