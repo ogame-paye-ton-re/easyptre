@@ -22,8 +22,8 @@ function improveGalaxyTable() {
     var activitiesToSend = 0;
 
     const start = performance.now();
-    const currentMiliTime = serverTime.getTime();
-    const currentTime = Math.floor(currentMiliTime / 1000);
+    const currentMiliTime = getIGCurrentMiliTS();
+    const currentTime = getIGCurrentTS();
 
     consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
     cleanGalaxyMiniMessage();

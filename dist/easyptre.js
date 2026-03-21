@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.14.1
+// @version      0.14.2
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 20 janv. 2026 08:58:33 CET
+// Build date: dim. 22 mars 2026 07:47:37 CET
 // ****************************************
 
 // ****************************************
@@ -76,13 +76,17 @@ var currentPlanetType = "";
 
 var ptreGalaxyActivityCount = 0;
 var ptreGalaxyEventCount = 0;
-var galaxyInitMiliTS = 0;
+var ptreGalaxyInitMiliTS = 0;
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
 var ptreDisplayGalaPopup = false;//TODO: at false, during Beta
 
+var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
+var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
+
 if (modeEasyPTRE == "ingame") {
-    galaxyInitMiliTS = serverTime.getTime();
+    ptrePageLoadClientMiliTS = Date.now();
+    ptrePageLoadServerMiliTS = serverTime.getTime(); // Only get serverTime one time
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
     universe = splitted[0].slice(1);
@@ -508,8 +512,8 @@ function improveGalaxyTable() {
     var activitiesToSend = 0;
 
     const start = performance.now();
-    const currentMiliTime = serverTime.getTime();
-    const currentTime = Math.floor(currentMiliTime / 1000);
+    const currentMiliTime = getIGCurrentMiliTS();
+    const currentTime = getIGCurrentTS();
 
     consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
     cleanGalaxyMiniMessage();
@@ -2105,6 +2109,8 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Fix] Fix timestamp management';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.13.3 (jan 2026)</div>- Several bugfix and polish';
@@ -3039,7 +3045,7 @@ function syncTargets(mode) {
 */
 function waitForGalaxyToBeLoaded() {
     consoleDebug("[GALAXY] Waiting for Galaxy content");
-    galaxyInitMiliTS = serverTime.getTime();
+    ptreGalaxyInitMiliTS = Date.now();
     const galaxyLoading = document.getElementById('galaxyLoading');
     if (window.getComputedStyle(galaxyLoading).display === 'none') {
         consoleDebug("[GALAXY] Galaxy is already ready!");
@@ -3047,7 +3053,7 @@ function waitForGalaxyToBeLoaded() {
     } else {
         const observer = new MutationObserver((mutations, obs) => {
             if (window.getComputedStyle(galaxyLoading).display === 'none') {
-                let tempDuration = serverTime.getTime() - galaxyInitMiliTS;
+                let tempDuration = Date.now() - ptreGalaxyInitMiliTS;
                 consoleDebug("[GALAXY] Galaxy is ready after " + tempDuration + " miliseconds");
                 obs.disconnect();
                 improveGalaxyTable();
@@ -3181,7 +3187,11 @@ function checkForPTREUpdate() {
 
 // Enable auto-check to PTRE
 // This is disabled by default cooldown <= 0
+// Use _autoCheckScheduled as Guard flag to avoid multiple concurrent timers
+var _autoCheckScheduled = false;
+
 function runAutoCheckForPTREUpdate() {
+    _autoCheckScheduled = false;
     const currentTime = getIGCurrentTS();
     const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
     // If Auto-Check is enabled
@@ -3191,7 +3201,10 @@ function runAutoCheckForPTREUpdate() {
             consoleDebug("Need to Check For Updates");
             checkForPTREUpdate();
         }
-        setTimeout(runAutoCheckForPTREUpdate, 10*1000);
+        if (!_autoCheckScheduled) {
+            _autoCheckScheduled = true;
+            setTimeout(runAutoCheckForPTREUpdate, 10*1000);
+        }
     } else {
         consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
     }
@@ -3318,8 +3331,17 @@ function getLastUpdateLabel(ts) {
     return temp;
 }
 
+// Calling serverTime.getTime() multtiple times is buggy.
+// We call it one time at script start
+// Then we manage current time via client time increase
 function getIGCurrentTS() {
-    return Math.floor(serverTime.getTime() / 1000);
+    const elapsed = Date.now() - ptrePageLoadClientMiliTS;
+    return Math.floor((ptrePageLoadServerMiliTS + elapsed) / 1000);
+}
+
+function getIGCurrentMiliTS() {
+    const elapsed = Date.now() - ptrePageLoadClientMiliTS;
+    return ptrePageLoadServerMiliTS + elapsed;
 }
 
 // ****************************************
@@ -3482,7 +3504,7 @@ function migrateDataAndCleanStorage() {
         var minTs = currentTime - logsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
-        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));
+        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs && item.ts <= currentTime));
         logsJSON = JSON.stringify(logsList);
         GM_setValue(ptreLogsList, logsJSON);
     }

@@ -13,7 +13,7 @@ function migrateDataAndCleanStorage() {
         var minTs = currentTime - logsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
-        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));
+        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs && item.ts <= currentTime));
         logsJSON = JSON.stringify(logsList);
         GM_setValue(ptreLogsList, logsJSON);
     }
