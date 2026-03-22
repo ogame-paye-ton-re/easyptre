@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 14:25:01 CET
+// Build date: dim. 22 mars 2026 15:16:15 CET
 // ****************************************
 
 // ****************************************
@@ -180,7 +180,7 @@ if (modeEasyPTRE == "ingame") {
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         var updateClass = '';
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
-        var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '');
+        var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
         if (configAlertActive) {
             ptreMenuName = "CLICK ME";
             updateClass = " ptreError";
@@ -1815,6 +1815,8 @@ function displayPTREMenu() {
         divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
         if (ptreStoredTK == '') {
             divPTRE += '<br><span class="ptreError">Add your PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
+        } else if (!isValidTeamKey(ptreStoredTK)) {
+            divPTRE += '<br><span class="ptreError">Invalid PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
         } else {
             divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '')+'</span>';
         }
@@ -2085,7 +2087,7 @@ function savePTRESettings() {
     // Save PTRE Team Key
     var newTK = document.getElementById('ptreTK').value;
     // Check PTRE Team Key Format
-    if (newTK == '' || (newTK.replace(/-/g, "").length == 18 && newTK.substr(0,2) == "TM")) {
+    if (newTK == '' || isValidTeamKey(newTK)) {
         // If new TK, store it
         if (newTK != GM_getValue(ptreTeamKey, '')) {
             GM_setValue(ptreTeamKey, newTK);
@@ -3295,6 +3297,11 @@ function globalPTRESync() {
 // ****************************************
 // MINI FUNCTIONS
 // ****************************************
+
+// Check TeamKey format
+function isValidTeamKey(tk) {
+    return tk.replace(/-/g, "").length == 18 && tk.substr(0, 2) == "TM";
+}
 
 // Detects if AGR is enabled
 function isAGREnabled() {

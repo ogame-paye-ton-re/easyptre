@@ -29,6 +29,8 @@ function displayPTREMenu() {
         divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
         if (ptreStoredTK == '') {
             divPTRE += '<br><span class="ptreError">Add your PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
+        } else if (!isValidTeamKey(ptreStoredTK)) {
+            divPTRE += '<br><span class="ptreError">Invalid PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
         } else {
             divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '')+'</span>';
         }
@@ -299,7 +301,7 @@ function savePTRESettings() {
     // Save PTRE Team Key
     var newTK = document.getElementById('ptreTK').value;
     // Check PTRE Team Key Format
-    if (newTK == '' || (newTK.replace(/-/g, "").length == 18 && newTK.substr(0,2) == "TM")) {
+    if (newTK == '' || isValidTeamKey(newTK)) {
         // If new TK, store it
         if (newTK != GM_getValue(ptreTeamKey, '')) {
             GM_setValue(ptreTeamKey, newTK);

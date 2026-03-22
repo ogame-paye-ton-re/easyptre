@@ -2,6 +2,11 @@
 // MINI FUNCTIONS
 // ****************************************
 
+// Check TeamKey format
+function isValidTeamKey(tk) {
+    return tk.replace(/-/g, "").length == 18 && tk.substr(0, 2) == "TM";
+}
+
 // Detects if AGR is enabled
 function isAGREnabled() {
     if (document.getElementById('ago_panel_Player')) {
