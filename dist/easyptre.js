@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 09:13:18 CET
+// Build date: dim. 22 mars 2026 11:56:38 CET
 // ****************************************
 
 // ****************************************
@@ -2521,6 +2521,15 @@ function displayTotalSystemsSaved() {
 // CALLS TO PTRE
 // ****************************************
 
+// Generate an empty system structure (all 15 positions with no player)
+function generateEmptySystem() {
+    const system = {};
+    for (let pos = 1; pos <= 15; pos++) {
+        system[pos] = { playerId: -1, planetId: -1, moonId: -1, ts: -1 };
+    }
+    return system;
+}
+
 // Process galaxy data
 // Sends player activity and galaxy updates
 /*
@@ -2550,13 +2559,6 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
     } else {
         consoleDebug("[GALAXY] No previous system " + galaxy + ":" + system);
         // We prepare an empty system
-        const generateEmptySystem = () => {
-            const system = {};
-            for (let pos = 1; pos <= 15; pos++) {
-                system[pos] = { playerId: -1, planetId: -1, moonId: -1, ts: -1 };
-            }
-            return system;
-        };
         previousSystem = generateEmptySystem();
     }
 
