@@ -84,16 +84,19 @@ function updateLastAvailableVersion(force = false) {
 
 // Get the content of a system
 function fetchSystemV2(galaxy, system) {
-    const galaxyData = GM_getValue(ptreGalaxyData+galaxy, {});
-    const systemData = galaxyData[String(system)] || null;
-    return systemData;
+    if (!ptreGalaxyCache[galaxy]) {
+        ptreGalaxyCache[galaxy] = GM_getValue(ptreGalaxyData+galaxy, {});
+    }
+    return ptreGalaxyCache[galaxy][String(system)] || null;
 }
 
 // Update the content of an entire system
 function updateSystemV2(galaxy, system, newSystemData) {
-    const galaxyData = GM_getValue(ptreGalaxyData+galaxy, {});
-    galaxyData[String(system)] = newSystemData;
-    GM_setValue(ptreGalaxyData+galaxy, galaxyData);
+    if (!ptreGalaxyCache[galaxy]) {
+        ptreGalaxyCache[galaxy] = GM_getValue(ptreGalaxyData+galaxy, {});
+    }
+    ptreGalaxyCache[galaxy][String(system)] = newSystemData;
+    GM_setValue(ptreGalaxyData+galaxy, ptreGalaxyCache[galaxy]);
     consoleDebug(`[GALAXY] Updated Storage for ${galaxy}:${system}`);
 }
 

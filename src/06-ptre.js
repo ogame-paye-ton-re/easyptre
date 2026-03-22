@@ -413,7 +413,6 @@ function getGEEInfosFromGala() {
 function syncDataWithPTRE(mode = "auto") {
     const currentTime = getIGCurrentTS();
     console.log("[EasyPTRE] Syncing data "+currentTime);
-    const hot_ts_max = currentTime + 24*3600;
     const teamKey = GM_getValue(ptreTeamKey, "notk");
     var addParams = "";
 

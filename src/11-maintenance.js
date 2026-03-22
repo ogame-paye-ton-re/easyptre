@@ -131,6 +131,7 @@ function garbageCollectGalaxyDataV2(days) {
                     }
                 }
                 GM_setValue(ptreGalaxyData+gala, galaxyData);
+                ptreGalaxyCache[gala] = galaxyData; // Keep in-memory cache in sync after GC
             }
         }
     }

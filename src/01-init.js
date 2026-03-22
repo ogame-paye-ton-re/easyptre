@@ -46,6 +46,7 @@ var currentPlanetType = "";
 var ptreGalaxyActivityCount = 0;
 var ptreGalaxyEventCount = 0;
 var ptreGalaxyInitMiliTS = 0;
+var ptreGalaxyCache = {};
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
 var ptreDisplayGalaPopup = false;//TODO: at false, during Beta

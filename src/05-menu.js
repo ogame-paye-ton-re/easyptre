@@ -359,7 +359,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
+    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
     content+= '<div><hr></div>';
@@ -442,7 +442,49 @@ function displayLogs() {
 function displayGalaxyTracking() {
     setupInfoBox("Galaxy tracking distribution");
 
-    var content = '<div class="ptreCategoryTitle">Distribution</div>';
+    var content = '<div class="ptreCategoryTitle">Galaxy details</div>';
+    content+='Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + ' | Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
+
+    const allGalaxyKeys = GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort();
+    const cachedGalaxies = Object.keys(ptreGalaxyCache).map(Number).sort((a, b) => a - b);
+
+    content+='<table><tr>';
+    content+='<td class="td_cell_radius_0" align="center">Galaxy key</td>';
+    content+='<td class="td_cell_radius_0" align="center">Systems in storage</td>';
+    content+='<td class="td_cell_radius_0" align="center">Systems in cache</td>';
+    content+='<td class="td_cell_radius_0" align="center">Cache status</td>';
+    content+='</tr>';
+    allGalaxyKeys.forEach(function(key) {
+        const storedData = GM_getValue(key, {});
+        const storedCount = Object.keys(storedData).length;
+        // Extract galaxy number from key (key = ptreGalaxyData + gala)
+        const gala = key.replace(ptreGalaxyData, '');
+        const inCache = ptreGalaxyCache[gala] !== undefined;
+        const cachedCount = inCache ? Object.keys(ptreGalaxyCache[gala]).length : '-';
+        let statusLabel;
+        if (!inCache) {
+            statusLabel = '<span class="ptreWarning">not loaded</span>';
+        } else if (cachedCount === storedCount) {
+            statusLabel = '<span class="ptreSuccess">in sync</span>';
+        } else {
+            statusLabel = '<span class="ptreWarning">cache ahead (+' + (cachedCount - storedCount) + ')</span>';
+        }
+        content+='<tr>';
+        content+='<td class="td_cell_radius_1" align="center">' + key + '</td>';
+        content+='<td class="td_cell_radius_1" align="center">' + storedCount + '</td>';
+        content+='<td class="td_cell_radius_1" align="center">' + cachedCount + '</td>';
+        content+='<td class="td_cell_radius_1" align="center">' + statusLabel + '</td>';
+        content+='</tr>';
+    });
+    if (allGalaxyKeys.length === 0) {
+        content+='<tr><td class="td_cell_radius_1" colspan="4" align="center"><span class="ptreWarning">No galaxy data in storage</span></td></tr>';
+    }
+    content+='</table>';
+    if (cachedGalaxies.length === 0) {
+        content+='<br><span class="ptreWarning">Cache is empty (no galaxy browsed yet this session)</span>';
+    }
+
+    content += '<div class="ptreCategoryTitle">Distribution</div>';
     content += 'X => 10/10 systems recently updated<br>+ => some systems recently updated<br><br>';
     content += '<div style="font-family: monospace; white-space: pre;">';
 
@@ -474,16 +516,6 @@ function displayGalaxyTracking() {
         content += `<div>Galaxy ${String(gala).padStart(2, ' ')} | ${line}</div>`;
     }
     content += '</div>';
-    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
-        content+='<div class="ptreCategoryTitle">Galaxy details</div>';
-        content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + '<br>';
-        content+='Galaxy Storage Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
-        content+='Galaxy keys:<br>';
-        GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
-            content+='- Found galaxy key: ' + key + '<br>';
-        });
-        content+='<br><span class="ptreSmall">If you dont see galaxies from "Galaxy keys" in the "Distribution" tab, you may purge data.</span>';
-    }
 
     content+='<div class="ptreCategoryTitle">Reset galaxy data</div>';
     content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA</div>';
@@ -703,9 +735,10 @@ function validatePurgeGalaxyTracking() {
 
     // Action: Purge Galaxy Tracking
     document.getElementById('purgeGalaxyTracking').addEventListener("click", function (event) {
-        for(var gala = 1; gala <= 12 ; gala++) {
+        for(var gala = 1; gala <= 15 ; gala++) {
             GM_deleteValue(ptreGalaxyData+gala);
         }
+        ptreGalaxyCache = {}; // Clear in-memory cache after purge
         displayGalaxyTracking();
         addToLogs("Purged Galaxy data");
     });
