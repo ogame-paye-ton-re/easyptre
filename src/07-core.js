@@ -70,7 +70,9 @@ function updateLastAvailableVersion(force = false) {
                         }
                     }
                 } else {
-                    document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
+                    if (document.getElementById('ptreUpdateVersionMessage')) {
+                        document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
+                    }
                 }
             }
         });

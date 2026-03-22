@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 08:53:11 CET
+// Build date: dim. 22 mars 2026 08:59:18 CET
 // ****************************************
 
 // ****************************************
@@ -3143,7 +3143,9 @@ function updateLastAvailableVersion(force = false) {
                         }
                     }
                 } else {
-                    document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
+                    if (document.getElementById('ptreUpdateVersionMessage')) {
+                        document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
+                    }
                 }
             }
         });
