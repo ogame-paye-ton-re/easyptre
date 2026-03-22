@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 08:59:18 CET
+// Build date: dim. 22 mars 2026 09:13:18 CET
 // ****************************************
 
 // ****************************************
@@ -1115,7 +1115,7 @@ function addPTREStuffsToMessagesPage() {
                     data: jsonSystem,
                     cache: false,
                     success : function(reponse){
-                        var reponseDecode = jQuery.parseJSON(reponse);
+                        var reponseDecode = JSON.parse(reponse);
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);
@@ -1294,7 +1294,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                         data: JSON.stringify({"0":{type: "dnp", id: playerId, val: 0, name: playerName}}),
                         cache: false,
                         success : function(reponse){
-                            var reponseDecode = jQuery.parseJSON(reponse);
+                            var reponseDecode = JSON.parse(reponse);
                             displayPTREPopUpMessage(reponseDecode.message);
                             if (reponseDecode.updated > 0) {
                                 // Update button color
@@ -2610,7 +2610,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             data: jsonSystem,
             cache: false,
             success : function(reponse){
-                let reponseDecode = jQuery.parseJSON(reponse);
+                let reponseDecode = JSON.parse(reponse);
                 if (reponseDecode.code == 1) {
                     console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
@@ -2669,7 +2669,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         data: JSON.stringify(activityTab),
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
@@ -2740,7 +2740,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=get&player_id=" + playerId + "&galaxy=" + galaxy + "&system=" + system + "&pos=" + pos,
                 type: 'POST',
                 success: function (reponse) {
-                    var reponseDecode = jQuery.parseJSON(reponse);
+                    var reponseDecode = JSON.parse(reponse);
                     consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
@@ -2778,7 +2778,7 @@ function pushPlayerNote(playerId) {
                     note: note
                 },
                 success: function (reponse) {
-                    var reponseDecode = jQuery.parseJSON(reponse);
+                    var reponseDecode = JSON.parse(reponse);
                     consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
@@ -2806,7 +2806,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             type : 'POST',
             cache: false,
             success : function(reponse){
-                var reponseDecode = jQuery.parseJSON(reponse);
+                var reponseDecode = JSON.parse(reponse);
                 consoleDebug("[FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
@@ -2888,7 +2888,7 @@ function getPhalanxInfosFromGala() {
         data: dataJSON,
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs(reponseDecode.message_debug);
@@ -2916,7 +2916,7 @@ function getGEEInfosFromGala() {
         data: null,
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs(reponseDecode.message_debug);
@@ -2952,7 +2952,7 @@ function syncDataWithPTRE(mode = "auto") {
         data: dataJSON,
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             if (reponseDecode.code == 1) {
                 consoleDebug("Received data from TS "+reponseDecode.timestamp);
                 GM_setValue(ptreTeamName, reponseDecode.team_name);
@@ -3040,7 +3040,7 @@ function syncTargets(mode) {
         data: JSON.stringify(targetList),
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             if (reponseDecode.code == 1) {
                 // Reset local list, as we update the entire list
                 GM_setValue(ptrePTREPlayerListJSON, '');
@@ -3202,7 +3202,7 @@ function checkForPTREUpdate() {
                 type : 'POST',
                 cache: false,
                 success : function(reponse){
-                    var reponseDecode = jQuery.parseJSON(reponse);
+                    var reponseDecode = JSON.parse(reponse);
                     if (reponseDecode.code == 1) {
                         // Update config (we dont change our current TS)
                         updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);

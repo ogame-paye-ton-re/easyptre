@@ -91,7 +91,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
             data: jsonSystem,
             cache: false,
             success : function(reponse){
-                let reponseDecode = jQuery.parseJSON(reponse);
+                let reponseDecode = JSON.parse(reponse);
                 if (reponseDecode.code == 1) {
                     console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
                     // If we saw real events (confirmed by PTRE)
@@ -150,7 +150,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
         data: JSON.stringify(activityTab),
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             console.log("[EasyPTRE] [GALAXY] [FROM PTRE] " + reponseDecode.message);
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
@@ -221,7 +221,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=get&player_id=" + playerId + "&galaxy=" + galaxy + "&system=" + system + "&pos=" + pos,
                 type: 'POST',
                 success: function (reponse) {
-                    var reponseDecode = jQuery.parseJSON(reponse);
+                    var reponseDecode = JSON.parse(reponse);
                     consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
@@ -259,7 +259,7 @@ function pushPlayerNote(playerId) {
                     note: note
                 },
                 success: function (reponse) {
-                    var reponseDecode = jQuery.parseJSON(reponse);
+                    var reponseDecode = JSON.parse(reponse);
                     consoleDebug("[FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
@@ -287,7 +287,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             type : 'POST',
             cache: false,
             success : function(reponse){
-                var reponseDecode = jQuery.parseJSON(reponse);
+                var reponseDecode = JSON.parse(reponse);
                 consoleDebug("[FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
@@ -369,7 +369,7 @@ function getPhalanxInfosFromGala() {
         data: dataJSON,
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs(reponseDecode.message_debug);
@@ -397,7 +397,7 @@ function getGEEInfosFromGala() {
         data: null,
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs(reponseDecode.message_debug);
@@ -433,7 +433,7 @@ function syncDataWithPTRE(mode = "auto") {
         data: dataJSON,
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             if (reponseDecode.code == 1) {
                 consoleDebug("Received data from TS "+reponseDecode.timestamp);
                 GM_setValue(ptreTeamName, reponseDecode.team_name);
@@ -521,7 +521,7 @@ function syncTargets(mode) {
         data: JSON.stringify(targetList),
         cache: false,
         success : function(reponse){
-            var reponseDecode = jQuery.parseJSON(reponse);
+            var reponseDecode = JSON.parse(reponse);
             if (reponseDecode.code == 1) {
                 // Reset local list, as we update the entire list
                 GM_setValue(ptrePTREPlayerListJSON, '');

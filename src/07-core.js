@@ -129,7 +129,7 @@ function checkForPTREUpdate() {
                 type : 'POST',
                 cache: false,
                 success : function(reponse){
-                    var reponseDecode = jQuery.parseJSON(reponse);
+                    var reponseDecode = JSON.parse(reponse);
                     if (reponseDecode.code == 1) {
                         // Update config (we dont change our current TS)
                         updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);

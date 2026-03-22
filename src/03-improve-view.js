@@ -589,7 +589,7 @@ function addPTREStuffsToMessagesPage() {
                     data: jsonSystem,
                     cache: false,
                     success : function(reponse){
-                        var reponseDecode = jQuery.parseJSON(reponse);
+                        var reponseDecode = JSON.parse(reponse);
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);
@@ -768,7 +768,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                         data: JSON.stringify({"0":{type: "dnp", id: playerId, val: 0, name: playerName}}),
                         cache: false,
                         success : function(reponse){
-                            var reponseDecode = jQuery.parseJSON(reponse);
+                            var reponseDecode = JSON.parse(reponse);
                             displayPTREPopUpMessage(reponseDecode.message);
                             if (reponseDecode.updated > 0) {
                                 // Update button color
