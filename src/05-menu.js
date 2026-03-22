@@ -155,7 +155,7 @@ function displayPTREMenu() {
         }
 
         // Galaxy Data
-        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 1) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 2) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
         if (isOGLorOGIEnabled()) {
             divPTRE += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptre Small">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
@@ -476,7 +476,7 @@ function displayGalaxyTracking() {
     content += '</div>';
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
         content+='<div class="ptreCategoryTitle">Galaxy details</div>';
-        content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 1) + '<br>';
+        content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + '<br>';
         content+='Galaxy Storage Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
         content+='Galaxy keys:<br>';
         GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
@@ -717,7 +717,7 @@ function displayTotalSystemsSaved() {
     var countGala = 0;
     var countSsystem = 0;
 
-    if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
+    if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
         for(var gala = 1; gala <= 15 ; gala++) {
             var galaxyData = GM_getValue(ptreGalaxyData+gala, '');
             if (galaxyData != '') {

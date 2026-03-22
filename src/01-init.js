@@ -141,9 +141,6 @@ var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + p
 // ****************************************
 
 if (modeEasyPTRE == "ingame") {
-    // Drop cache V1 (one time action)
-    dropGalaxyCacheStorageV1();
-
     // Add EasyPTRE menu
     if (!/page=standalone&component=empire/.test(location.href)) {
         // Setup Menu Button

@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 08:29:50 CET
+// Build date: dim. 22 mars 2026 08:53:11 CET
 // ****************************************
 
 // ****************************************
@@ -172,9 +172,6 @@ var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + p
 // ****************************************
 
 if (modeEasyPTRE == "ingame") {
-    // Drop cache V1 (one time action)
-    dropGalaxyCacheStorageV1();
-
     // Add EasyPTRE menu
     if (!/page=standalone&component=empire/.test(location.href)) {
         // Setup Menu Button
@@ -1944,7 +1941,7 @@ function displayPTREMenu() {
         }
 
         // Galaxy Data
-        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 1) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 2) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
         divPTRE += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
         if (isOGLorOGIEnabled()) {
             divPTRE += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptre Small">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
@@ -2265,7 +2262,7 @@ function displayGalaxyTracking() {
     content += '</div>';
     if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
         content+='<div class="ptreCategoryTitle">Galaxy details</div>';
-        content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 1) + '<br>';
+        content+='Galaxy Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + '<br>';
         content+='Galaxy Storage Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
         content+='Galaxy keys:<br>';
         GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
@@ -2506,7 +2503,7 @@ function displayTotalSystemsSaved() {
     var countGala = 0;
     var countSsystem = 0;
 
-    if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
+    if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
         for(var gala = 1; gala <= 15 ; gala++) {
             var galaxyData = GM_getValue(ptreGalaxyData+gala, '');
             if (galaxyData != '') {
@@ -3621,32 +3618,6 @@ function migrateDataAndCleanStorage() {
     }
 }
 
-/*
-    Drop old storage
-    Wont loose real data
-    It will only make more requests to PTRE, at start
-*/
-function dropGalaxyCacheStorageV1() {
-    //TODO: remove in few days
-    // Migrate cooldown check to "per universe"
-    if (GM_getValue(ptreCheckForUpdateCooldown, -1) == -1) { // if we dont have the new "per uni" parameter (exclude 0 as means disabled)
-        const oldUpdateCooldown = GM_getValue("ptre-CheckForUpdateCooldown", 0);
-        if (oldUpdateCooldown > 0) {
-            GM_setValue(ptreCheckForUpdateCooldown, oldUpdateCooldown);
-            addToLogs("Migrate cooldown " + oldUpdateCooldown + " to: " + ptreCheckForUpdateCooldown);
-        }
-    }
-    // Clean old storage ONCE
-    if (GM_getValue(ptreGalaxyStorageVersion, 1) != 2) {
-        GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
-            GM_deleteValue(key);
-            console.log("Deleting Galaxy Key: " + key);
-        });
-        addToLogs("Cleaned Galaxy Storage V1");
-        GM_setValue(ptreGalaxyStorageVersion, 2);
-    }
-}
-
 function addToLogs(message) {
     const currentTime = getIGCurrentTS();
     console.log('[EasyPTRE] ' + message);
@@ -3667,7 +3638,7 @@ function addToLogs(message) {
 // Will make more request to PTRE when goind to newly empty system, but its fine
 function garbageCollectGalaxyDataV2(days) {
     var removedCount = 0;
-    if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
+    if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
         const currentTime = getIGCurrentTS();
         const limitTS = currentTime - days*24*60*60;
         for(var gala = 1; gala <= 15 ; gala++) {

@@ -91,32 +91,6 @@ function migrateDataAndCleanStorage() {
     }
 }
 
-/*
-    Drop old storage
-    Wont loose real data
-    It will only make more requests to PTRE, at start
-*/
-function dropGalaxyCacheStorageV1() {
-    //TODO: remove in few days
-    // Migrate cooldown check to "per universe"
-    if (GM_getValue(ptreCheckForUpdateCooldown, -1) == -1) { // if we dont have the new "per uni" parameter (exclude 0 as means disabled)
-        const oldUpdateCooldown = GM_getValue("ptre-CheckForUpdateCooldown", 0);
-        if (oldUpdateCooldown > 0) {
-            GM_setValue(ptreCheckForUpdateCooldown, oldUpdateCooldown);
-            addToLogs("Migrate cooldown " + oldUpdateCooldown + " to: " + ptreCheckForUpdateCooldown);
-        }
-    }
-    // Clean old storage ONCE
-    if (GM_getValue(ptreGalaxyStorageVersion, 1) != 2) {
-        GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort().forEach(key => {
-            GM_deleteValue(key);
-            console.log("Deleting Galaxy Key: " + key);
-        });
-        addToLogs("Cleaned Galaxy Storage V1");
-        GM_setValue(ptreGalaxyStorageVersion, 2);
-    }
-}
-
 function addToLogs(message) {
     const currentTime = getIGCurrentTS();
     console.log('[EasyPTRE] ' + message);
@@ -137,7 +111,7 @@ function addToLogs(message) {
 // Will make more request to PTRE when goind to newly empty system, but its fine
 function garbageCollectGalaxyDataV2(days) {
     var removedCount = 0;
-    if (GM_getValue(ptreGalaxyStorageVersion, 1) == 2) {
+    if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
         const currentTime = getIGCurrentTS();
         const limitTS = currentTime - days*24*60*60;
         for(var gala = 1; gala <= 15 ; gala++) {
