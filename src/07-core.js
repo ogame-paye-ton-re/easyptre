@@ -8,7 +8,7 @@
 */
 function waitForGalaxyToBeLoaded() {
     consoleDebug("[GALAXY] Waiting for Galaxy content");
-    galaxyInitMiliTS = serverTime.getTime();
+    ptreGalaxyInitMiliTS = Date.now();
     const galaxyLoading = document.getElementById('galaxyLoading');
     if (window.getComputedStyle(galaxyLoading).display === 'none') {
         consoleDebug("[GALAXY] Galaxy is already ready!");
@@ -16,7 +16,7 @@ function waitForGalaxyToBeLoaded() {
     } else {
         const observer = new MutationObserver((mutations, obs) => {
             if (window.getComputedStyle(galaxyLoading).display === 'none') {
-                let tempDuration = serverTime.getTime() - galaxyInitMiliTS;
+                let tempDuration = Date.now() - ptreGalaxyInitMiliTS;
                 consoleDebug("[GALAXY] Galaxy is ready after " + tempDuration + " miliseconds");
                 obs.disconnect();
                 improveGalaxyTable();
@@ -150,7 +150,11 @@ function checkForPTREUpdate() {
 
 // Enable auto-check to PTRE
 // This is disabled by default cooldown <= 0
+// Use _autoCheckScheduled as Guard flag to avoid multiple concurrent timers
+var _autoCheckScheduled = false;
+
 function runAutoCheckForPTREUpdate() {
+    _autoCheckScheduled = false;
     const currentTime = getIGCurrentTS();
     const cooldown = Number(GM_getValue(ptreCheckForUpdateCooldown, 0));
     // If Auto-Check is enabled
@@ -160,7 +164,10 @@ function runAutoCheckForPTREUpdate() {
             consoleDebug("Need to Check For Updates");
             checkForPTREUpdate();
         }
-        setTimeout(runAutoCheckForPTREUpdate, 10*1000);
+        if (!_autoCheckScheduled) {
+            _autoCheckScheduled = true;
+            setTimeout(runAutoCheckForPTREUpdate, 10*1000);
+        }
     } else {
         consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
     }

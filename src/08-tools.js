@@ -108,7 +108,16 @@ function getLastUpdateLabel(ts) {
     return temp;
 }
 
+// Calling serverTime.getTime() multtiple times is buggy.
+// We call it one time at script start
+// Then we manage current time via client time increase
 function getIGCurrentTS() {
-    return Math.floor(serverTime.getTime() / 1000);
+    const elapsed = Date.now() - ptrePageLoadClientMiliTS;
+    return Math.floor((ptrePageLoadServerMiliTS + elapsed) / 1000);
+}
+
+function getIGCurrentMiliTS() {
+    const elapsed = Date.now() - ptrePageLoadClientMiliTS;
+    return ptrePageLoadServerMiliTS + elapsed;
 }
 

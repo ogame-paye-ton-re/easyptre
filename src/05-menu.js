@@ -359,6 +359,8 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Fix] Fix timestamp management';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.13.3 (jan 2026)</div>- Several bugfix and polish';

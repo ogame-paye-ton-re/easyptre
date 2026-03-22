@@ -45,13 +45,17 @@ var currentPlanetType = "";
 
 var ptreGalaxyActivityCount = 0;
 var ptreGalaxyEventCount = 0;
-var galaxyInitMiliTS = 0;
+var ptreGalaxyInitMiliTS = 0;
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
 var ptreDisplayGalaPopup = false;//TODO: at false, during Beta
 
+var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
+var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
+
 if (modeEasyPTRE == "ingame") {
-    galaxyInitMiliTS = serverTime.getTime();
+    ptrePageLoadClientMiliTS = Date.now();
+    ptrePageLoadServerMiliTS = serverTime.getTime(); // Only get serverTime one time
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
     universe = splitted[0].slice(1);
