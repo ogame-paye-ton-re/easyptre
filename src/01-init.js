@@ -151,21 +151,41 @@ if (modeEasyPTRE == "ingame") {
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         var updateClass = '';
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
-        if ((lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '')) {
+        var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '');
+        if (configAlertActive) {
             ptreMenuName = "CLICK ME";
             updateClass = " ptreError";
         }
-        var aff_option = '<span class="menu_icon"><a id="iconeUpdate" href="https://ptre.chez.gg" target="blank_" ><img id="imgPTREmenu" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
-        aff_option += '<a id="affOptionsPTRE" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
+        // When alert is active, clicking the icon opens EasyPTRE settings instead of the PTRE website
+        var iconLink = configAlertActive
+            ? '<a id="ptreMenuIcon" href="#" target="_self">'
+            : '<a id="ptreMenuIcon" href="https://ptre.chez.gg" target="blank_">';
+        var aff_option = '<span class="menu_icon">' + iconLink + '<img id="ptreMenuImg" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
+        aff_option += '<a id="ptreMenuText" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
+        if (configAlertActive) {
+            var badgeTitle = (ptreStoredTK == '')
+                ? 'EasyPTRE: No Team Key set. Click to configure.'
+                : 'EasyPTRE: Update available. Click to open settings.';
+            aff_option += '<span id="ptreMissingTKBadge" title="' + badgeTitle + '">!</span>';
+        }
 
         var tab = document.createElement("li");
         tab.innerHTML = aff_option;
         tab.id = 'optionPTRE';
         document.getElementById('menuTableTools').appendChild(tab);
 
-        document.getElementById('affOptionsPTRE').addEventListener("click", function (event) {
+        document.getElementById('ptreMenuText').addEventListener("click", function (event) {
             displayPTREMenu();
         }, true);
+        if (configAlertActive) {
+            document.getElementById('ptreMenuIcon').addEventListener("click", function (event) {
+                event.preventDefault();
+                displayPTREMenu();
+            }, true);
+            document.getElementById('ptreMissingTKBadge').addEventListener("click", function (event) {
+                displayPTREMenu();
+            }, true);
+        }
     }
 
     // Run on all pages

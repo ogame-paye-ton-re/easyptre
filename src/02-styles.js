@@ -182,5 +182,24 @@ GM_addStyle(`
     z-index: 1001;
     padding: 5px;
 }
+#optionPTRE {
+    position: relative;
+}
+#ptreMissingTKBadge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: #D43635;
+    color: white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 14px;
+    z-index: 10;
+    cursor: pointer;
+}
 `);
 

@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 07:47:37 CET
+// Build date: dim. 22 mars 2026 08:29:50 CET
 // ****************************************
 
 // ****************************************
@@ -182,21 +182,41 @@ if (modeEasyPTRE == "ingame") {
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         var updateClass = '';
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
-        if ((lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '')) {
+        var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || (ptreStoredTK == '');
+        if (configAlertActive) {
             ptreMenuName = "CLICK ME";
             updateClass = " ptreError";
         }
-        var aff_option = '<span class="menu_icon"><a id="iconeUpdate" href="https://ptre.chez.gg" target="blank_" ><img id="imgPTREmenu" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
-        aff_option += '<a id="affOptionsPTRE" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
+        // When alert is active, clicking the icon opens EasyPTRE settings instead of the PTRE website
+        var iconLink = configAlertActive
+            ? '<a id="ptreMenuIcon" href="#" target="_self">'
+            : '<a id="ptreMenuIcon" href="https://ptre.chez.gg" target="blank_">';
+        var aff_option = '<span class="menu_icon">' + iconLink + '<img id="ptreMenuImg" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
+        aff_option += '<a id="ptreMenuText" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
+        if (configAlertActive) {
+            var badgeTitle = (ptreStoredTK == '')
+                ? 'EasyPTRE: No Team Key set. Click to configure.'
+                : 'EasyPTRE: Update available. Click to open settings.';
+            aff_option += '<span id="ptreMissingTKBadge" title="' + badgeTitle + '">!</span>';
+        }
 
         var tab = document.createElement("li");
         tab.innerHTML = aff_option;
         tab.id = 'optionPTRE';
         document.getElementById('menuTableTools').appendChild(tab);
 
-        document.getElementById('affOptionsPTRE').addEventListener("click", function (event) {
+        document.getElementById('ptreMenuText').addEventListener("click", function (event) {
             displayPTREMenu();
         }, true);
+        if (configAlertActive) {
+            document.getElementById('ptreMenuIcon').addEventListener("click", function (event) {
+                event.preventDefault();
+                displayPTREMenu();
+            }, true);
+            document.getElementById('ptreMissingTKBadge').addEventListener("click", function (event) {
+                displayPTREMenu();
+            }, true);
+        }
     }
 
     // Run on all pages
@@ -485,6 +505,25 @@ GM_addStyle(`
     background-color: #171d22;
     z-index: 1001;
     padding: 5px;
+}
+#optionPTRE {
+    position: relative;
+}
+#ptreMissingTKBadge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: #D43635;
+    color: white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 14px;
+    z-index: 10;
+    cursor: pointer;
 }
 `);
 
@@ -2064,8 +2103,8 @@ function savePTRESettings() {
     }
     addToLogs('Saving settings (Miner mode: ' + document.getElementById('PTREToogleMinerMode').checked + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
-    document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
-    setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
+    document.getElementById('ptreMenuImg').src = imgPTRESaveOK;
+    setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, menuImageDisplayTime);
 }
 
 // This function creates empty Info Box.
@@ -2109,7 +2148,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Fix] Fix timestamp management';
+    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
     content+= '<div><hr></div>';

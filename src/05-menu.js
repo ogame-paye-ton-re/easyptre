@@ -314,8 +314,8 @@ function savePTRESettings() {
     }
     addToLogs('Saving settings (Miner mode: ' + document.getElementById('PTREToogleMinerMode').checked + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
-    document.getElementById('imgPTREmenu').src = imgPTRESaveOK;
-    setTimeout(function() {document.getElementById('imgPTREmenu').src = imgPTRE;}, menuImageDisplayTime);
+    document.getElementById('ptreMenuImg').src = imgPTRESaveOK;
+    setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, menuImageDisplayTime);
 }
 
 // This function creates empty Info Box.
@@ -359,7 +359,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Fix] Fix timestamp management';
+    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
     content+= '<div><hr></div>';
