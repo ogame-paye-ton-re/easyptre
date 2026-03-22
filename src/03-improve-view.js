@@ -575,12 +575,11 @@ function addPTREStuffsToMessagesPage() {
                 GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
 
                 // Build JSON
-                var jsonSystem = '{';
+                const jsonSystemObj = {};
                 tabActiPos.forEach(function(jsonPos) {
-                    jsonSystem += '"'+jsonPos.coords+'-'+jsonPos.messageID+'":'+JSON.stringify(jsonPos)+',';
+                    jsonSystemObj[jsonPos.coords+'-'+jsonPos.messageID] = jsonPos;
                 });
-                jsonSystem = jsonSystem.substr(0,jsonSystem.length-1);
-                jsonSystem += '}';
+                const jsonSystem = JSON.stringify(jsonSystemObj);
 
                 // Sent to PTRE
                 $.ajax({

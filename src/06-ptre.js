@@ -79,13 +79,11 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
         // Save current System to storage
         updateSystemV2(galaxy, system, newSystemInfos);
         // Push to PTRE
-        var jsonSystem = '{';
+        const jsonSystemObj = {};
         newSystemToPush.forEach(function(jsonPos) {
-            jsonSystem += '"'+jsonPos.coords+'":'+JSON.stringify(jsonPos)+',';
-            //consoleDebug(jsonSystem);
+            jsonSystemObj[jsonPos.coords] = jsonPos;
         });
-        jsonSystem = jsonSystem.substr(0,jsonSystem.length-1);
-        jsonSystem += '}';
+        const jsonSystem = JSON.stringify(jsonSystemObj);
         // Send to PTRE
         $.ajax({
             url : urlPTREPushGalaUpdate,
