@@ -34,7 +34,7 @@ function migrateDataAndCleanStorage() {
         });
         dataList = JSON.parse(dataJSON);
         // Go throught every element
-        $.each(dataList, function(i, elem) {
+        dataList.forEach(function(elem) {
             var keep_elem = 1;
             if (elem.type == "phalanx") {
                 // Clean relocated planets

@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 11:56:38 CET
+// Build date: dim. 22 mars 2026 12:29:08 CET
 // ****************************************
 
 // ****************************************
@@ -1102,7 +1102,7 @@ function addPTREStuffsToMessagesPage() {
 
                 // Build JSON
                 var jsonSystem = '{';
-                $.each(tabActiPos, function(nb, jsonPos){
+                tabActiPos.forEach(function(jsonPos) {
                     jsonSystem += '"'+jsonPos.coords+'-'+jsonPos.messageID+'":'+JSON.stringify(jsonPos)+',';
                 });
                 jsonSystem = jsonSystem.substr(0,jsonSystem.length-1);
@@ -1352,7 +1352,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
     // Look for same entry
     var idASup = -1;
-    $.each(dataList, function(i, elem) {
+    dataList.forEach(function(elem) {
         //console.log("[EasyPTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
@@ -1511,7 +1511,7 @@ function debugSharableData() {
     var dataList = [];
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
-        $.each(dataList, function(i, elem) {
+        dataList.forEach(function(elem) {
             console.log("[" + elem.type + "] " + elem.id + " => " + elem.val + " (" + elem.coords + ")");
         });
     } else {
@@ -1538,7 +1538,7 @@ function deletePlayerFromList(playerId, type) {
             targetList = JSON.parse(targetJSON);
         }
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck, i) {
             if (PlayerCheck.id == playerId) {
                 idASup = i;
                 pseudo = PlayerCheck.pseudo;
@@ -1616,7 +1616,7 @@ function toogleTargetPrivateStatus(playerId) {
     if (targetJSON != '') {
         targetList = JSON.parse(targetJSON);
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck, i) {
             if (PlayerCheck.id == playerId) {
                 // Present => Delete
                 idASup = i;
@@ -1650,7 +1650,7 @@ function isTargetPrivate(playerId) {
     if (targetJSON != '') {
         targetList = JSON.parse(targetJSON);
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (PlayerCheck.id == playerId) {
                 found = 1;
             }
@@ -1698,7 +1698,7 @@ function isPlayerInTheList(playerId, type = 'PTRE') {
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (PlayerCheck.id == playerId) {
                 ret = true;
             }
@@ -1717,7 +1717,7 @@ function getMergedTargetsList() {
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (!mergedTargetsList.includes(Number(PlayerCheck.id))) {
                 mergedTargetsList.push(Number(PlayerCheck.id));
             }
@@ -1726,7 +1726,7 @@ function getMergedTargetsList() {
     targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (!mergedTargetsList.includes(Number(PlayerCheck.id))) {
                 mergedTargetsList.push(Number(PlayerCheck.id));
             }
@@ -1740,7 +1740,7 @@ function getAGRPlayerIDFromPseudo(playerPseudo) {
     var targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (PlayerCheck.pseudo == playerPseudo) {
                 ret = PlayerCheck.id;
             }
@@ -1762,7 +1762,7 @@ function updateLocalAGRList() {
 
     var count = 0;
     if (tabAgo && tabAgo[1] && tabAgo[1].children) {
-        $.each(tabAgo[1].children, function(i, ligneJoueurAGR) {
+        Array.from(tabAgo[1].children).forEach(function(ligneJoueurAGR) {
             if (ligneJoueurAGR.getAttributeNode('ago-data')) {
                 var txtjsonDataAgo = ligneJoueurAGR.getAttributeNode('ago-data').value;
                 var jsonDataAgo = JSON.parse(txtjsonDataAgo);
@@ -1899,7 +1899,7 @@ function displayPTREMenu() {
         var phalanxAdditionnalMessage = '';
         if (dataJSON != '') {
             dataList = JSON.parse(dataJSON);
-            $.each(dataList, function(i, elem) {
+            dataList.forEach(function(elem) {
                 if (elem.type == "phalanx") {
                     phalanxCountTotal++;
                     if (elem.val != -1) {
@@ -1916,7 +1916,7 @@ function displayPTREMenu() {
         const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
         const galaEventsCount = galaEventsList.length;
         const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
-        $.each(highlightedPlayersList, function(i, elem) {
+        Object.values(highlightedPlayersList).forEach(function(elem) {
             if (elem.status == "hot") {
                 hotCount++;
             } else if (elem.status == "dnp") {
@@ -2145,7 +2145,7 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management';
+    content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
     content+= '<div><hr></div>';
@@ -2210,7 +2210,7 @@ function displayLogs() {
         logsList = JSON.parse(logsJSON);
     }
     logsList.sort((a, b) => b.ts - a.ts);
-    $.each(logsList, function(i, elem) {
+    logsList.forEach(function(elem) {
         if (elem.uni == country + "-" + universe) {
             content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         }
@@ -2307,10 +2307,9 @@ function displayTargetsList() {
         if (targetJSON != '') {
             targetList = JSON.parse(targetJSON);
             if (targetList) {
-                var i = 0;
-                $.each(targetList, function(i, PlayerCheck) {
+                targetList.forEach(function(PlayerCheck, index) {
                     //consoleDebug(PlayerCheck);
-                    i++;
+                    const i = index + 1;
                     content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+ (i%2) +'">'+PlayerCheck.pseudo+'</td>';
                     content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
                     content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
@@ -2336,10 +2335,9 @@ function displayTargetsList() {
     if (targetJSON != '') {
         targetListPTRE = JSON.parse(targetJSON);
         if (targetListPTRE) {
-            i = 0;
-            $.each(targetListPTRE, function(i, PlayerCheck) {
+            targetListPTRE.forEach(function(PlayerCheck, index) {
                 //consoleDebug(PlayerCheck);
-                i++;
+                const i = index + 1;
                 content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+ (i%2) +'">'+PlayerCheck.pseudo+'</td>';
                 content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
                 content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
@@ -2363,7 +2361,7 @@ function displayTargetsList() {
     });
     // Action: Toogle target status
     var targetStatus = document.getElementsByClassName('sharedTargetStatus');
-    $.each(targetStatus, function(nb, target) {
+    Array.from(targetStatus).forEach(function(target) {
         document.getElementById(target.id).addEventListener("click", function (event)
         {
             var status = toogleTargetPrivateStatus(target.id);
@@ -2372,14 +2370,14 @@ function displayTargetsList() {
     });
     // Action: Player Infos
     if (targetList) {
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             document.getElementById('btnGetPlayerInfos'+PlayerCheck.id).addEventListener("click", function (event) {
                 getPlayerInfos(PlayerCheck.id, PlayerCheck.pseudo);
             });
         });
     }
     if (targetListPTRE) {
-        $.each(targetListPTRE, function(i, PlayerCheck) {
+        targetListPTRE.forEach(function(PlayerCheck) {
             document.getElementById('btnGetPlayerInfos'+PlayerCheck.id).addEventListener("click", function (event) {
                 getPlayerInfos(PlayerCheck.id, PlayerCheck.pseudo);
             });
@@ -2387,7 +2385,7 @@ function displayTargetsList() {
     }
     // Action: Delete player
     if (targetList) {
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             document.getElementById('removePlayerFromListBySettings_'+PlayerCheck.id).addEventListener("click", function (event) {
                 // Delete player from list
                 var mess = deletePlayerFromList(PlayerCheck.id, "AGR");
@@ -2397,7 +2395,7 @@ function displayTargetsList() {
         });
     }
     if (targetListPTRE) {
-        $.each(targetListPTRE, function(i, PlayerCheck) {
+        targetListPTRE.forEach(function(PlayerCheck) {
             document.getElementById('removePlayerFromListBySettings_'+PlayerCheck.id).addEventListener("click", function (event) {
                 // Delete player from list
                 var mess = deletePlayerFromList(PlayerCheck.id, "PTRE");
@@ -2423,7 +2421,7 @@ function displaySharedData() {
     content += '<div class="ptreCategoryTitle">Synced data</div><table><tr><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Phalanx</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td></tr>';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
-        $.each(dataList, function(i, elem) {
+        dataList.forEach(function(elem) {
             if (elem.type == "phalanx") {
                 let val = elem.val;
                 if (val == -1) {
@@ -2437,7 +2435,7 @@ function displaySharedData() {
     content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx (' + undefElem + ')</td></tr></table><br><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>';
 
     content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Hot Targets</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td></tr>';
-    $.each(highlightedPlayersList, function(i, elem) {
+    Object.values(highlightedPlayersList).forEach(function(elem) {
         if (elem.status == "hot") {
             content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.name + '</td></tr>';
         }
@@ -2445,7 +2443,7 @@ function displaySharedData() {
     content += '</table><br><br><span class="ptreSuccess">Players recently spied</span>';
 
     content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Do Not Probe</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td><td class="td_cell_radius_0" align="center">Duration</td></tr>';
-    $.each(highlightedPlayersList, function(i, elem) {
+    Object.values(highlightedPlayersList).forEach(function(elem) {
         if (elem.status == "dnp") {
             var duration = Math.round((elem.ts - currentTime) / 60);
             content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.name + '</td><td class="td_cell_radius_1" align="center">' + duration + ' min</td></tr>';
@@ -2599,7 +2597,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
         updateSystemV2(galaxy, system, newSystemInfos);
         // Push to PTRE
         var jsonSystem = '{';
-        $.each(newSystemToPush, function(nb, jsonPos){
+        newSystemToPush.forEach(function(jsonPos) {
             jsonSystem += '"'+jsonPos.coords+'":'+JSON.stringify(jsonPos)+',';
             //consoleDebug(jsonSystem);
         });
@@ -2815,7 +2813,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
                         document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
                         var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
-                        $.each(reponseDecode.ranks_array, function(i, rank) {
+                        reponseDecode.ranks_array.forEach(function(rank, i) {
                             const previousRank = reponseDecode.ranks_array[i + 1];
                             var classR = "";
                             var diff = "-";
@@ -3048,7 +3046,7 @@ function syncTargets(mode) {
                 GM_setValue(ptrePTREPlayerListJSON, '');
                 var count = 0;
                 var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
-                $.each(newTargetList, function(i, incomingPlayer) {
+                newTargetList.forEach(function(incomingPlayer) {
                     if (!isPlayerInLists(incomingPlayer.player_id)) {
                         addPlayerToList(incomingPlayer.player_id, incomingPlayer.pseudo, 'PTRE');
                         count++;
@@ -3565,7 +3563,7 @@ function migrateDataAndCleanStorage() {
         });
         dataList = JSON.parse(dataJSON);
         // Go throught every element
-        $.each(dataList, function(i, elem) {
+        dataList.forEach(function(elem) {
             var keep_elem = 1;
             if (elem.type == "phalanx") {
                 // Clean relocated planets

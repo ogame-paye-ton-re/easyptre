@@ -14,7 +14,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
     // Look for same entry
     var idASup = -1;
-    $.each(dataList, function(i, elem) {
+    dataList.forEach(function(elem) {
         //console.log("[EasyPTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
@@ -173,7 +173,7 @@ function debugSharableData() {
     var dataList = [];
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
-        $.each(dataList, function(i, elem) {
+        dataList.forEach(function(elem) {
             console.log("[" + elem.type + "] " + elem.id + " => " + elem.val + " (" + elem.coords + ")");
         });
     } else {
@@ -200,7 +200,7 @@ function deletePlayerFromList(playerId, type) {
             targetList = JSON.parse(targetJSON);
         }
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck, i) {
             if (PlayerCheck.id == playerId) {
                 idASup = i;
                 pseudo = PlayerCheck.pseudo;
@@ -278,7 +278,7 @@ function toogleTargetPrivateStatus(playerId) {
     if (targetJSON != '') {
         targetList = JSON.parse(targetJSON);
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck, i) {
             if (PlayerCheck.id == playerId) {
                 // Present => Delete
                 idASup = i;
@@ -312,7 +312,7 @@ function isTargetPrivate(playerId) {
     if (targetJSON != '') {
         targetList = JSON.parse(targetJSON);
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (PlayerCheck.id == playerId) {
                 found = 1;
             }
@@ -360,7 +360,7 @@ function isPlayerInTheList(playerId, type = 'PTRE') {
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
 
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (PlayerCheck.id == playerId) {
                 ret = true;
             }
@@ -379,7 +379,7 @@ function getMergedTargetsList() {
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (!mergedTargetsList.includes(Number(PlayerCheck.id))) {
                 mergedTargetsList.push(Number(PlayerCheck.id));
             }
@@ -388,7 +388,7 @@ function getMergedTargetsList() {
     targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (!mergedTargetsList.includes(Number(PlayerCheck.id))) {
                 mergedTargetsList.push(Number(PlayerCheck.id));
             }
@@ -402,7 +402,7 @@ function getAGRPlayerIDFromPseudo(playerPseudo) {
     var targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     if (targetJSON != '') {
         var targetList = JSON.parse(targetJSON);
-        $.each(targetList, function(i, PlayerCheck) {
+        targetList.forEach(function(PlayerCheck) {
             if (PlayerCheck.pseudo == playerPseudo) {
                 ret = PlayerCheck.id;
             }
@@ -424,7 +424,7 @@ function updateLocalAGRList() {
 
     var count = 0;
     if (tabAgo && tabAgo[1] && tabAgo[1].children) {
-        $.each(tabAgo[1].children, function(i, ligneJoueurAGR) {
+        Array.from(tabAgo[1].children).forEach(function(ligneJoueurAGR) {
             if (ligneJoueurAGR.getAttributeNode('ago-data')) {
                 var txtjsonDataAgo = ligneJoueurAGR.getAttributeNode('ago-data').value;
                 var jsonDataAgo = JSON.parse(txtjsonDataAgo);

@@ -576,7 +576,7 @@ function addPTREStuffsToMessagesPage() {
 
                 // Build JSON
                 var jsonSystem = '{';
-                $.each(tabActiPos, function(nb, jsonPos){
+                tabActiPos.forEach(function(jsonPos) {
                     jsonSystem += '"'+jsonPos.coords+'-'+jsonPos.messageID+'":'+JSON.stringify(jsonPos)+',';
                 });
                 jsonSystem = jsonSystem.substr(0,jsonSystem.length-1);

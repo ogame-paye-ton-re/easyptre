@@ -80,7 +80,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
         updateSystemV2(galaxy, system, newSystemInfos);
         // Push to PTRE
         var jsonSystem = '{';
-        $.each(newSystemToPush, function(nb, jsonPos){
+        newSystemToPush.forEach(function(jsonPos) {
             jsonSystem += '"'+jsonPos.coords+'":'+JSON.stringify(jsonPos)+',';
             //consoleDebug(jsonSystem);
         });
@@ -296,7 +296,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
                         document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
                         var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
-                        $.each(reponseDecode.ranks_array, function(i, rank) {
+                        reponseDecode.ranks_array.forEach(function(rank, i) {
                             const previousRank = reponseDecode.ranks_array[i + 1];
                             var classR = "";
                             var diff = "-";
@@ -529,7 +529,7 @@ function syncTargets(mode) {
                 GM_setValue(ptrePTREPlayerListJSON, '');
                 var count = 0;
                 var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
-                $.each(newTargetList, function(i, incomingPlayer) {
+                newTargetList.forEach(function(incomingPlayer) {
                     if (!isPlayerInLists(incomingPlayer.player_id)) {
                         addPlayerToList(incomingPlayer.player_id, incomingPlayer.pseudo, 'PTRE');
                         count++;
