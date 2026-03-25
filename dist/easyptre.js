@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.14.2
+// @version      0.14.3
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -22,11 +22,12 @@
 // @connect      www.tampermonkey.net
 // @connect      ogame.gameforge.com
 // @connect      ptre.chez.gg
+// @connect      openuserjs.org
 // @supportURL   https://discord.gg/WsJGC9G
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 mars 2026 15:16:15 CET
+// Build date: mer. 25 mars 2026 20:24:36 CET
 // ****************************************
 
 // ****************************************
@@ -2147,6 +2148,8 @@ function displayHelp() {
 function displayChangelog() {
     setupInfoBox("EasyPTRE Changelog");
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';

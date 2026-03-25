@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.14.2
+// @version      0.14.3
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -22,6 +22,7 @@
 // @connect      www.tampermonkey.net
 // @connect      ogame.gameforge.com
 // @connect      ptre.chez.gg
+// @connect      openuserjs.org
 // @supportURL   https://discord.gg/WsJGC9G
 // ==/UserScript==
 
