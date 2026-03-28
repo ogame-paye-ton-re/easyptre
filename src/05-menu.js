@@ -2,12 +2,99 @@
 // MENUS
 // ****************************************
 
-// Displays PTRE settings
-function displayPTREMenu() {
-    const currentTime = getIGCurrentTS();
+var ptreCurrentView = null;
 
-    if (!document.getElementById('btnSaveOptPTRE')) {
-        migrateDataAndCleanStorage();
+// Creates the unified main box on first call, then only updates title and active nav.
+// navKey: 'Settings' | 'Data' | 'Galaxy' | 'Changelog' | 'Help' | 'Logs' | null
+function setupMainBox(title, navKey) {
+    if (!document.getElementById('ptreMainWrapper')) {
+        var defaultMessageDivInPanel = "";
+        if (!isValidTeamKey(GM_getValue(ptreTeamKey, ''))) {
+            defaultMessageDivInPanel = ptreMissingTKMessage;
+        }
+        agrEnabled = false;
+        if (isAGREnabled()) {
+            agrEnabled = true;
+        }
+        var html = '<div id="ptreMainBox">';
+        html += '<div id="ptreMainHeader">';
+        html += '<div id="ptreMainHeaderTop">';
+        html += '<span id="ptreMainTitle"></span>';
+        html += '<div id="ptreMainHeaderButtons">';
+        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue">&#8635; Refresh</div>';
+        html += ' <div id="ptreMainClose" type="button" class="button btn_blue">&#10005; Close</div>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div id="messageDivInPanel" class="ptreWarning">' + defaultMessageDivInPanel + '</div>';
+        html += '</div>';
+        html += '<div id="ptreMainBody">';
+        html += '<div id="ptreMainContent"></div>';
+        html += '<div id="ptreMainNav">';
+        html += '<div id="ptreNavOverview" class="button btn_blue ptreNavBtn">Overview</div>';
+        html += '<div id="ptreNavSettings" class="button btn_blue ptreNavBtn">&#9881; Settings</div>';
+        html += '<div id="ptreNavData" class="button btn_blue ptreNavBtn">Shared Data</div>';
+        html += '<div id="ptreNavPTRETargets" class="button btn_blue ptreNavBtn">PTRE Targets</div>';
+        if (agrEnabled) {
+            html += '<div id="ptreNavAGRTargets" class="button btn_blue ptreNavBtn">AGR Targets</div>';
+        }
+        html += '<div id="ptreNavGalaxy" class="button btn_blue ptreNavBtn">Galaxy</div>';
+        html += '<div><hr></div>';
+        html += '<div id="ptreNavHelp" class="button btn_blue ptreNavBtn">Help</div>';
+        html += '<div id="ptreNavLogs" class="button btn_blue ptreNavBtn">Logs</div>';
+        html += '<div id="ptreNavUpdates" class="button btn_blue ptreNavBtn">Updates</div>';
+        html += '<div id="ptreNavToolsCompatibility" class="button btn_blue ptreNavBtn">Tools Compat</div>';
+        html += '<div id="ptreNavChangelog" class="button btn_blue ptreNavBtn">Changelog</div>';
+        html += '</div></div>';
+        html += '<div id="ptreMainFooter">';
+        html += '<div id="ptreMainFooterLeft"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></div>';
+        html += '<div id="ptreMainFooterRight"><span class="ptreBold">EasyPTRE v' + GM_info.script.version + '</span></div>';
+        html += '</div>';
+        html += '<div id="ptreMainFooterMsg"><span id="ptreUpdateVersionMessage"></span></div>';
+        html += '</div>';
+        var wrapper = document.createElement('div');
+        wrapper.id = 'ptreMainWrapper';
+        wrapper.innerHTML = html;
+        document.body.appendChild(wrapper);
+        document.getElementById('ptreMainClose').addEventListener('click', function() {
+            document.getElementById('ptreMainWrapper').remove();
+            var badge = document.getElementById('ptreTopRightBadge');
+            if (badge) { badge.style.display = ''; }
+        });
+        document.getElementById('ptreMainRefresh').addEventListener('click', function() {
+            if (ptreCurrentView) { ptreCurrentView(); }
+        });
+        document.getElementById('ptreNavSettings').addEventListener('click', function() { displaySettings(); });
+        document.getElementById('ptreNavOverview').addEventListener('click', function() { displayOverview(); });
+        document.getElementById('ptreNavData').addEventListener('click', function() { displaySharedData(); });
+        document.getElementById('ptreNavGalaxy').addEventListener('click', function() { displayGalaxyTracking(); });
+        if (agrEnabled) {
+            document.getElementById('ptreNavAGRTargets').addEventListener('click', function() { displayAGRTargetsList(); });
+        }
+        document.getElementById('ptreNavPTRETargets').addEventListener('click', function() { displayPTRETargetsList(); });
+        document.getElementById('ptreNavChangelog').addEventListener('click', function() { displayChangelog(); });
+        document.getElementById('ptreNavHelp').addEventListener('click', function() { displayHelp(); });
+        document.getElementById('ptreNavLogs').addEventListener('click', function() { displayLogs(); });
+        document.getElementById('ptreNavUpdates').addEventListener('click', function() { displayUpdateBox(''); });
+        document.getElementById('ptreNavToolsCompatibility').addEventListener('click', function() { displayToolsCompatibility(); });
+    }
+    document.getElementById('ptreMainTitle').textContent = title;
+    var badge = document.getElementById('ptreTopRightBadge');
+    if (badge) { badge.style.display = 'none'; }
+    document.querySelectorAll('.ptreNavBtn').forEach(function(b) { b.classList.remove('ptreNavActive'); });
+    if (navKey) {
+        var activeBtn = document.getElementById('ptreNav' + navKey);
+        if (activeBtn) { activeBtn.classList.add('ptreNavActive'); }
+    }
+    document.getElementById('ptreMainContent').innerHTML = '<br><center><span class="ptreWarning">LOADING...</span></center><br>';
+}
+
+// Displays PTRE settings
+function displaySettings() {
+    const currentTime = getIGCurrentTS();
+    ptreCurrentView = displaySettings;
+    setupMainBox('EasyPTRE Settings', 'Settings');
+
+    migrateDataAndCleanStorage();
 
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
 
@@ -20,10 +107,7 @@ function displayPTREMenu() {
         const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">(recommended: ON)</span>';
         const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">(recommended: OFF)</span>';
         var tdId = 0;
-        var divPTRE = '<div id="boxPTRESettings"><table border="1" width="100%">';
-        divPTRE += '<tr><td class="td_cell" width="50%"><div class="ptreBoxTitle">EasyPTRE PANNEL</div></td><td class="td_cell" align="right"><div id="btnHelpPTRE" type="button" class="button btn_blue">HELP</div> <div id="btnRefreshOptPTRE" type="button" class="button btn_blue">REFRESH</div> <div id="btnCloseOptPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><div id=messageDivInSettings class="ptreWarning"></div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
+        var divPTRE = '<table border="1" width="100%">';
         // Settings
         divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">SAVE</div></td></tr>';
         divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
@@ -100,176 +184,19 @@ function displayPTREMenu() {
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
-        //
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr></table></td></tr>';
         // End Settings
+        divPTRE += '</table>';
 
-        // Shared data
-        var dataJSON = '';
-        dataJSON = GM_getValue(ptreDataToSync, '');
-        var phalanxCountTotal = 0;
-        var phalanxCount = 0;
-        var dnpCount = 0;
-        var hotCount = 0;
-        var dataList = [];
-        var phalanxAdditionnalMessage = '';
-        if (dataJSON != '') {
-            dataList = JSON.parse(dataJSON);
-            dataList.forEach(function(elem) {
-                if (elem.type == "phalanx") {
-                    phalanxCountTotal++;
-                    if (elem.val != -1) {
-                        phalanxCount++;
-                    } else if (phalanxAdditionnalMessage == "") {
-                        phalanxAdditionnalMessage = '<span class="ptreSmall ptreError">Missing phalanx: '+buildLinkToMoonBuilding(elem.id)+'</span>';
-                    }
-                }
-            });
-        }
-        if (phalanxAdditionnalMessage == "") {
-            phalanxAdditionnalMessage = '<span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span>';
-        }
-        const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
-        const galaEventsCount = galaEventsList.length;
-        const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
-        Object.values(highlightedPlayersList).forEach(function(elem) {
-            if (elem.status == "hot") {
-                hotCount++;
-            } else if (elem.status == "dnp") {
-                dnpCount++;
-            }
-        });
-        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" colspan="2">';
-        divPTRE += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br>'+phalanxAdditionnalMessage+'</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
-        divPTRE += '</table></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-
-        // Features diabled when OGL/OGI detected
-        if (!isOGLorOGIEnabled()) {
-            // Targets list
-            divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Targets list (<span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue">OPEN LIST</div></td></tr>';
-            divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
-            divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-        }
-
-        // Galaxy Data
-        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 2) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
-        if (isOGLorOGIEnabled()) {
-            divPTRE += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptre Small">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
-        }
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-
-        // Lifeforms Menu
-        divPTRE += '<tr><td class="td_cell" colspan="2"><div class="ptreCategoryTitle">Lifeforms researchs (<span id="ptreLastTechnosRefreshField">' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + '</span>)</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet menu to update</a> - <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Check it out on PTRE</a></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-
-        // Footer
-        //divPTRE += '<tr>';
-        divPTRE += '<tr><td class="td_cell" align="right" colspan="2"><div id="displayLogs" type="button" class="button btn_blue">LOGS</div> <div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION</div> <div id="displayChangelog" type="button" class="button btn_blue">CHANGELOG</div></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="left"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></td><td class="td_cell" align="right"><span class="ptreBold">EasyPTRE v' + GM_info.script.version + '</span></td></tr>';
-        divPTRE += '<tr><td class="td_cell" align="center" colspan="2"><span id="ptreUpdateVersionMessage">';
-        var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
-        if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
-            var updateMessageShort = '<span class="ptreError">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
-            divPTRE += updateMessageShort;
-            displayUpdateBox(updateMessageShort);
-        }
-        divPTRE += '</span></td></tr>';
-
-        //fin div table tr
-        divPTRE += '</table></div>';
-
-        var elementSetPTRE = document.createElement("div");
-        elementSetPTRE.innerHTML = divPTRE;
-        elementSetPTRE.id = 'divPTRESettings';
-
-        if (document.getElementById('bottom')) {
-            document.getElementById('bottom').appendChild(elementSetPTRE);
-        }
-
-        // Action: Sync data to PTRE
-        document.getElementById('synctDataWithPTRE').addEventListener("click", function (event) {
-            syncDataWithPTRE('manual');
-        });
-
-        // Action: Check version
-        document.getElementById('forceCheckVersionButton').addEventListener("click", function (event) {
-            document.getElementById('ptreUpdateVersionMessage').innerHTML = 'Checking EasyPTRE version...';
-            updateLastAvailableVersion(true);
-        });
-
-        // Action: Check version
-        document.getElementById('displayLogs').addEventListener("click", function (event) {
-            displayLogs();
-        });
-
-        // Action: Help
-        document.getElementById('btnHelpPTRE').addEventListener("click", function (event) {
-            displayHelp();
-        });
-
-        // Action: Changelog
-        document.getElementById('displayChangelog').addEventListener("click", function (event) {
-            displayChangelog();
-        });
-
-        // Action: Display Galaxy Tracking
-        if (document.getElementById('displayGalaxyTracking')) {
-            document.getElementById('displayGalaxyTracking').addEventListener("click", function (event) {
-                displayGalaxyTracking();
-            });
-        }
-
-        // Action: Display Targets List
-        if (document.getElementById('displayTargetsList')) {
-            document.getElementById('displayTargetsList').addEventListener("click", function (event) {
-                displayTargetsList();
-            });
-        }
-
-        // Action: Display Shared Data
-        if (document.getElementById('displaySharedData')) {
-            document.getElementById('displaySharedData').addEventListener("click", function (event) {
-                displaySharedData();
-            });
-        }
-
-        // Action: Close
-        document.getElementById('btnCloseOptPTRE').addEventListener("click", function (event) {
-            document.getElementById('divPTRESettings').parentNode.removeChild(document.getElementById('divPTRESettings'));
-            if (document.getElementById('divPTREInfos')) {
-                document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
-            }
-        });
+        document.getElementById('ptreMainContent').innerHTML = divPTRE;
 
         // Action: Save
         document.getElementById('btnSaveOptPTRE').addEventListener("click", function (event) {
             savePTRESettings();
-            setTimeout(function() {document.getElementById('divPTRESettings').parentNode.removeChild(document.getElementById('divPTRESettings')); displayPTREMenu();}, 2000);
+            displaySettings();
         });
-
-        // Action: Refresh
-        document.getElementById('btnRefreshOptPTRE').addEventListener("click", function (event) {
-            document.getElementById('divPTRESettings').parentNode.removeChild(document.getElementById('divPTRESettings'));
-            setTimeout(function() {displayPTREMenu();}, 100);
-        });
-
-        // Action: OGI/OGI infos
-        if (document.getElementById('btnOGLOGIDetails')) {
-            document.getElementById('btnOGLOGIDetails').addEventListener("click", function (event) {
-                displayOGLOGIInfos();
-            });
-        }
 
         // Check last script version
         updateLastAvailableVersion(false);
-    }
 
     // Sync targets
     if (currentTime > (GM_getValue(ptreLastTargetsSync, 0) + 15*60)) {
@@ -278,6 +205,121 @@ function displayPTREMenu() {
     // Sync Data
     if (currentTime > (GM_getValue(ptreLastDataSync, 0) + 15*60)) {
         setTimeout(syncDataWithPTRE, 2000);
+    }
+}
+
+// Displays overview (team data, targets, galaxy, lifeforms)
+function displayOverview() {
+    const currentTime = getIGCurrentTS();
+    ptreCurrentView = displayOverview;
+    setupMainBox('EasyPTRE Overview', 'Overview');
+
+    // Shared data
+    var dataJSON = '';
+    dataJSON = GM_getValue(ptreDataToSync, '');
+    var phalanxCountTotal = 0;
+    var phalanxCount = 0;
+    var dnpCount = 0;
+    var hotCount = 0;
+    var dataList = [];
+    var phalanxAdditionnalMessage = '';
+    if (dataJSON != '') {
+        dataList = JSON.parse(dataJSON);
+        dataList.forEach(function(elem) {
+            if (elem.type == "phalanx") {
+                phalanxCountTotal++;
+                if (elem.val != -1) {
+                    phalanxCount++;
+                } else if (phalanxAdditionnalMessage == "") {
+                    phalanxAdditionnalMessage = '<span class="ptreSmall ptreError">Missing phalanx: '+buildLinkToMoonBuilding(elem.id)+'</span>';
+                }
+            }
+        });
+    }
+    if (phalanxAdditionnalMessage == "") {
+        phalanxAdditionnalMessage = '<span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span>';
+    }
+    const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
+    const galaEventsCount = galaEventsList.length;
+    const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
+    Object.values(highlightedPlayersList).forEach(function(elem) {
+        if (elem.status == "hot") {
+            hotCount++;
+        } else if (elem.status == "dnp") {
+            dnpCount++;
+        }
+    });
+    var divOV = '<table border="1" width="100%">';
+    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
+    divOV += '<tr><td class="td_cell" colspan="2">';
+    divOV += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br>'+phalanxAdditionnalMessage+'</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
+    divOV += '</table></td></tr>';
+    divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
+
+    // Features disabled when OGL/OGI detected
+    if (!isOGLorOGIEnabled()) {
+        divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Targets list (<span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue">OPEN LIST</div></td></tr>';
+        divOV += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
+        divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
+    }
+
+    // Galaxy Data
+    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 2) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
+    divOV += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
+    if (isOGLorOGIEnabled()) {
+        divOV += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptre Small">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
+    }
+    divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
+
+    // Lifeforms Menu
+    divOV += '<tr><td class="td_cell" colspan="2"><div class="ptreCategoryTitle">Lifeforms researchs (<span id="ptreLastTechnosRefreshField">' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + '</span>)</div></td></tr>';
+    divOV += '<tr><td class="td_cell" align="center" colspan="2"><a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet menu to update</a> - <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Check it out on PTRE</a></td></tr>';
+
+    divOV += '</table>';
+
+    // Update version message in footer
+    var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
+    if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
+        var updateMessageShort = '<span class="ptreError">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
+        displayUpdateVersionMessage(updateMessageShort);
+    }
+
+    document.getElementById('ptreMainContent').innerHTML = divOV;
+
+    // Action: Sync data to PTRE
+    document.getElementById('synctDataWithPTRE').addEventListener("click", function (event) {
+        syncDataWithPTRE('manual');
+    });
+
+    // Action: Display Galaxy Tracking
+    if (document.getElementById('displayGalaxyTracking')) {
+        document.getElementById('displayGalaxyTracking').addEventListener("click", function (event) {
+            displayGalaxyTracking();
+        });
+    }
+
+    // Action: Display Targets List
+    if (document.getElementById('displayTargetsList')) {
+        document.getElementById('displayTargetsList').addEventListener("click", function (event) {
+            displayPTRETargetsList();
+        });
+    }
+
+    // Action: Display Shared Data
+    if (document.getElementById('displaySharedData')) {
+        document.getElementById('displaySharedData').addEventListener("click", function (event) {
+            displaySharedData();
+        });
+    }
+
+    // Action: OGI/OGI infos
+    if (document.getElementById('btnOGLOGIDetails')) {
+        document.getElementById('btnOGLOGIDetails').addEventListener("click", function (event) {
+            displayToolsCompatibility();
+        });
     }
 }
 
@@ -320,29 +362,9 @@ function savePTRESettings() {
     setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, menuImageDisplayTime);
 }
 
-// This function creates empty Info Box.
-// Its ready to be updated
-function setupInfoBox(title) {
-    if (document.getElementById('divPTREInfos')) {
-        document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
-    }
-    var divPTRE = '<div id="boxPTREInfos"><table border="1" width="100%"><tr><td align="right"><div class="ptreBoxTitle">' + title + '</div></td><td align="right"><div id="btnCloseInfosPTRE" type="button" class="button btn_blue">CLOSE</div></td></tr></table><hr>';
-    divPTRE+='<div id="infoBoxContent"><br><br><center><span class="ptreWarning">LOADING...</span></center><br><br><br></div>';
-    var elementSetPTRE = document.createElement("div");
-    elementSetPTRE.innerHTML = divPTRE;
-    elementSetPTRE.id = 'divPTREInfos';
-
-    if (document.getElementById('ingamepage')) {
-        document.getElementById('ingamepage').appendChild(elementSetPTRE);
-    }
-
-    document.getElementById('btnCloseInfosPTRE').addEventListener("click", function (event) {
-        document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
-    });
-}
-
 function displayHelp() {
-    setupInfoBox("EasyPTRE Help");
+    ptreCurrentView = displayHelp;
+    setupMainBox('Help', 'Help');
     var content = '<div class="ptreCategoryTitle">Purpose</div>EasyPTRE works as a side-car of AGR in order to enable PTRE basic features. Once configured, you will be able to: <br>- Push and share spy reports<br>- Push counter spy messages as acivities<br>- Track targets galaxy activities and check results on PTRE website<br>- Track galaxy events (new moons, etc)<br>- Display player top fleet from PTRE<br>- Sync targets list with your Team';
     content+= '<div class="ptreCategoryTitle">Team Key setting</div>To use it, you need to create a Team on <a href="https://ptre.chez.gg?page=team" target="_blank">PTRE website</a> and add Team Key to EasyPTRE settings.<br>PTRE Team Key should look like: TM-XXXX-XXXX-XXXX-XXXX. Create your Team or ask your teammates for it.';
     content+= '<div class="ptreCategoryTitle">Spy report push</div>You can push spy reports from the messages page or when opening a spy report. Spy report will be shared to your Team and over Discord (if <a href="https://ptre.chez.gg/?page=discord_integration" target="_blank">configuration</a> is done).';
@@ -355,16 +377,17 @@ function displayHelp() {
     content+= '<br>Common targets list (for your PTRE Team) can be configured <a href="https://ptre.chez.gg/?page=players_list" target="_blank">on PTRE players list page</a>.';
     content+= '<div class="ptreCategoryTitle">Need more help?</div>You can get some help on <a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>, come and ask us.';
 
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
 }
 
 function displayChangelog() {
-    setupInfoBox("EasyPTRE Changelog");
+    ptreCurrentView = displayChangelog;
+    setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Move galaxy pop-up from Beta to release<br>- [Feature] Add an option to disable galaxy pop-up';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
-    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
-    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.0 (jan 2026)</div>- Global code refacto and polish';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.13.3 (jan 2026)</div>- Several bugfix and polish';
@@ -390,12 +413,13 @@ function displayChangelog() {
     content+= '<div class="ptreSubTitle">0.7.6</div>- Import AGR custom lists to PTRE tracking list (in addition of basic lists)<br>- Improve notification system (keep 5 sec history)';
     content+= '<div class="ptreSubTitle">0.7.5</div>- Display target top fleet directly into EasyPTRE pannel<br>- [Feature] Add help menu';
     content+= '<div class="ptreSubTitle">0.7.4</div>- [Feature] Sync AGR/PTRE targets list with teammates via PTRE (non-mandatory)<br>- [Feature] Add a private targets list management system (in order to not share)<br>- [Feature] Add a debug mode option<br>- [Feature] Script will check, once a day, for updates and display a label<br>- [Fix] Fix pushing activities when refreshing same system<br>- [Fix] Remove AGR "Traders" from targets lists ("Friends" were already removed)<br>- [Fix] Fix galaxy page detection (depending on from where player clicks)<br>- [Fix] Add scrollbar to targets list<br>- [Fix] Move EasyPTRE pannel to right side in order to not overlap with AGR';
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
 }
 
 function displayUpdateBox(updateMessageShort) {
-    setupInfoBox("EasyPTRE update");
+    setupMainBox('EasyPTRE Updates', 'Updates');
     var content = updateMessageShort;
+    content += '<div class="ptreCategoryTitle">Check for updates</div><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION NOW</div><br>';
     content += '<div class="ptreCategoryTitle">Automatic updates</div>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
     content += '<div class="ptreCategoryTitle">Manual update</div>If you want to proceed to a manual update here is how to:<br>';
     content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
@@ -406,19 +430,30 @@ function displayUpdateBox(updateMessageShort) {
     content += '<br>- Press "Start"';
     content += '<br>- (optionnal) If TamperMonkey proposes "Overwrite", validate it';
     content += '<br>- Update should be done';
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
+    document.getElementById('forceCheckVersionButton').addEventListener('click', function() {
+        displayUpdateVersionMessage("Checking...");
+        updateLastAvailableVersion(true);
+    });
 }
 
-function displayOGLOGIInfos() {
-    setupInfoBox("OGLight or OGInfinity: enabled");
-    var content = '<span class="ptreWarning">OGLight or OGInfinity is enabled: some EasyPTRE features are disabled to leave priority to your favorite tool, OGL / OGI. Please also add your PTRE TeamKey into OGL / OGI.</span>';
-    content += '<br><br>EasyPTRE is still managing some tasks like:<br>- Galaxy Event Explorer Infos (in galaxy view)<br>- Lifeforms/combat researchs sync (for PTRE spy reports)<br>- Phalanx infos sharing (in galaxy view or Discord)';
+function displayToolsCompatibility() {
+    setupMainBox('Tools Compatibility', 'ToolsCompatibility');
+    var content = '';
+    if (isOGLEnabled() || isOGIEnabled()) {
+        content += '<span class="ptreWarning">OGLight or OGInfinity is enabled: some EasyPTRE features are disabled to leave priority to your favorite tool, OGL / OGI. Please also add your PTRE TeamKey into OGL / OGI.</span>';
+        content += '<br><br>EasyPTRE is still managing some tasks like:<br>- Galaxy Event Explorer Infos (in galaxy view)<br>- Lifeforms/combat researchs sync (for PTRE spy reports)<br>- Phalanx infos sharing (in galaxy view or Discord)';
+    }
+    if (isAGREnabled()) {
+        content += '<span class="ptreWarning">AGR is enabled. Your AGR target list can be synced to PTRE</span>';
+    }
 
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
 }
 
 function displayLogs() {
-    setupInfoBox("EasyPTRE Logs");
+    ptreCurrentView = displayLogs;
+    setupMainBox('Logs', 'Logs');
     var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
@@ -435,7 +470,7 @@ function displayLogs() {
     });
     content+= '</table>';
 
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
     document.getElementById('purgeLogs').addEventListener("click", function (event) {
         GM_deleteValue(ptreLogsList);
         addToLogs("Logs cleaned");
@@ -444,13 +479,13 @@ function displayLogs() {
 }
 
 function displayGalaxyTracking() {
-    setupInfoBox("Galaxy tracking distribution");
+    ptreCurrentView = displayGalaxyTracking;
+    setupMainBox('Galaxy', 'Galaxy');
 
     var content = '<div class="ptreCategoryTitle">Galaxy details</div>';
     content+='Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + ' | Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
 
     const allGalaxyKeys = GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort();
-    const cachedGalaxies = Object.keys(ptreGalaxyCache).map(Number).sort((a, b) => a - b);
 
     content+='<table><tr>';
     content+='<td class="td_cell_radius_0" align="center">Galaxy key</td>';
@@ -484,9 +519,6 @@ function displayGalaxyTracking() {
         content+='<tr><td class="td_cell_radius_1" colspan="4" align="center"><span class="ptreWarning">No galaxy data in storage</span></td></tr>';
     }
     content+='</table>';
-    if (cachedGalaxies.length === 0) {
-        content+='<br><span class="ptreWarning">Cache is empty (no galaxy browsed yet this session)</span>';
-    }
 
     content += '<div class="ptreCategoryTitle">Distribution</div>';
     content += 'X => 10/10 systems recently updated<br>+ => some systems recently updated<br><br>';
@@ -523,7 +555,7 @@ function displayGalaxyTracking() {
 
     content+='<div class="ptreCategoryTitle">Reset galaxy data</div>';
     content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA</div>';
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
 
     // Action: Purge Galaxy Tracking
     document.getElementById('purgeGalaxyTracking').addEventListener("click", function (event) {
@@ -531,123 +563,123 @@ function displayGalaxyTracking() {
     });
 }
 
-function displayTargetsList() {
-    setupInfoBox("Targets List");
+function displayAGRTargetsList() {
+    ptreCurrentView = displayAGRTargetsList;
+    setupMainBox('AGR Targets', 'AGRTargets');
 
     var content = '<div id="targetsListDiv"><table width="100%"><tr><td><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">SYNC TARGETS</div></td></tr></table><br><br>';
 
-    // Check if AGR is enabled
     var isAGROn = false;
     if (isAGREnabled()) {
         isAGROn = true;
         updateLocalAGRList();
     }
-    content += '<table width="800px"><tr><td align="center" valign="top">';
-    // EasyPTRE enabled (AGR mode or vanilla mode)
-    // Targets list
+
+    var targetJSON = '';
+    var targetList = '';
     if (!isAGROn) {
-        content += '<span class="ptreError">AGR is not enabled: Only using PTRE list.</span>';
+        content += '<span class="ptreError">AGR is not enabled.</span>';
     } else {
-        // Display PTRE list if AGR list setting is disabled OR AGR extension not installed
-        var targetJSON = '';
-        var targetList = '';
-        content += 'AGR Target List<br><span class="ptreSmall">This list is based on your AGR list</span><br><br><table width="90%">';
+        content += 'AGR Target List<br><span class="ptreSmall">This list is based on your AGR list</span><br><br><table width="100%">';
         content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><div class="ptreSubTitle">Player<br>Name</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Fleet<br>Infos</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">PTRE<br>Profile</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Keep<br>Private</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Remove<br>Target</div></td></tr>';
         targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
         if (targetJSON != '') {
             targetList = JSON.parse(targetJSON);
             if (targetList) {
                 targetList.forEach(function(PlayerCheck, index) {
-                    //consoleDebug(PlayerCheck);
                     const i = index + 1;
-                    content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+ (i%2) +'">'+PlayerCheck.pseudo+'</td>';
-                    content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
-                    content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
+                    content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+(i%2)+'">'+PlayerCheck.pseudo+'</td>';
+                    content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
+                    content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
                     var checked = '';
                     if (isTargetPrivate(PlayerCheck.id)) {
                         checked = ' checked';
                     }
-                    content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><input class="sharedTargetStatus" id="'+PlayerCheck.id+'" type="checkbox"' + checked + '></td>';
-                    content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><a class="tooltip" id="removePlayerFromListBySettings_'+PlayerCheck.id+'" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgSupPlayer + '" height="12" width="12"></a></td>';
+                    content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><input class="sharedTargetStatus" id="'+PlayerCheck.id+'" type="checkbox"' + checked + '></td>';
+                    content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><a class="tooltip" id="removePlayerFromListBySettings_'+PlayerCheck.id+'" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgSupPlayer + '" height="12" width="12"></a></td>';
                     content += '</tr>';
                 });
             }
         }
-        content += '</table> (x' + targetList.length + ')';
+        content += '</table> (x' + (targetList ? targetList.length : 0) + ')';
     }
-    content += '</td><td align="center" valign="top">';
-    // Display PTRE list if AGR list setting is disabled OR AGR extension not installed
-    targetJSON = '';
-    var targetListPTRE = '';
-    content += 'PTRE Team Target List<br><span class="ptreSmall">Common list with your Team</span><br><br><table width="90%">';
-    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><div class="ptreSubTitle">Player<br>Name</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Fleet<br>Infos</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">PTRE<br>Profile</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Remove<br>Target</div></td></tr>';
-    targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
-    if (targetJSON != '') {
-        targetListPTRE = JSON.parse(targetJSON);
-        if (targetListPTRE) {
-            targetListPTRE.forEach(function(PlayerCheck, index) {
-                //consoleDebug(PlayerCheck);
-                const i = index + 1;
-                content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+ (i%2) +'">'+PlayerCheck.pseudo+'</td>';
-                content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
-                content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
-                content += '<td class="td_cell_radius_'+ (i%2) +'" align="center"><a class="tooltip" id="removePlayerFromListBySettings_'+PlayerCheck.id+'" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgSupPlayer + '" height="12" width="12"></a></td>';
-                content += '</tr>';
-            });
-        }
-    }
-    content += '</table> (x' + targetListPTRE.length + ')';
-    content += '</td></tr></table></div>';
-    document.getElementById('infoBoxContent').innerHTML = content;
+    content += '</div>';
+    document.getElementById('ptreMainContent').innerHTML = content;
 
     // Action: reload list
     document.getElementById('reloadLocalList').addEventListener("click", function (event) {
-        setupInfoBox();
-        setTimeout(displayTargetsList, 100);
+        setTimeout(displayAGRTargetsList, 100);
     });
     // Action: sync targets
     document.getElementById('synctTargetsWithPTRE').addEventListener("click", function (event) {
         syncTargets("manual");
     });
-    // Action: Toogle target status
+    // Action: Toggle target status
     var targetStatus = document.getElementsByClassName('sharedTargetStatus');
     Array.from(targetStatus).forEach(function(target) {
-        document.getElementById(target.id).addEventListener("click", function (event)
-        {
+        document.getElementById(target.id).addEventListener("click", function (event) {
             var status = toogleTargetPrivateStatus(target.id);
             displayMessageInSettings('Target is now ' + status);
         });
     });
-    // Action: Player Infos
+    // Action: Player Infos + Delete
     if (targetList) {
         targetList.forEach(function(PlayerCheck) {
             document.getElementById('btnGetPlayerInfos'+PlayerCheck.id).addEventListener("click", function (event) {
                 getPlayerInfos(PlayerCheck.id, PlayerCheck.pseudo);
             });
-        });
-    }
-    if (targetListPTRE) {
-        targetListPTRE.forEach(function(PlayerCheck) {
-            document.getElementById('btnGetPlayerInfos'+PlayerCheck.id).addEventListener("click", function (event) {
-                getPlayerInfos(PlayerCheck.id, PlayerCheck.pseudo);
-            });
-        });
-    }
-    // Action: Delete player
-    if (targetList) {
-        targetList.forEach(function(PlayerCheck) {
             document.getElementById('removePlayerFromListBySettings_'+PlayerCheck.id).addEventListener("click", function (event) {
-                // Delete player from list
                 var mess = deletePlayerFromList(PlayerCheck.id, "AGR");
                 displayMessageInSettings(mess);
                 document.getElementById('rawPLayer_'+PlayerCheck.id).remove();
             });
         });
     }
+}
+
+function displayPTRETargetsList() {
+    ptreCurrentView = displayPTRETargetsList;
+    setupMainBox('PTRE Targets', 'PTRETargets');
+
+    var content = '<div id="targetsListDiv"><table width="100%"><tr><td><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">SYNC TARGETS</div></td></tr></table><br><br>';
+
+    var targetJSON = '';
+    var targetListPTRE = '';
+    content += 'PTRE Team Target List<br><span class="ptreSmall">Common list with your Team</span><br><br><table width="100%">';
+    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_0"><div class="ptreSubTitle">Player<br>Name</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Fleet<br>Infos</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">PTRE<br>Profile</div></td><td class="td_cell_radius_0" align="center"><div class="ptreSubTitle">Remove<br>Target</div></td></tr>';
+    targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
+    if (targetJSON != '') {
+        targetListPTRE = JSON.parse(targetJSON);
+        if (targetListPTRE) {
+            targetListPTRE.forEach(function(PlayerCheck, index) {
+                const i = index + 1;
+                content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+(i%2)+'">'+PlayerCheck.pseudo+'</td>';
+                content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
+                content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
+                content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><a class="tooltip" id="removePlayerFromListBySettings_'+PlayerCheck.id+'" style="cursor:pointer;"><img class="mouseSwitch" src="' + imgSupPlayer + '" height="12" width="12"></a></td>';
+                content += '</tr>';
+            });
+        }
+    }
+    content += '</table> (x' + (targetListPTRE ? targetListPTRE.length : 0) + ')';
+    content += '</div>';
+    document.getElementById('ptreMainContent').innerHTML = content;
+
+    // Action: reload list
+    document.getElementById('reloadLocalList').addEventListener("click", function (event) {
+        setTimeout(displayPTRETargetsList, 100);
+    });
+    // Action: sync targets
+    document.getElementById('synctTargetsWithPTRE').addEventListener("click", function (event) {
+        syncTargets("manual");
+    });
+    // Action: Player Infos + Delete
     if (targetListPTRE) {
         targetListPTRE.forEach(function(PlayerCheck) {
+            document.getElementById('btnGetPlayerInfos'+PlayerCheck.id).addEventListener("click", function (event) {
+                getPlayerInfos(PlayerCheck.id, PlayerCheck.pseudo);
+            });
             document.getElementById('removePlayerFromListBySettings_'+PlayerCheck.id).addEventListener("click", function (event) {
-                // Delete player from list
                 var mess = deletePlayerFromList(PlayerCheck.id, "PTRE");
                 displayMessageInSettings(mess);
                 document.getElementById('rawPLayer_'+PlayerCheck.id).remove();
@@ -657,7 +689,8 @@ function displayTargetsList() {
 }
 
 function displaySharedData() {
-    setupInfoBox("Team Shared data");
+    ptreCurrentView = displaySharedData;
+    setupMainBox('Shared Data', 'Data');
     const currentTime = getIGCurrentTS();
     var content = '';
     var phalanxCount = 0;
@@ -727,15 +760,15 @@ function displaySharedData() {
         }
     }
 
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
 }
 
 function validatePurgeGalaxyTracking() {
-    setupInfoBox("Delete Galaxy tracking data ?");
+    setupMainBox('Delete Galaxy data?', 'Galaxy');
     var content = '<span class="ptreError">This will delete galaxy data from local storage.</span><br><br>';
     content+= 'It is recommended to delete thoses data only if you have issues with galaxy feature<br>or if you have not play for a long time this universe.<br><br>';
     content+= '<div id="purgeGalaxyTracking" class="button btn_blue">PURGE DATA, REALLY?</div>';
-    document.getElementById('infoBoxContent').innerHTML = content;
+    document.getElementById('ptreMainContent').innerHTML = content;
 
     // Action: Purge Galaxy Tracking
     document.getElementById('purgeGalaxyTracking').addEventListener("click", function (event) {
@@ -763,6 +796,20 @@ function displayTotalSystemsSaved() {
         return 'Tracked Galaxies: <span class="ptreSuccess">'+countGala+'</span> | Tracked Systems: <span class="ptreSuccess">'+countSsystem+'</span>';
     } else {
         return '<span class="ptreError">Wrong Galaxy Cache Version</span>';
+    }
+}
+
+function displayUpdateVersionMessage(message) {
+    if (document.getElementById('ptreUpdateVersionMessage')) {
+        document.getElementById('ptreUpdateVersionMessage').innerHTML = message;
+    }
+}
+
+function displayMessageInSettings(message) {
+    if (document.getElementById('messageDivInPanel')) {
+        document.getElementById('messageDivInPanel').innerHTML = message;
+    } else {
+        displayPTREPopUpMessage(message);
     }
 }
 

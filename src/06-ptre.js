@@ -172,8 +172,8 @@ function processPlayerActivities(galaxy, system, activityTab) {
 function getPlayerInfos(playerID, pseudo) {
     const TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
-        setupInfoBox("Player " + pseudo);
-        var content = '<center><div id="backToTargetsList" class="button btn_blue">BACK TO TARGETS LIST</div><br><br>';
+        setupMainBox("Player " + pseudo, null);
+        var content = '<center>';
         $.ajax({
             dataType: "json",
             url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
@@ -191,17 +191,12 @@ function getPlayerInfos(playerID, pseudo) {
                     addToLogs(reponse.message);
                 }
                 content+= '</center>';
-                document.getElementById('infoBoxContent').innerHTML = content;
-                if (document.getElementById('backToTargetsList')) {
-                    document.getElementById('backToTargetsList').addEventListener("click", function (event) {
-                        displayTargetsList();
-                    });
-                }
+                document.getElementById('ptreMainContent').innerHTML = content;
             }
         });
     } else {
         displayPTREPopUpMessage(ptreMissingTKMessage);
-        document.getElementById('infoBoxContent').innerHTML = ptreMissingTKMessage;
+        document.getElementById('ptreMainContent').innerHTML = ptreMissingTKMessage;
     }
 }
 
@@ -541,7 +536,7 @@ function syncTargets(mode) {
                 }
                 // Refresh targets list if displayed
                 if (document.getElementById('targetsListDiv')) {
-                    displayTargetsList();
+                    displayPTRETargetsList();
                 }
             } else {
                 displayMessageInSettings(reponseDecode.message);

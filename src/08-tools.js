@@ -62,7 +62,7 @@ function buildLinkToGalaxy(galaxy, system, position) {
 }
 
 function buildLinkToMoonBuilding(moonID) {
-    return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=facilities&cp='+moonID+'">Visit Moon buildings</a>';
+    return '<a href="https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=facilities&cp='+moonID+'">Visit another Moon buildings</a>';
 }
 
 function consoleDebug(message) {
@@ -73,14 +73,6 @@ function consoleDebug(message) {
 
 function round(x, y) {
     return Number.parseFloat(x).toFixed(y);
-}
-
-function displayMessageInSettings(message) {
-    if (document.getElementById('messageDivInSettings')) {
-        document.getElementById('messageDivInSettings').innerHTML = message;
-    } else {
-        displayPTREPopUpMessage(message);
-    }
 }
 
 function setNumber(x) {
