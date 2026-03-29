@@ -55,9 +55,7 @@ function updateLastAvailableVersion(force = false) {
                     GM_setValue(ptreLastAvailableVersion, availableVersion);
                     GM_setValue(ptreLastAvailableVersionRefresh, currentTime);
                     if (availableVersion !== GM_info.script.version) {
-                        if (document.getElementById('ptreUpdateVersionMessage')) {
-                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>';
-                        }
+                        displayUpdateVersionMessage('<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>');
                         if (document.getElementById('ptreMenuName')) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
                             document.getElementById('ptreMenuName').classList.add('ptreError');
@@ -65,14 +63,10 @@ function updateLastAvailableVersion(force = false) {
                         displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
                         consoleDebug('Version ' + availableVersion + ' is available');
                     } else {
-                        if (document.getElementById('ptreUpdateVersionMessage')) {
-                            document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreSuccess">EasyPTRE is up to date</span>';
-                        }
+                        displayUpdateVersionMessage('<span class="ptreSuccess">EasyPTRE is up to date</span>');
                     }
                 } else {
-                    if (document.getElementById('ptreUpdateVersionMessage')) {
-                        document.getElementById('ptreUpdateVersionMessage').innerHTML = '<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>';
-                    }
+                    displayUpdateVersionMessage('<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>');
                 }
             }
         });

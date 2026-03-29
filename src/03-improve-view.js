@@ -349,24 +349,26 @@ function improvePageFleet() {
     var currentTime = getIGCurrentTS();
     if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
-        var tooltipContent = spanElement.getAttribute('data-tooltip-title');
-        var tempDiv = document.createElement('div');
-        tempDiv.innerHTML = tooltipContent;
-        var inputElements = tempDiv.querySelectorAll('input');
-        var secondInputElement = inputElements[1];
-        var techJSON = secondInputElement ? secondInputElement.value : null;
-        if (techJSON != null) {
-            //techList = JSON.parse(techJSON);
-            GM_setValue(ptreTechnosJSON, techJSON);
-            var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
-            displayPTREPopUpMessage(tempMessage);
-            // Update last check TS
-            GM_setValue(ptreLastTechnosRefresh, currentTime);
-            if (document.getElementById("ptreLastTechnosRefreshField")) {
-                document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
+        if (spanElement) {
+            var tooltipContent = spanElement.getAttribute('data-tooltip-title');
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tooltipContent;
+            var inputElements = tempDiv.querySelectorAll('input');
+            var secondInputElement = inputElements[1];
+            var techJSON = secondInputElement ? secondInputElement.value : null;
+            if (techJSON != null) {
+                //techList = JSON.parse(techJSON);
+                GM_setValue(ptreTechnosJSON, techJSON);
+                var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
+                displayPTREPopUpMessage(tempMessage);
+                // Update last check TS
+                GM_setValue(ptreLastTechnosRefresh, currentTime);
+                if (document.getElementById("ptreLastTechnosRefreshField")) {
+                    document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
+                }
+            } else {
+                console.log("[EasyPTRE] Cant find Techs!");
             }
-        } else {
-            console.log("[EasyPTRE] Cant find Techs!");
         }
     }
 }
@@ -713,9 +715,9 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 panel.parentNode.removeChild(panel);
             }
             document.removeEventListener('click', clickHandler);
-            // If fleet menu was open
-            if (document.getElementById('divPTREInfos')) {
-                document.getElementById('divPTREInfos').parentNode.removeChild(document.getElementById('divPTREInfos'));
+            // If main panel was open, close it
+            if (document.getElementById('ptreMainWrapper')) {
+                document.getElementById('ptreMainWrapper').remove();
             }
         };
         const clickHandler = (event) => {

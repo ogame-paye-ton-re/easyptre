@@ -28,11 +28,11 @@ GM_addStyle(`
 .ptreCategoryTitle {
     color: #6f9fc8;
     font-weight: bold;
-    margin: 5px;
+    margin: 10px;
 }
 .ptreSubTitle {
     color: #6f9fc8;
-    margin: 5px;
+    margin: 10px;
 }
 .td_cell {
     padding: 3px;
@@ -122,18 +122,90 @@ GM_addStyle(`
 .button {
     padding: 0px;
 }
-#divPTRESettings {
+#ptreMainWrapper {
     position: fixed;
     top: 30px;
     right: 10px;
     z-index: 1000;
     font-size: 10pt;
 }
-#boxPTRESettings {
-    width: 550px;
-    padding:10px;
-    border: solid black 2px;
+#ptreMainBox {
+    width: 720px;
     background-color: #171d22;
+    border: 2px solid black;
+}
+#ptreMainHeader {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 10px;
+    border-bottom: 1px solid #2a3540;
+    background-color: #101518;
+}
+#ptreMainHeaderTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#ptreMainTitle {
+    color: #6f9fc8;
+    font-weight: bold;
+    font-size: 11pt;
+    text-decoration: underline;
+}
+#ptreMainHeaderButtons {
+    display: flex;
+    gap: 4px;
+}
+#messageDivInPanel {
+    min-height: 0;
+    padding: 4px 10px 2px 10px;
+    font-size: 9pt;
+    text-align: center;
+}
+#ptreMainBody {
+    display: flex;
+}
+#ptreMainContent {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 600px;
+    min-width: 0;
+}
+#ptreMainNav {
+    width: 100px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 6px;
+    border-left: 1px solid #2a3540;
+    background-color: #101518;
+}
+.ptreNavBtn {
+    display: block;
+    text-align: center;
+    cursor: pointer;
+    padding: 4px 2px;
+}
+.ptreNavBtn.ptreNavActive {
+    outline: 1px solid #6f9fc8;
+}
+#ptreMainFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px;
+    border-top: 1px solid #2a3540;
+    background-color: #101518;
+    font-size: 9pt;
+}
+#ptreMainFooterMsg {
+    padding: 2px 10px 4px 10px;
+    background-color: #101518;
+    font-size: 9pt;
+    text-align: center;
+    min-height: 16px;
 }
 #boxPTREMessage {
     position: fixed;
@@ -143,21 +215,6 @@ GM_addStyle(`
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
-}
-#boxPTREInfos {
-    position: fixed;
-    top: 30px;
-    right: 590px;
-    z-index: 1000;
-    font-size: 10pt;
-    min-width: 300px;
-    padding:10px;
-    border: solid black 2px;
-    background-color: #171d22;
-}
-#infoBoxContent {
-    overflow-y: scroll;
-    max-height: 600px;
 }
 #btnSaveOptPTRE {
     cursor:pointer;
@@ -184,6 +241,14 @@ GM_addStyle(`
 }
 #optionPTRE {
     position: relative;
+}
+#ptreTopRightBadge {
+    position: fixed;
+    top: 40px;
+    right: 8px;
+    z-index: 1200;
+    padding: 3px 8px;
+    cursor: pointer;
 }
 #ptreMissingTKBadge {
     position: absolute;

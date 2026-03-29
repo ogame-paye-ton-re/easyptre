@@ -173,17 +173,28 @@ if (modeEasyPTRE == "ingame") {
         document.getElementById('menuTableTools').appendChild(tab);
 
         document.getElementById('ptreMenuText').addEventListener("click", function (event) {
-            displayPTREMenu();
+            displayOverview();
         }, true);
+
         if (configAlertActive) {
             document.getElementById('ptreMenuIcon').addEventListener("click", function (event) {
                 event.preventDefault();
-                displayPTREMenu();
+                displaySettings();
             }, true);
             document.getElementById('ptreMissingTKBadge').addEventListener("click", function (event) {
-                displayPTREMenu();
+                displaySettings();
             }, true);
         }
+
+        // Add fixed button in top right corner
+        var badge = document.createElement("div");
+        badge.id = 'ptreTopRightBadge';
+        badge.classList.add('button', 'btn_blue');
+        badge.innerHTML = '&#9881; EasyPTRE';
+        document.body.appendChild(badge);
+        document.getElementById('ptreTopRightBadge').addEventListener("click", function (event) {
+            displayOverview();
+        });
     }
 
     // Run on all pages
