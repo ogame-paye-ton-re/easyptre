@@ -266,6 +266,7 @@ function improvePageMessages() {
 function improvePageGalaxy() {
     console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
+    const galaxyPopupMode = GM_getValue(ptreEnableGalaxyPopup, 'false');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
     let tkComment = "";
@@ -288,8 +289,8 @@ function improvePageGalaxy() {
         ptrePushActivities = false;
         toolComment+= "OGI ";
     }
-    //TODO: remove after Beta
-    if (betaMode == 'true') {
+    // Enable Galaxy Pop-up for the entire galaxy browsing session
+    if (galaxyPopupMode == 'true' && minerMode == 'false') {
         ptreDisplayGalaPopup = true;
     }
 
@@ -317,7 +318,7 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'Galaxy Popup: ' + galaxyPopupMode + ' - BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
         if (ptrePushActivities === true) {
             tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
         }

@@ -103,6 +103,7 @@ const ptreLastUpdateCheck = ptrePerUniKeysPrefix + "LastUpdateCheck";
 const ptreCurrentBackendUpdateTS = ptrePerUniKeysPrefix + "CurrentBackendUpdateTS"; // TS from Backend (Not Local)
 const ptreCheckForUpdateCooldown = ptrePerUniKeysPrefix + "CheckForUpdateCooldown";
 const ptreLastGlobalSync = ptrePerUniKeysPrefix + "LastGlobalSync";
+const ptreEnableGalaxyPopup = ptrePerUniKeysPrefix + "EnableGalaxyPopup";
 const ptreEnableMinerMode = ptrePerUniKeysPrefix + "EnableMinerMode";
 const ptreEnableBetaMode = ptrePerUniKeysPrefix + "EnableBetaMode";
 const ptreGalaxyStorageVersion = ptrePerUniKeysPrefix + "GalaxyStorageVersion";

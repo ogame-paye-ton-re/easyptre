@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 29 mars 2026 15:21:27 CEST
+// Build date: dim. 29 mars 2026 19:49:45 CEST
 // ****************************************
 
 // ****************************************
@@ -135,6 +135,7 @@ const ptreLastUpdateCheck = ptrePerUniKeysPrefix + "LastUpdateCheck";
 const ptreCurrentBackendUpdateTS = ptrePerUniKeysPrefix + "CurrentBackendUpdateTS"; // TS from Backend (Not Local)
 const ptreCheckForUpdateCooldown = ptrePerUniKeysPrefix + "CheckForUpdateCooldown";
 const ptreLastGlobalSync = ptrePerUniKeysPrefix + "LastGlobalSync";
+const ptreEnableGalaxyPopup = ptrePerUniKeysPrefix + "EnableGalaxyPopup";
 const ptreEnableMinerMode = ptrePerUniKeysPrefix + "EnableMinerMode";
 const ptreEnableBetaMode = ptrePerUniKeysPrefix + "EnableBetaMode";
 const ptreGalaxyStorageVersion = ptrePerUniKeysPrefix + "GalaxyStorageVersion";
@@ -871,6 +872,7 @@ function improvePageMessages() {
 function improvePageGalaxy() {
     console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
+    const galaxyPopupMode = GM_getValue(ptreEnableGalaxyPopup, 'false');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
     let tkComment = "";
@@ -893,8 +895,8 @@ function improvePageGalaxy() {
         ptrePushActivities = false;
         toolComment+= "OGI ";
     }
-    //TODO: remove after Beta
-    if (betaMode == 'true') {
+    // Enable Galaxy Pop-up for the entire galaxy browsing session
+    if (galaxyPopupMode == 'true' && minerMode == 'false') {
         ptreDisplayGalaPopup = true;
     }
 
@@ -922,7 +924,7 @@ function improvePageGalaxy() {
         tempContent+= '</span>';
         tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'Galaxy Popup: ' + galaxyPopupMode + ' - BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
         if (ptrePushActivities === true) {
             tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
         }
@@ -1972,8 +1974,21 @@ function displaySettings() {
             isAGROn = true;
         }
 
-        const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">(recommended: ON)</span>';
-        const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">(recommended: OFF)</span>';
+        //const betaMessage = '<br><span class="ptreSmall ptreError">Enables Beta features that might be unpolished.</span>';
+        const betaMessage = '<br><span class="ptreSmall ptreSuccess">No Beta feature, at the moment. Previous one: Galaxy Pop-up (jan 2026).</span>';
+        const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">Recommended: ON.</span>';
+        const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">Recommended: OFF.</span>';
+        const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner if you want to enable it.</span>';
+
+        // Get every settings
+        var improveAGRTableOn = (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true' ? 'checked' : '');
+        var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
+        var galaxyPopupOn = (GM_getValue(ptreEnableGalaxyPopup, 'true') == 'true' ? 'checked' : '');
+        var toogleEventsOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
+        var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
+        var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
+        var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
+
         var tdId = 0;
         var divPTRE = '<table border="1" width="100%">';
         // Settings
@@ -1988,24 +2003,25 @@ function displaySettings() {
         }
         divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
         tdId++;
+        // Separator
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;" colspan="2"><hr></td></tr>';
+        tdId++;
         // If AGR is detected
         if (isAGROn) {
             // AGR Spy Table Improvement
-            var improveAGRSpyTableValue = (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true' ? 'checked' : '');
             divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Improve AGR Spy Table:';
-            if (improveAGRSpyTableValue != 'checked') {
+            if (improveAGRTableOn != 'checked') {
                 divPTRE += recommendedLabelOn;
             }
             divPTRE += '</td>';
             divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREImproveAGRSpyTable" type="checkbox" ';
-            divPTRE += improveAGRSpyTableValue;
+            divPTRE += improveAGRTableOn;
             divPTRE += ' />';
             divPTRE += '</td></tr>';
             tdId++;
         }
         // Add Buddies to Friends and Phalanx feature
-        var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE.</span>';
         if (buddiesOn != 'checked') {
             divPTRE += recommendedLabelOn;
         }
@@ -2015,29 +2031,32 @@ function displaySettings() {
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
+        // Enable Galaxy Pop-up
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Galaxy Pop-up:<br><span class="ptreSmall">Add a PTRE icon close to players in galaxy view.</span>';
+        if (galaxyPopupOn != 'checked') {
+            divPTRE += recommendedLabelOn;
+        }
+        var tempCheckbox = '';
+        if (MinerModeOn == 'checked') {
+            divPTRE += minerModeOnLabel;
+            tempCheckbox = ' disabled';
+        }
+        divPTRE += '</td>';
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleGalaxyPopup" type="checkbox" ';
+        divPTRE += galaxyPopupOn;
+        divPTRE += tempCheckbox;
+        divPTRE += ' />';
+        divPTRE += '</td></tr>';
+        tdId++;
         // Toogle Events on Overview Page
-        var toogleEventsOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptreSmall">Works well with option "Always show events" set to "Hide"</span></td>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptreSmall">Works well with option "Always show events" set to "Hide".</span></td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleEventOnOverviewPage" type="checkbox" ';
         divPTRE += toogleEventsOn;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
-        // Miner Mode
-        var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Miner Mode:<br><span class="ptreSmall">I do not want every UX improvements,<br>but I sill want to help my Team</span>';
-        if (MinerModeOn == 'checked') {
-            divPTRE += recommendedLabelOff;
-        }
-        divPTRE += '</td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleMinerMode" type="checkbox" ';
-        divPTRE += MinerModeOn;
-        divPTRE += ' />';
-        divPTRE += '</td></tr>';
-        tdId++;
         // Beta Mode
-        var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:<br><span class="ptreSmall ptreError">Enables Beta features that might be unpolished (galaxy)</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:'+betaMessage;
         divPTRE += '</td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleBetaMode" type="checkbox" ';
         divPTRE += BetaModeOn;
@@ -2045,10 +2064,23 @@ function displaySettings() {
         divPTRE += '</td></tr>';
         tdId++;
         // Console Debug mode
-        var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Debug Mode:</td>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Debug Mode:<br><span class="ptreSmall">Displays debug information in the console.</span></td>';
         divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREEnableConsoleDebug" type="checkbox" ';
         divPTRE += debugMode;
+        divPTRE += ' />';
+        divPTRE += '</td></tr>';
+        tdId++;
+        // Separator
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;" colspan="2"><hr></td></tr>';
+        tdId++;
+        // Miner Mode
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Miner Mode:<br><span class="ptreSmall">If you do not want every UX improvements, but you still want to help your Team.<br>This will disable some active features (Galaxy Toolbar, Galaxy pop-up).</span>';
+        if (MinerModeOn == 'checked') {
+            divPTRE += recommendedLabelOff;
+        }
+        divPTRE += '</td>';
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleMinerMode" type="checkbox" ';
+        divPTRE += MinerModeOn;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
@@ -2203,8 +2235,23 @@ function savePTRESettings() {
     GM_setValue(ptreAddBuddiesToFriendsAndPhalanx, document.getElementById('PTREAddBuddiesToFriendsAndPhalanx').checked + '');
     // Update Toggle Events on Overview page
     GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
+
+    // Manage imcompatible settings
+    // This setting overwrites some other settings
+    galaxyPopupMode = document.getElementById('PTREToogleGalaxyPopup').checked + '';
+    minerMode = document.getElementById('PTREToogleMinerMode').checked + '';
+    console.log('Popup mode: ' + galaxyPopupMode);
+    console.log('Miner mode: ' + minerMode);
+
+    if (minerMode == 'true') {
+        galaxyPopupMode = 'false';
+    }
+    // Update Galaxy Popup Mode
+    GM_setValue(ptreEnableGalaxyPopup, galaxyPopupMode + '');
     // Update Miner Mode
-    GM_setValue(ptreEnableMinerMode, document.getElementById('PTREToogleMinerMode').checked + '');
+    GM_setValue(ptreEnableMinerMode, minerMode + '');
+
+
     // Update Beta Mode
     GM_setValue(ptreEnableBetaMode, document.getElementById('PTREToogleBetaMode').checked + '');
 
@@ -2224,7 +2271,7 @@ function savePTRESettings() {
     } else {
         displayMessageInSettings('Wrong Team Key Format');
     }
-    addToLogs('Saving settings (Miner mode: ' + document.getElementById('PTREToogleMinerMode').checked + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
+    addToLogs('Saving settings (Miner mode: ' + minerMode + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
     document.getElementById('ptreMenuImg').src = imgPTRESaveOK;
     setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, menuImageDisplayTime);
@@ -2252,7 +2299,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Move galaxy pop-up from Beta to release<br>- [Feature] Add an option to disable galaxy pop-up';
+    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
