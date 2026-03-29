@@ -189,7 +189,7 @@ GM_addStyle(`
     padding: 4px 2px;
 }
 .ptreNavBtn.ptreNavActive {
-    outline: 1px solid #6f9fc8;
+    outline: 2px solid #299f9b;
 }
 #ptreMainFooter {
     display: flex;
@@ -242,12 +242,12 @@ GM_addStyle(`
 #optionPTRE {
     position: relative;
 }
-#ptreTopRightBadge {
+#ptreTopRightMenuButton {
     position: fixed;
-    top: 40px;
-    right: 8px;
+    top: 10px;
+    right: 10px;
     z-index: 1200;
-    padding: 3px 8px;
+    padding: 3px 0;
     cursor: pointer;
 }
 #ptreMissingTKBadge {
@@ -263,7 +263,7 @@ GM_addStyle(`
     font-weight: bold;
     text-align: center;
     line-height: 14px;
-    z-index: 10;
+    z-index: 1000;
     cursor: pointer;
 }
 `);

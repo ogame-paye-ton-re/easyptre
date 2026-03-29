@@ -301,7 +301,7 @@ function improvePageGalaxy() {
         //TODO:   a udatder quand la fct AGR passe
         var tempContent = '<table width="100%"><tr>';
         tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
-        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">GALAXY EVENTS</div></td>';
+        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">&#128225; FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">&#128225; GALAXY EVENTS</div></td>';
         tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
@@ -609,6 +609,9 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
     consoleDebug("Click on pos " + galaxy + ":" + system + ":" + pos);
     const currentTime = getIGCurrentTS();
 
+    // Close PTRE menu
+    closePTREMenu();
+
     // Clean previous Galaxy box
     if (window.ptreGalaxyCleanup) {
         window.ptreGalaxyCleanup();
@@ -715,10 +718,6 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 panel.parentNode.removeChild(panel);
             }
             document.removeEventListener('click', clickHandler);
-            // If main panel was open, close it
-            if (document.getElementById('ptreMainWrapper')) {
-                document.getElementById('ptreMainWrapper').remove();
-            }
         };
         const clickHandler = (event) => {
             if (!panel.contains(event.target) && event.target !== button) {

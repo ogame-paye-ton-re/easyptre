@@ -2,8 +2,6 @@
 // MENUS
 // ****************************************
 
-var ptreCurrentView = null;
-
 // Creates the unified main box on first call, then only updates title and active nav.
 // navKey: 'Settings' | 'Data' | 'Galaxy' | 'Changelog' | 'Help' | 'Logs' | null
 function setupMainBox(title, navKey) {
@@ -12,7 +10,7 @@ function setupMainBox(title, navKey) {
         if (!isValidTeamKey(GM_getValue(ptreTeamKey, ''))) {
             defaultMessageDivInPanel = ptreMissingTKMessage;
         }
-        agrEnabled = false;
+        var agrEnabled = false;
         if (isAGREnabled()) {
             agrEnabled = true;
         }
@@ -21,8 +19,8 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreMainHeaderTop">';
         html += '<span id="ptreMainTitle"></span>';
         html += '<div id="ptreMainHeaderButtons">';
-        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue">&#8635; Refresh</div>';
-        html += ' <div id="ptreMainClose" type="button" class="button btn_blue">&#10005; Close</div>';
+        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue ptreNavBtn">&#8635; Refresh</div>';
+        html += ' <div id="ptreMainClose" type="button" class="button btn_blue ptreNavBtn">&#10005; Close</div>';
         html += '</div>';
         html += '</div>';
         html += '<div id="messageDivInPanel" class="ptreWarning">' + defaultMessageDivInPanel + '</div>';
@@ -32,18 +30,19 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreMainNav">';
         html += '<div id="ptreNavOverview" class="button btn_blue ptreNavBtn">Overview</div>';
         html += '<div id="ptreNavSettings" class="button btn_blue ptreNavBtn">&#9881; Settings</div>';
-        html += '<div id="ptreNavData" class="button btn_blue ptreNavBtn">Shared Data</div>';
-        html += '<div id="ptreNavPTRETargets" class="button btn_blue ptreNavBtn">PTRE Targets</div>';
+        html += '<div id="ptreNavData" class="button btn_blue ptreNavBtn">&#9733; Shared Data</div>';
+        html += '<div id="ptreNavPTRETargets" class="button btn_blue ptreNavBtn">&#9992; PTRE Targets</div>';
         if (agrEnabled) {
-            html += '<div id="ptreNavAGRTargets" class="button btn_blue ptreNavBtn">AGR Targets</div>';
+            html += '<div id="ptreNavAGRTargets" class="button btn_blue ptreNavBtn">&#9992; AGR Targets</div>';
         }
-        html += '<div id="ptreNavGalaxy" class="button btn_blue ptreNavBtn">Galaxy</div>';
+        html += '<div id="ptreNavGalaxy" class="button btn_blue ptreNavBtn">&#128506; Galaxy</div>';
+        html += '<div id="ptreNavSharedNotes" class="button btn_blue ptreNavBtn">&#128221; Shared Notes</div>';
         html += '<div><hr></div>';
-        html += '<div id="ptreNavHelp" class="button btn_blue ptreNavBtn">Help</div>';
-        html += '<div id="ptreNavLogs" class="button btn_blue ptreNavBtn">Logs</div>';
-        html += '<div id="ptreNavUpdates" class="button btn_blue ptreNavBtn">Updates</div>';
-        html += '<div id="ptreNavToolsCompatibility" class="button btn_blue ptreNavBtn">Tools Compat</div>';
-        html += '<div id="ptreNavChangelog" class="button btn_blue ptreNavBtn">Changelog</div>';
+        html += '<div id="ptreNavHelp" class="button btn_blue ptreNavBtn">&#10067; Help</div>';
+        html += '<div id="ptreNavLogs" class="button btn_blue ptreNavBtn">&#128221; Logs</div>';
+        html += '<div id="ptreNavUpdates" class="button btn_blue ptreNavBtn">&#128640; Updates</div>';
+        html += '<div id="ptreNavToolsCompatibility" class="button btn_blue ptreNavBtn">&#9881; Tools Compat</div>';
+        html += '<div id="ptreNavChangelog" class="button btn_blue ptreNavBtn">&#128221; Changelog</div>';
         html += '</div></div>';
         html += '<div id="ptreMainFooter">';
         html += '<div id="ptreMainFooterLeft"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></div>';
@@ -56,12 +55,15 @@ function setupMainBox(title, navKey) {
         wrapper.innerHTML = html;
         document.body.appendChild(wrapper);
         document.getElementById('ptreMainClose').addEventListener('click', function() {
-            document.getElementById('ptreMainWrapper').remove();
-            var badge = document.getElementById('ptreTopRightBadge');
-            if (badge) { badge.style.display = ''; }
+            closePTREMenu();
         });
         document.getElementById('ptreMainRefresh').addEventListener('click', function() {
-            if (ptreCurrentView) { ptreCurrentView(); }
+            if (ptreCurrentView) {
+                document.getElementById('ptreMainContent').innerHTML = '';
+                setTimeout(() => {
+                    ptreCurrentView();
+                }, 100);
+            }
         });
         document.getElementById('ptreNavSettings').addEventListener('click', function() { displaySettings(); });
         document.getElementById('ptreNavOverview').addEventListener('click', function() { displayOverview(); });
@@ -76,9 +78,10 @@ function setupMainBox(title, navKey) {
         document.getElementById('ptreNavLogs').addEventListener('click', function() { displayLogs(); });
         document.getElementById('ptreNavUpdates').addEventListener('click', function() { displayUpdateBox(''); });
         document.getElementById('ptreNavToolsCompatibility').addEventListener('click', function() { displayToolsCompatibility(); });
+        document.getElementById('ptreNavSharedNotes').addEventListener('click', function() { displayAllSharedNotes(); });
     }
     document.getElementById('ptreMainTitle').textContent = title;
-    var badge = document.getElementById('ptreTopRightBadge');
+    var badge = document.getElementById('ptreTopRightMenuButton');
     if (badge) { badge.style.display = 'none'; }
     document.querySelectorAll('.ptreNavBtn').forEach(function(b) { b.classList.remove('ptreNavActive'); });
     if (navKey) {
@@ -109,7 +112,7 @@ function displaySettings() {
         var tdId = 0;
         var divPTRE = '<table border="1" width="100%">';
         // Settings
-        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">SAVE</div></td></tr>';
+        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">&#128190; SAVE</div></td></tr>';
         divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
         if (ptreStoredTK == '') {
             divPTRE += '<br><span class="ptreError">Add your PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
@@ -250,7 +253,7 @@ function displayOverview() {
         }
     });
     var divOV = '<table border="1" width="100%">';
-    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
+    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2">';
     divOV += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br>'+phalanxAdditionnalMessage+'</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
@@ -567,7 +570,7 @@ function displayAGRTargetsList() {
     ptreCurrentView = displayAGRTargetsList;
     setupMainBox('AGR Targets', 'AGRTargets');
 
-    var content = '<div id="targetsListDiv"><table width="100%"><tr><td><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">SYNC TARGETS</div></td></tr></table><br><br>';
+    var content = '<div id="targetsListDiv"><table width="100%"><tr><td><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">&#8635; RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">&#8635; SYNC TARGETS</div></td></tr></table><br><br>';
 
     var isAGROn = false;
     if (isAGREnabled()) {
@@ -641,7 +644,7 @@ function displayPTRETargetsList() {
     ptreCurrentView = displayPTRETargetsList;
     setupMainBox('PTRE Targets', 'PTRETargets');
 
-    var content = '<div id="targetsListDiv"><table width="100%"><tr><td><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">SYNC TARGETS</div></td></tr></table><br><br>';
+    var content = '<div id="targetsListDiv"><table width="100%"><tr><td><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage list on PTRE website</a></td><td align="right"><div id="reloadLocalList" class="button btn_blue">&#8635; RELOAD LOCAL LIST</div> <div id="synctTargetsWithPTRE" class="button btn_blue">&#8635; SYNC TARGETS</div></td></tr></table><br><br>';
 
     var targetJSON = '';
     var targetListPTRE = '';
@@ -799,6 +802,45 @@ function displayTotalSystemsSaved() {
     }
 }
 
+function displayAllSharedNotes() {
+    ptreCurrentView = displayAllSharedNotes;
+    setupMainBox('Shared Notes', 'SharedNotes');
+
+    const TKey = GM_getValue(ptreTeamKey, '');
+    if (TKey == '') {
+        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
+        return;
+    }
+
+    fetch(urlPTREIngamePopUp + '&team_key=' + TKey + '&action=getallnotes', { method: 'POST' })
+        .then(function(response) { return response.json(); })
+        .then(function(reponseDecode) {
+            if (!document.getElementById('ptreMainContent')) { return; }
+            consoleDebug('[FROM PTRE] ' + reponseDecode.message);
+            if (reponseDecode.code == 1) {
+                var notesHtml = atob(reponseDecode.allnotes);
+                document.getElementById('ptreMainContent').innerHTML = notesHtml;
+                // Add events on buttons
+                document.querySelectorAll('.updatePlayerNote').forEach(function(el) {
+                    var playerId = el.id.split('-')[1];
+                    el.addEventListener('click', function() {
+                        pushPlayerNote(playerId);
+                        //displayAllSharedNotes();
+                    });
+                });
+            } else {
+                document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + reponseDecode.message + '</span>';
+                addToLogs(reponseDecode.message);
+            }
+        })
+        .catch(function(e) {
+            if (document.getElementById('ptreMainContent')) {
+                document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">Request failed</span>';
+            }
+            addToLogs('displayAllSharedNotes: ' + e);
+        });
+}
+
 function displayUpdateVersionMessage(message) {
     if (document.getElementById('ptreUpdateVersionMessage')) {
         document.getElementById('ptreUpdateVersionMessage').innerHTML = message;
@@ -810,6 +852,17 @@ function displayMessageInSettings(message) {
         document.getElementById('messageDivInPanel').innerHTML = message;
     } else {
         displayPTREPopUpMessage(message);
+    }
+}
+
+function closePTREMenu() {
+    var menu = document.getElementById('ptreMainWrapper');
+    if (menu) {
+        menu.remove();
+    }
+    var badge = document.getElementById('ptreTopRightMenuButton');
+    if (badge) {
+        badge.style.display = '';
     }
 }
 

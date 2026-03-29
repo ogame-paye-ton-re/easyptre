@@ -42,6 +42,7 @@ var currentPlayerName = "";
 var currentPlanetID = -1;
 var currentPlanetCoords = "";
 var currentPlanetType = "";
+var ptreCurrentView = null;
 
 var ptreGalaxyActivityCount = 0;
 var ptreGalaxyEventCount = 0;
@@ -188,11 +189,11 @@ if (modeEasyPTRE == "ingame") {
 
         // Add fixed button in top right corner
         var badge = document.createElement("div");
-        badge.id = 'ptreTopRightBadge';
+        badge.id = 'ptreTopRightMenuButton';
         badge.classList.add('button', 'btn_blue');
-        badge.innerHTML = '&#9881; EasyPTRE';
+        badge.innerHTML = '&#9881; PTRE';
         document.body.appendChild(badge);
-        document.getElementById('ptreTopRightBadge').addEventListener("click", function (event) {
+        document.getElementById('ptreTopRightMenuButton').addEventListener("click", function (event) {
             displayOverview();
         });
     }
