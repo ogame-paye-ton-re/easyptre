@@ -6,6 +6,7 @@
     Watches the loading element on the galaxy page
     Once gone, we can start improving galaxy table
 */
+// TODO: check galaxyLoading?
 function waitForGalaxyToBeLoaded() {
     consoleDebug("[GALAXY] Waiting for Galaxy content");
     ptreGalaxyInitMiliTS = Date.now();
@@ -173,13 +174,34 @@ function runAutoCheckForPTREUpdate() {
 }
 
 // Sync all data once a day
-function globalPTRESync() {
-    addToLogs("Global Clean & Sync");
+async function globalPTRESync(mode = "auto") {
+    const miliTS = Date.now();
     const currentTime = getIGCurrentTS();
+    const lastGlobalSyncTemp = Number(GM_getValue(ptreLastGlobalSync, 0));
+
+    if (currentTime < lastGlobalSyncTemp + 60) {
+        consoleDebug("[SYNC] globalPTRESync skipped (60-sec cooldown)");
+        updateHtmlById("ptreLastDataSyncMessageField", "Global sync skipped (60-sec cooldown)");
+        updateHtmlById("ptreLastTargetsSyncMessageField", "Global sync skipped (60-sec cooldown)");
+        return;
+    }
+
+    updateHtmlById("ptreLastDataSyncMessageField", "Loading...");
+    updateHtmlById("ptreLastTargetsSyncMessageField", "Loading...");
+
     migrateDataAndCleanStorage();
+
     garbageCollectGalaxyDataV2(ptreGalaxyStorageRetention);
+
+    await updateDataFromEmpireMoonPage();
+
     syncTargets();
-    syncDataWithPTRE();
+
+    syncDataWithPTRE(mode);
+
     GM_setValue(ptreLastGlobalSync, currentTime);
+    updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
+    var tempDuration = Date.now() - miliTS;
+    addToLogs("Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 

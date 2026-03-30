@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 29 mars 2026 19:49:45 CEST
+// Build date: mar. 31 mars 2026 18:53:33 CEST
 // ****************************************
 
 // ****************************************
@@ -83,13 +83,18 @@ var ptreGalaxyCache = {};
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
 var ptreDisplayGalaPopup = false;//TODO: at false, during Beta
+var ptreEnableConsoleDebugValue = false;
 
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
 var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
 
 if (modeEasyPTRE == "ingame") {
+    // Only get serverTime one time
+    // this is NOT a UNIX timestamp (UNIX: document.getElementsByName('ogame-timestamp')[0].content)
+    ptrePageLoadServerMiliTS = serverTime.getTime();
     ptrePageLoadClientMiliTS = Date.now();
-    ptrePageLoadServerMiliTS = serverTime.getTime(); // Only get serverTime one time
+    console.log("[EasyPTRE] Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
+    console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
     universe = splitted[0].slice(1);
@@ -125,6 +130,7 @@ const ptreTechnosJSON = ptrePerUniKeysPrefix + "Technos";
 const ptreLastTechnosRefresh = ptrePerUniKeysPrefix + "LastTechnosRefresh";
 const ptrePlayerID = ptrePerUniKeysPrefix + "PlayerID";
 const ptreDataToSync = ptrePerUniKeysPrefix + "DataToSync";
+const ptreEmpireMoonLastRefresh = ptrePerUniKeysPrefix + "EmpireMoonLastRefresh";
 const ptreGalaxyData = ptrePerUniKeysPrefix + "GalaxyDataG"; // Object
 const ptreBuddiesList = ptrePerUniKeysPrefix + "BuddiesList";
 const ptreBuddiesListLastRefresh = ptrePerUniKeysPrefix + "BuddiesListLastRefresh";
@@ -169,6 +175,11 @@ var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + 
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
+
+// Load debug value once
+if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+    ptreEnableConsoleDebugValue = true;
+}
 
 // ****************************************
 // MAIN EXEC
@@ -278,7 +289,9 @@ if (modeEasyPTRE == "ingame") {
 
     // Global Sync
     if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
-        setTimeout(globalPTRESync, 3000);
+        if (!/page=standalone&component=empire/.test(location.href)) {
+            setTimeout(globalPTRESync, 3000);
+        }
     }
 
     // Check for new version only (no need to run it if only browsing)
@@ -462,7 +475,7 @@ GM_addStyle(`
     position: fixed;
     top: 30px;
     right: 10px;
-    z-index: 1000;
+    z-index: 1000;//TODO: changer par 10000
     font-size: 10pt;
 }
 #ptreMainBox {
@@ -846,7 +859,7 @@ function improvePageAny() {
 // Add PTRE buttons to messages page
 function improvePageMessages() {
     console.log("[EasyPTRE] Improving Messages Page");
-    if (!isOGLorOGIEnabled() && !isOGLorOGIEnabled()) {
+    if (!isOGLorOGIEnabled()) {
         if (GM_getValue(ptreTeamKey) != '') {
             // Update Message Page (spy report part)
             setTimeout(addPTREStuffsToMessagesPage, 1000);
@@ -991,11 +1004,11 @@ function improvePageFacilities() {
             var phalanxLevel = levelSpan.getAttribute('data-value');
             var coords = document.getElementsByName('ogame-planet-coordinates')[0].content;
             var moonID = document.getElementsByName('ogame-planet-id')[0].content;
-            consoleDebug(coords + ': Found Phalanx level '+phalanxLevel);
+            consoleDebug("[Phalanx] " + coords + ': Found Phalanx level '+phalanxLevel);
             refreshPhalanxStorage(moonID, coords, phalanxLevel);
         }
     } else {
-        consoleDebug("Cant find technologies element");
+        consoleDebug("[Phalanx] Cant find technologies element");
     }
 }
 
@@ -1423,6 +1436,8 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
 
 // Add data to sharable structure
 // Element should be like: {type: string_type, id: ID, coords: coords, val: a_value};
+// Not called at the moment
+/*
 function addDataToPTREData(newData, syncToPTRE = true) {
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
@@ -1433,7 +1448,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
     // Look for same entry
     var idASup = -1;
-    dataList.forEach(function(elem) {
+    dataList.forEach(function(elem, i) {
         //console.log("[EasyPTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
@@ -1466,122 +1481,44 @@ function addDataToPTREData(newData, syncToPTRE = true) {
         setTimeout(syncDataWithPTRE, dataSharingDelay);
     }
 }
+*/
 
 function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE = true) {
-    consoleDebug("[Phalanx] Refresh Moons and Phalanx");
-    let existingMoons = {};
-    let planetFound = 0;
-    let moonFound = 0;
-    let missingPhalanxMessage = "";
+    phalanxLevelNew = Number(phalanxLevelNew);
+    consoleDebug("[Phalanx] Checking Phalanx update for " + moonIdNew + " at " + coordsNew + " (level " + phalanxLevelNew + ")");
 
-    //debugSharableData();
-
-    // Get current planet and moon list (from planet menu)
-    const planetListFromDOM = document.getElementById('planetList');
-    for (const child of planetListFromDOM.children) {
-        if (child.classList.contains("smallplanet")) {
-            let splitted = child.id.split('-');
-            let planetId = Number(splitted[1]);
-            let coords = "";
-            let moonID = 0;
-            //consoleDebug("[Phalanx] Planet ID: " + planetId);
-            const planetElem = child.querySelectorAll('.planet-koords');
-            if (planetElem) {
-                planetFound++;
-                //coords = planetElem[0].innerHTML;
-                //coords = coords.replace(/[\[\]]/g, "");
-                //consoleDebug("[Phalanx] Coords: " + coords);
-                const regex = /\d+:\d+:\d+/;
-                const match = planetElem[0].innerHTML.match(regex);
-                if (match) {
-                    coords = match[0];
-                }
-            }
-            const moonElem = child.querySelectorAll('.icon-moon');
-            if (moonElem && moonElem[0]) {
-                splitted = moonElem[0].id.split('_');
-                moonID = Number(splitted[1]);
-                //consoleDebug("[Phalanx] moonId: " + moonID);
-            }
-            if (coords != "" && moonID != 0) {
-                consoleDebug("[Phalanx] Found current Moon " + moonID + " at " + coords);
-                existingMoons[String(moonID)] = coords;
-                moonFound++;
-            }
-        }
-    }
-    // Mark current moon as listed
-    existingMoons[moonIdNew] = -1;
-    consoleDebug("[Phalanx] Found " + planetFound + " planets and " + moonFound + " moons");
-
-    // Update current data
     var dataJSON = GM_getValue(ptreDataToSync, '');
-    var dataList = [];
-    var dataListNew = [];
-    if (dataJSON != '') {
-        dataList = JSON.parse(dataJSON);
-    }
-    dataList.forEach((elem, index) => {
-        if (elem.type != "phalanx") {
-            // Keep non-phalanx elements
-            dataListNew.push(elem);
-            consoleDebug("[Phalanx] Keep non-phalanx element");
-        } else {
-            // If it's a phalanx
-            consoleDebug("[Phalanx] Found stored Moon " + elem.id + " (" + elem.coords + ")");
-            // Skip moon to add (we add it at the end)
-            if (elem.id != moonIdNew) {
-                // Check if moon is really existing
-                if (existingMoons[elem.id] && existingMoons[elem.id] != -1) {
-                    if (elem.coords == existingMoons[elem.id]) {
-                        // If the moon is still at the same place
-                        consoleDebug("[Phalanx] Keep: This moon exists and is at the same spot");
-                        dataListNew.push(elem);
-                    } else {
-                        // If moon moved, we update the coords
-                        consoleDebug("[Phalanx] Update: This moon exists BUT has been moved from "+elem.coords+" to "+existingMoons[elem.id]);
-                        let phalanx = {type: "phalanx", id: elem.id, coords: existingMoons[elem.id], val: elem.val};
-                        dataListNew.push(phalanx);
-                    }
-                    // Mark this moon as listed
-                    existingMoons[elem.id] = -1;
-                    // Generate message to an missing phalanx
-                    if (elem.val == -1) {
-                        missingPhalanxMessage = " - Missing phalanx: "+buildLinkToMoonBuilding(elem.id);
-                    }
-                } else {
-                    consoleDebug("[Phalanx] Drop: Cant find this moon " + elem.id);
-                }
+    var dataList = dataJSON != '' ? JSON.parse(dataJSON) : [];
+
+    var found = false;
+    var needToSave = false;
+
+    dataList.forEach(function(elem) {
+        if (elem.type == "phalanx" && elem.id == moonIdNew) {
+            found = true;
+            if (elem.coords == coordsNew && elem.val == phalanxLevelNew) {
+                consoleDebug("[Phalanx] Already up to date, no change");
             } else {
-                consoleDebug("[Phalanx] Skipping current moon (added after)");
+                consoleDebug("[Phalanx] Updated: coords " + elem.coords + " -> " + coordsNew + ", level " + elem.val + " -> " + phalanxLevelNew);
+                elem.coords = coordsNew;
+                elem.val = phalanxLevelNew;
+                needToSave = true;
             }
         }
     });
-    // This is the moon to update
-    //consoleDebug("[Phalanx] Update: This is the moon to update");
-    let phalanx = {type: "phalanx", id: moonIdNew, coords: coordsNew, val: phalanxLevelNew};
-    dataListNew.push(phalanx);
 
-    // Adding moons not listed
-    Object.entries(existingMoons).forEach(([key, value]) => {
-        if (value != -1) {
-            consoleDebug("[Phalanx] Moon " + key + " at " + value + " is missing from list: adding it!");
-            let phalanx = {type: "phalanx", id: key, coords: value, val: -1};
-            dataListNew.push(phalanx);
+    if (!found) {
+        consoleDebug("[Phalanx] New entry, inserting");
+        dataList.push({type: "phalanx", id: moonIdNew, coords: coordsNew, val: phalanxLevelNew});
+        needToSave = true;
+    }
+
+    if (needToSave) {
+        GM_setValue(ptreDataToSync, JSON.stringify(dataList));
+        displayPTREPopUpMessage("Phalanx updated");
+        if (syncToPTRE === true) {
+            setTimeout(syncDataWithPTRE, dataSharingDelay);
         }
-    });
-
-    // Save list
-    dataJSON = JSON.stringify(dataListNew);
-    GM_setValue(ptreDataToSync, dataJSON);
-
-    //debugSharableData();
-
-    displayPTREPopUpMessage("Phalanx updated" + missingPhalanxMessage);
-
-    // Sync data to PTRE
-    if (syncToPTRE === true) {
-        setTimeout(syncDataWithPTRE, dataSharingDelay);
     }
 }
 
@@ -1886,7 +1823,7 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreMainHeaderTop">';
         html += '<span id="ptreMainTitle"></span>';
         html += '<div id="ptreMainHeaderButtons">';
-        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue ptreNavBtn">&#8635; Refresh</div>';
+        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue ptreNavBtn">&#8635; Refresh View</div>';
         html += ' <div id="ptreMainClose" type="button" class="button btn_blue ptreNavBtn">&#10005; Close</div>';
         html += '</div>';
         html += '</div>';
@@ -1999,7 +1936,7 @@ function displaySettings() {
         } else if (!isValidTeamKey(ptreStoredTK)) {
             divPTRE += '<br><span class="ptreError">Invalid PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
         } else {
-            divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '')+'</span>';
+            divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '???')+'</span>';
         }
         divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
         tdId++;
@@ -2021,7 +1958,7 @@ function displaySettings() {
             tdId++;
         }
         // Add Buddies to Friends and Phalanx feature
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE.</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE. <a href="/game/index.php?page=ingame&component=buddies">Update</a>. (Last Refresh: ' +getLastUpdateLabel(GM_getValue(ptreBuddiesListLastRefresh, 0)) + ')</span>';
         if (buddiesOn != 'checked') {
             divPTRE += recommendedLabelOn;
         }
@@ -2118,26 +2055,17 @@ function displayOverview() {
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
     var phalanxCountTotal = 0;
-    var phalanxCount = 0;
     var dnpCount = 0;
     var hotCount = 0;
     var dataList = [];
-    var phalanxAdditionnalMessage = '';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
         dataList.forEach(function(elem) {
             if (elem.type == "phalanx") {
+                // Count total Phalanx
                 phalanxCountTotal++;
-                if (elem.val != -1) {
-                    phalanxCount++;
-                } else if (phalanxAdditionnalMessage == "") {
-                    phalanxAdditionnalMessage = '<span class="ptreSmall ptreError">Missing phalanx: '+buildLinkToMoonBuilding(elem.id)+'</span>';
-                }
             }
         });
-    }
-    if (phalanxAdditionnalMessage == "") {
-        phalanxAdditionnalMessage = '<span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span>';
     }
     const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     const galaEventsCount = galaEventsList.length;
@@ -2150,18 +2078,24 @@ function displayOverview() {
         }
     });
     var divOV = '<table border="1" width="100%">';
-    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
+    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle"></div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2">';
-    divOV += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br>'+phalanxAdditionnalMessage+'</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
+    divOV += '<table border="1" width="100%">';
+    divOV += '<tr><td class="td_cell_radius_0">Team Name:</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + GM_getValue(ptreTeamName, '???') + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Phalanx:<br><span class="ptreSmall">Last Update: </span><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + phalanxCountTotal + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
-    divOV += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
-    divOV += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
+
+    divOV += '<tr><td class="td_cell_radius_1">Last Global Sync:<br><span class="ptreSmall">All data synchronized</span></td><td class="td_cell_radius_1" align="center"><span id="ptreLastGlobalSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0)) + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Last Data Sync:<br><span class="ptreSmall">Phalanx, Hot targets, Do Not Probe list, Galaxy events<br><span id="ptreLastDataSyncMessageField" class="ptreWarning"></span></span></td><td class="td_cell_radius_0" align="center"><span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Last Targets Sync:<br><span class="ptreSmall">Targets list<br><span id="ptreLastTargetsSyncMessageField" class="ptreWarning"></span></span></td><td class="td_cell_radius_1" align="center"><span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span></td></tr>';
     divOV += '</table></td></tr>';
     divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
     // Features disabled when OGL/OGI detected
     if (!isOGLorOGIEnabled()) {
-        divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Targets list (<span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue">OPEN LIST</div></td></tr>';
+        divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Targets list</div></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue">OPEN LIST</div></td></tr>';
         divOV += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
         divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
     }
@@ -2170,7 +2104,7 @@ function displayOverview() {
     divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 2) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
     if (isOGLorOGIEnabled()) {
-        divOV += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptre Small">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
+        divOV += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptreSmall">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
     }
     divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
@@ -2191,7 +2125,7 @@ function displayOverview() {
 
     // Action: Sync data to PTRE
     document.getElementById('synctDataWithPTRE').addEventListener("click", function (event) {
-        syncDataWithPTRE('manual');
+        globalPTRESync('manual');
     });
 
     // Action: Display Galaxy Tracking
@@ -2238,8 +2172,8 @@ function savePTRESettings() {
 
     // Manage imcompatible settings
     // This setting overwrites some other settings
-    galaxyPopupMode = document.getElementById('PTREToogleGalaxyPopup').checked + '';
-    minerMode = document.getElementById('PTREToogleMinerMode').checked + '';
+    var galaxyPopupMode = document.getElementById('PTREToogleGalaxyPopup').checked + '';
+    var minerMode = document.getElementById('PTREToogleMinerMode').checked + '';
     console.log('Popup mode: ' + galaxyPopupMode);
     console.log('Miner mode: ' + minerMode);
 
@@ -2611,7 +2545,7 @@ function displaySharedData() {
     var phalanxCount = 0;
     var dataJSON = '';
     var dataList = [];
-    var undefElem = 0;
+    var missingPhalanx = 0;
     dataJSON = GM_getValue(ptreDataToSync, '');
     const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
 
@@ -2623,6 +2557,7 @@ function displaySharedData() {
             if (elem.type == "phalanx") {
                 let val = elem.val;
                 if (val == -1) {
+                    missingPhalanx++;
                     val = '<span class="ptreWarning">???</span>';
                 }
                 content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + val + '</td></tr>';
@@ -2630,7 +2565,7 @@ function displaySharedData() {
             }
         });
     }
-    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx (' + undefElem + ')</td></tr></table><br><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>';
+    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx<br><span class="ptreSmall">Empty: ' + missingPhalanx + '</span></td></tr></table><br><div id="refreshEmpireMoonDataButton" class="button btn_blue">&#8635; UPDATE</div><br><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span>';
 
     content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Hot Targets</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td></tr>';
     Object.values(highlightedPlayersList).forEach(function(elem) {
@@ -2676,6 +2611,14 @@ function displaySharedData() {
     }
 
     document.getElementById('ptreMainContent').innerHTML = content;
+
+    // Action: Empire Moon page refresh
+    if (document.getElementById('refreshEmpireMoonDataButton')) {
+        document.getElementById('refreshEmpireMoonDataButton').addEventListener("click", function (event) {
+            document.getElementById('refreshEmpireMoonDataButton').remove();
+            updateDataFromEmpireMoonPage();
+        });
+    }
 }
 
 function validatePurgeGalaxyTracking() {
@@ -3242,6 +3185,7 @@ function syncDataWithPTRE(mode = "auto") {
             }
             if (mode == 'manual') {
                 displayMessageInSettings(reponseDecode.message_debug);
+                updateHtmlById("ptreLastDataSyncMessageField", reponseDecode.message_debug);
             }
         }
     });
@@ -3314,6 +3258,7 @@ function syncTargets(mode) {
                 if (document.getElementById("ptreLastTargetsSyncField")) {
                     document.getElementById("ptreLastTargetsSyncField").innerHTML = getLastUpdateLabel(currentTime);
                 }
+                updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
                 // Refresh targets list if displayed
                 if (document.getElementById('targetsListDiv')) {
                     displayPTRETargetsList();
@@ -3321,8 +3266,79 @@ function syncTargets(mode) {
             } else {
                 displayMessageInSettings(reponseDecode.message);
                 addToLogs(reponseDecode.message);
+                updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
             }
         }
+    });
+}
+
+// Get Empire page as JSON
+// Update Phalanx
+function updateDataFromEmpireMoonPage() {
+    consoleDebug("[EasyPTRE] Fetching Empire Moon Page");
+    const currentTime = getIGCurrentTS();
+    return fetch('https://' + window.location.host + '/game/index.php?page=ajax&component=empire&ajax=1&planetType=1&asJson=1', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+        var data = JSON.parse(result.mergedArray);
+        var planets = data.planets;
+        if (!planets || planets.length === 0) {
+            addToLogs('[EMPIRE] No planets found in JSON response');
+            displayMessageInSettings('No phalanx data found in Empire Moon page');
+            return;
+        }
+
+        var newPhalanxList = [];
+        planets.forEach(function(planet) {
+            var moonID = String(planet.id);
+            // on récupère "[1:2:3]"
+            var coordRaw = planet.coordinates;
+            var match = coordRaw.match(/\[(\d+):(\d+):(\d+)\]/);
+            if (!match) {
+                consoleDebug('[EMPIRE] Cant parse coords for moon ' + moonID + ': ' + coordRaw);
+                return;
+            }
+            var coords = match[1] + ':' + match[2] + ':' + match[3];
+            var phalanxLevel = parseInt(planet['42'], 10);
+            if (isNaN(phalanxLevel)) {
+                consoleDebug('[EMPIRE] No phalanx (42) for moon ' + moonID);
+                return;
+            }
+            consoleDebug('[EMPIRE] ' + coords + ' (' + moonID + ') → phalanx: ' + phalanxLevel);
+            newPhalanxList.push({type: "phalanx", id: moonID, coords: coords, val: phalanxLevel});
+        });
+
+        if (newPhalanxList.length > 0) {
+            var dataJSON = GM_getValue(ptreDataToSync, '');
+            var dataList = [];
+            if (dataJSON != '') {
+                dataList = JSON.parse(dataJSON);
+            }
+            var dataListNew = dataList.filter(function(elem) { return elem.type !== "phalanx"; });
+            newPhalanxList.forEach(function(entry) { dataListNew.push(entry); });
+            GM_setValue(ptreDataToSync, JSON.stringify(dataListNew));
+
+            //setTimeout(syncDataWithPTRE, dataSharingDelay);
+
+            var levels = newPhalanxList.map(function(e) { return e.val; });
+            var levelMin = Math.min.apply(null, levels);
+            var levelMax = Math.max.apply(null, levels);
+
+            GM_setValue(ptreEmpireMoonLastRefresh, currentTime);
+            updateHtmlById("ptreEmpireMoonLastRefreshField", getLastUpdateLabel(currentTime));
+
+            addToLogs('Updated ' + newPhalanxList.length + ' phalanx (min: ' + levelMin + ' | max: ' + levelMax + ')');
+            displayMessageInSettings('Phalanx updated: ' + newPhalanxList.length + ' moons (min: ' + levelMin + ' | max: ' + levelMax + ')');
+        } else {
+            addToLogs('[EMPIRE] No phalanx found in JSON response');
+            displayMessageInSettings('No phalanx data found in Empire Moon page');
+        }
+    })
+    .catch(function(error) {
+        console.error("[EasyPTRE] Can't fetch empire data ", error);
+        displayMessageInSettings('Failed to fetch Empire Moon page');
     });
 }
 
@@ -3334,6 +3350,7 @@ function syncTargets(mode) {
     Watches the loading element on the galaxy page
     Once gone, we can start improving galaxy table
 */
+// TODO: check galaxyLoading?
 function waitForGalaxyToBeLoaded() {
     consoleDebug("[GALAXY] Waiting for Galaxy content");
     ptreGalaxyInitMiliTS = Date.now();
@@ -3501,14 +3518,35 @@ function runAutoCheckForPTREUpdate() {
 }
 
 // Sync all data once a day
-function globalPTRESync() {
-    addToLogs("Global Clean & Sync");
+async function globalPTRESync(mode = "auto") {
+    const miliTS = Date.now();
     const currentTime = getIGCurrentTS();
+    const lastGlobalSyncTemp = Number(GM_getValue(ptreLastGlobalSync, 0));
+
+    if (currentTime < lastGlobalSyncTemp + 60) {
+        consoleDebug("[SYNC] globalPTRESync skipped (60-sec cooldown)");
+        updateHtmlById("ptreLastDataSyncMessageField", "Global sync skipped (60-sec cooldown)");
+        updateHtmlById("ptreLastTargetsSyncMessageField", "Global sync skipped (60-sec cooldown)");
+        return;
+    }
+
+    updateHtmlById("ptreLastDataSyncMessageField", "Loading...");
+    updateHtmlById("ptreLastTargetsSyncMessageField", "Loading...");
+
     migrateDataAndCleanStorage();
+
     garbageCollectGalaxyDataV2(ptreGalaxyStorageRetention);
+
+    await updateDataFromEmpireMoonPage();
+
     syncTargets();
-    syncDataWithPTRE();
+
+    syncDataWithPTRE(mode);
+
     GM_setValue(ptreLastGlobalSync, currentTime);
+    updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
+    var tempDuration = Date.now() - miliTS;
+    addToLogs("Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 
 // ****************************************
@@ -3579,7 +3617,7 @@ function buildLinkToMoonBuilding(moonID) {
 }
 
 function consoleDebug(message) {
-    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+    if (ptreEnableConsoleDebugValue === true) {
         console.log('[EasyPTRE] ' + message);
     }
 }
@@ -3616,6 +3654,13 @@ function getLastUpdateLabel(ts) {
         return "In " + inSec + " secs";
     }
     return temp;
+}
+
+function updateHtmlById(id, html) {
+    const element = document.getElementById(id);
+     if (element) {
+        element.innerHTML = html;
+    }
 }
 
 // Calling serverTime.getTime() multtiple times is buggy.
@@ -3796,52 +3841,6 @@ function migrateDataAndCleanStorage() {
         GM_setValue(ptreLogsList, logsJSON);
     }
     // End: Clean logs
-
-    // Clean Sharable Data
-    var dataJSON = '';
-    var dataJSONNew = '';
-    dataJSON = GM_getValue(ptreDataToSync, '');
-    var dataList = [];
-    var dataListNew = [];
-    if (dataJSON != '') {
-        // Get current planet list
-        const planetListFromDOM = document.querySelectorAll('.planet-koords');
-        var planetList = [];
-        planetListFromDOM.forEach(function(planet) {
-            planetList.push(planet.textContent.replace(/[\[\]]/g, ""));
-        });
-        dataList = JSON.parse(dataJSON);
-        // Go throught every element
-        dataList.forEach(function(elem) {
-            var keep_elem = 1;
-            if (elem.type == "phalanx") {
-                // Clean relocated planets
-                if (!planetList.includes(elem.coords)) {
-                    consoleDebug("Deleting phalanx (no more planet): " + elem.coords);
-                    keep_elem = 0;
-                }
-                // Clean Old phalanx ID format
-                const regex = /\:/;
-                if (regex.test(elem.id)) {
-                    consoleDebug("Need to remove old ID format: " + elem.id);
-                    keep_elem = 0;
-                }
-            } else {
-                // Wrong / deprecated type
-                consoleDebug("Need to remove wrong / deprecated type: " + elem.type);
-                keep_elem = 0;
-            }
-            // Keep element
-            if (keep_elem == 1) {
-                //console.log("Need to KEEP " + elem.type + ": " + elem.id + " (" + elem.val + ")");
-                dataListNew.push(elem);
-            }
-        });
-        dataJSONNew = JSON.stringify(dataListNew);
-        GM_setValue(ptreDataToSync, dataJSONNew);
-    }
-    //debugSharableData();
-    // End: Clean Sharable Data with wrong format
 
     // Clean LastAvailableVersion Keys from each universe
     const pattern = /LastAvailableVersion/i;
