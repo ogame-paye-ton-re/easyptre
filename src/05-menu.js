@@ -280,7 +280,7 @@ function displayOverview() {
     divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle"></div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2">';
     divOV += '<table border="1" width="100%">';
-    divOV += '<tr><td class="td_cell_radius_0">Team Name:</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + GM_getValue(ptreTeamName, '???') + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Team Name:<br><a href="https://ptre.chez.gg/" target="_blank">Manage Team on ptre.chez.gg</a></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + GM_getValue(ptreTeamName, '???') + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_1">Phalanx:<br><span class="ptreSmall">Last Update: </span><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + phalanxCountTotal + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_1">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
@@ -467,7 +467,7 @@ function displayChangelog() {
 function displayUpdateBox(updateMessageShort) {
     setupMainBox('EasyPTRE Updates', 'Updates');
     var content = updateMessageShort;
-    content += '<div class="ptreCategoryTitle">Check for updates</div><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION NOW</div><br>';
+    content += '<div class="ptreCategoryTitle">Check for updates</div>Last check: ' + getUnixTSLabel(GM_getValue(ptreLastAvailableVersionRefresh, 0)) + '<br><br><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION NOW</div><br>';
     content += '<div class="ptreCategoryTitle">Automatic updates</div>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
     content += '<div class="ptreCategoryTitle">Manual update</div>If you want to proceed to a manual update here is how to:<br>';
     content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
@@ -513,7 +513,7 @@ function displayLogs() {
     logsList.sort((a, b) => b.ts - a.ts);
     logsList.forEach(function(elem) {
         if (elem.uni == country + "-" + universe) {
-            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content+= '<tr><td class="td_cell_radius_1" align="center">' + getUnixTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         }
     });
     content+= '</table>';
@@ -954,7 +954,7 @@ function displayTamperMonkeyKeys() {
         content += '<tr><td class="td_cell_radius_1" colspan="3" align="center"><span class="ptreWarning">No logs.</span></td></tr>';
     } else {
         logsList.forEach(function(elem) {
-            content += '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content += '<tr><td class="td_cell_radius_1" align="center">' + getUnixTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         });
     }
     content += '</table>';

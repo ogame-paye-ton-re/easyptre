@@ -105,7 +105,7 @@ function getLastUpdateLabel(ts) {
     return temp;
 }
 
-function getLogTSLabel(ts) {
+function getUnixTSLabel(ts) {
     var temp = "";
     const currentTime = getCurrentUnixTS();
 

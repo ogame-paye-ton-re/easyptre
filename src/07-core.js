@@ -37,9 +37,9 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentTime = getIGCurrentTS();
+    var currentUnixTS = getCurrentUnixTS();
 
-    if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
+    if (force === true || currentUnixTS > lastCheckTime + versionCheckTimeout) {
         consoleDebug("Checking last version available");
         GM_xmlhttpRequest({
             method:'GET',
@@ -54,7 +54,7 @@ function updateLastAvailableVersion(force = false) {
                     consoleDebug("Current version: " + GM_info.script.version);
                     consoleDebug("Last version: " + availableVersion);
                     GM_setValue(ptreLastAvailableVersion, availableVersion);
-                    GM_setValue(ptreLastAvailableVersionRefresh, currentTime);
+                    GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
                     if (availableVersion !== GM_info.script.version) {
                         displayUpdateVersionMessage('<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>');
                         if (document.getElementById('ptreMenuName')) {
@@ -72,7 +72,7 @@ function updateLastAvailableVersion(force = false) {
             }
         });
     } else {
-        var temp = lastCheckTime + versionCheckTimeout - currentTime;
+        var temp = lastCheckTime + versionCheckTimeout - currentUnixTS;
         //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }

@@ -19,22 +19,6 @@ function migrateDataAndCleanStorage() {
     }
     // End: Clean logs
 
-    // Clean LastAvailableVersion Keys from each universe
-    const pattern = /LastAvailableVersion/i;
-    var count = 0;
-    GM_listValues().forEach(key => {
-        if (pattern.test(key)) {
-            if (key != ptreLastAvailableVersion && key != ptreLastAvailableVersionRefresh) {
-                GM_deleteValue(key);
-                count++;
-            }
-        }
-    });
-    if (count > 0) {
-        addToLogs("Deleted " + count + " deprecated Keys (LastAvailableVersion)");
-    }
-    // End: Clean LastAvailableVersion Keys
-
     // Check TS
     const lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
     if (lastGlobalSyncTemp != 0) {

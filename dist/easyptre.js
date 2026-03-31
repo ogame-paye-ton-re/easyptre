@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 31 mars 2026 22:29:07 CEST
+// Build date: mar. 31 mars 2026 23:15:03 CEST
 // ****************************************
 
 // ****************************************
@@ -117,8 +117,8 @@ if (modeEasyPTRE == "ingame") {
 // GM keys
 const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not change!
 const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
-const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
-const ptreLogsList = "ptre-Logs";
+const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Unix TS
+const ptreLogsList = "ptre-Logs";// Unix TS
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
 const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
@@ -2084,7 +2084,7 @@ function displayOverview() {
     divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle"></div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2">';
     divOV += '<table border="1" width="100%">';
-    divOV += '<tr><td class="td_cell_radius_0">Team Name:</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + GM_getValue(ptreTeamName, '???') + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Team Name:<br><a href="https://ptre.chez.gg/" target="_blank">Manage Team on ptre.chez.gg</a></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + GM_getValue(ptreTeamName, '???') + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_1">Phalanx:<br><span class="ptreSmall">Last Update: </span><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + phalanxCountTotal + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_1">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
@@ -2271,7 +2271,7 @@ function displayChangelog() {
 function displayUpdateBox(updateMessageShort) {
     setupMainBox('EasyPTRE Updates', 'Updates');
     var content = updateMessageShort;
-    content += '<div class="ptreCategoryTitle">Check for updates</div><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION NOW</div><br>';
+    content += '<div class="ptreCategoryTitle">Check for updates</div>Last check: ' + getUnixTSLabel(GM_getValue(ptreLastAvailableVersionRefresh, 0)) + '<br><br><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION NOW</div><br>';
     content += '<div class="ptreCategoryTitle">Automatic updates</div>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
     content += '<div class="ptreCategoryTitle">Manual update</div>If you want to proceed to a manual update here is how to:<br>';
     content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
@@ -2317,7 +2317,7 @@ function displayLogs() {
     logsList.sort((a, b) => b.ts - a.ts);
     logsList.forEach(function(elem) {
         if (elem.uni == country + "-" + universe) {
-            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content+= '<tr><td class="td_cell_radius_1" align="center">' + getUnixTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         }
     });
     content+= '</table>';
@@ -2758,7 +2758,7 @@ function displayTamperMonkeyKeys() {
         content += '<tr><td class="td_cell_radius_1" colspan="3" align="center"><span class="ptreWarning">No logs.</span></td></tr>';
     } else {
         logsList.forEach(function(elem) {
-            content += '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content += '<tr><td class="td_cell_radius_1" align="center">' + getUnixTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         });
     }
     content += '</table>';
@@ -3448,9 +3448,9 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentTime = getIGCurrentTS();
+    var currentUnixTS = getCurrentUnixTS();
 
-    if (force === true || currentTime > lastCheckTime + versionCheckTimeout) {
+    if (force === true || currentUnixTS > lastCheckTime + versionCheckTimeout) {
         consoleDebug("Checking last version available");
         GM_xmlhttpRequest({
             method:'GET',
@@ -3465,7 +3465,7 @@ function updateLastAvailableVersion(force = false) {
                     consoleDebug("Current version: " + GM_info.script.version);
                     consoleDebug("Last version: " + availableVersion);
                     GM_setValue(ptreLastAvailableVersion, availableVersion);
-                    GM_setValue(ptreLastAvailableVersionRefresh, currentTime);
+                    GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
                     if (availableVersion !== GM_info.script.version) {
                         displayUpdateVersionMessage('<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>');
                         if (document.getElementById('ptreMenuName')) {
@@ -3483,7 +3483,7 @@ function updateLastAvailableVersion(force = false) {
             }
         });
     } else {
-        var temp = lastCheckTime + versionCheckTimeout - currentTime;
+        var temp = lastCheckTime + versionCheckTimeout - currentUnixTS;
         //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }
@@ -3723,7 +3723,7 @@ function getLastUpdateLabel(ts) {
     return temp;
 }
 
-function getLogTSLabel(ts) {
+function getUnixTSLabel(ts) {
     var temp = "";
     const currentTime = getCurrentUnixTS();
 
@@ -3937,22 +3937,6 @@ function migrateDataAndCleanStorage() {
         GM_setValue(ptreLogsList, logsJSON);
     }
     // End: Clean logs
-
-    // Clean LastAvailableVersion Keys from each universe
-    const pattern = /LastAvailableVersion/i;
-    var count = 0;
-    GM_listValues().forEach(key => {
-        if (pattern.test(key)) {
-            if (key != ptreLastAvailableVersion && key != ptreLastAvailableVersionRefresh) {
-                GM_deleteValue(key);
-                count++;
-            }
-        }
-    });
-    if (count > 0) {
-        addToLogs("Deleted " + count + " deprecated Keys (LastAvailableVersion)");
-    }
-    // End: Clean LastAvailableVersion Keys
 
     // Check TS
     const lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);

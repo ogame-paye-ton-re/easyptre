@@ -85,8 +85,8 @@ if (modeEasyPTRE == "ingame") {
 // GM keys
 const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not change!
 const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
-const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";
-const ptreLogsList = "ptre-Logs";
+const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Unix TS
+const ptreLogsList = "ptre-Logs";// Unix TS
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
 const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
