@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 31 mars 2026 23:15:03 CEST
+// Build date: mar. 31 mars 2026 23:26:30 CEST
 // ****************************************
 
 // ****************************************
@@ -289,20 +289,21 @@ if (modeEasyPTRE == "ingame") {
         setTimeout(improvePageBuddies, improvePageDelay);
     }
 
-    // Global Sync
-    if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
-        if (!/page=standalone&component=empire/.test(location.href)) {
+    // Dont run background tasks on Empire page
+    if (!/page=standalone&component=empire/.test(location.href)) {
+        // Global Sync
+        if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
             setTimeout(globalPTRESync, 3000);
         }
+
+        // Check for new version only (no need to run it if only browsing)
+        setTimeout(updateLastAvailableVersion, 4000);
+
+        // Prepare next Backend Check
+        // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
+        // It only check if update is needed, it does not do the update
+        runAutoCheckForPTREUpdate();
     }
-
-    // Check for new version only (no need to run it if only browsing)
-    setTimeout(updateLastAvailableVersion, 4000);
-
-    // Prepare next Backend Check
-    // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
-    // It only check if update is needed, it does not do the update
-    runAutoCheckForPTREUpdate();
 }
 
 // ****************************************
