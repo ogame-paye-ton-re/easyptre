@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 31 mars 2026 19:35:19 CEST
+// Build date: mar. 31 mars 2026 21:56:47 CEST
 // ****************************************
 
 // ****************************************
@@ -52,7 +52,7 @@ const dataSharingDelay = 200;
 const improvePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const deepSpacePlayerId = 99999;
-const logsRetentionDuration = 7*24*60*60;
+const logsRetentionDuration = 15*24*60*60;
 const globalPTRESyncTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 15; // nb of days we keep planets infos
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
@@ -1842,9 +1842,11 @@ function setupMainBox(title, navKey) {
         html += '<div><hr></div>';
         html += '<div id="ptreNavHelp" class="button btn_blue ptreNavBtn">&#10067; Help</div>';
         html += '<div id="ptreNavLogs" class="button btn_blue ptreNavBtn">&#128221; Logs</div>';
-        html += '<div id="ptreNavUpdates" class="button btn_blue ptreNavBtn">&#128640; Updates</div>';
         html += '<div id="ptreNavToolsCompatibility" class="button btn_blue ptreNavBtn">&#9881; Tools Compat</div>';
         html += '<div id="ptreNavChangelog" class="button btn_blue ptreNavBtn">&#128221; Changelog</div>';
+        html += '<div><hr></div>';
+        html += '<div id="ptreNavUpdates" class="button btn_blue ptreNavBtn">&#128640; Updates</div>';
+        html += '<div id="ptreNavTMKeys" class="button btn_blue ptreNavBtn">&#128273; TM Keys</div>';
         html += '</div></div>';
         html += '<div id="ptreMainFooter">';
         html += '<div id="ptreMainFooterLeft"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></div>';
@@ -1881,6 +1883,7 @@ function setupMainBox(title, navKey) {
         document.getElementById('ptreNavUpdates').addEventListener('click', function() { displayUpdateBox(''); });
         document.getElementById('ptreNavToolsCompatibility').addEventListener('click', function() { displayToolsCompatibility(); });
         document.getElementById('ptreNavSharedNotes').addEventListener('click', function() { displayAllSharedNotes(); });
+        document.getElementById('ptreNavTMKeys').addEventListener('click', function() { displayTamperMonkeyKeys(); });
     }
     document.getElementById('ptreMainTitle').textContent = title;
     var badge = document.getElementById('ptreTopRightMenuButton');
@@ -2231,7 +2234,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up';
+    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up<br>- [Feature] Add TamperMonkey Keys management menu';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
@@ -2301,7 +2304,7 @@ function displayToolsCompatibility() {
 function displayLogs() {
     ptreCurrentView = displayLogs;
     setupMainBox('Logs', 'Logs');
-    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer. <div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
+    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -2563,7 +2566,7 @@ function displaySharedData() {
             }
         });
     }
-    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx<br><span class="ptreSmall">Empty: ' + missingPhalanx + '</span></td></tr></table><br><div id="refreshEmpireMoonDataButton" class="button btn_blue">&#8635; UPDATE</div><br><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span>';
+    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx<br><span class="ptreSmall">Empty: ' + missingPhalanx + '</span></td></tr></table><br><a href="https://ptre.chez.gg/?page=phalanx_debug" target="_blank">Phalanx Debug</a><br><br><div id="refreshEmpireMoonDataButton" class="button btn_blue">&#8635; UPDATE</div><br><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span>';
 
     content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Hot Targets</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td></tr>';
     Object.values(highlightedPlayersList).forEach(function(elem) {
@@ -2690,6 +2693,86 @@ function displayAllSharedNotes() {
             updateHtmlById('ptreMainContent', '<span class="ptreError">Request failed</span>');
             addToLogs('displayAllSharedNotes: ' + e);
         });
+}
+
+// List every universes keys
+// Key format: "ptre-" + country + "-" + universe + "-"
+function displayTamperMonkeyKeys() {
+    ptreCurrentView = displayTamperMonkeyKeys;
+    setupMainBox('Tampermonkey Keys', 'TMKeys');
+
+    const allKeys = GM_listValues();
+    const uniMap = {};
+    allKeys.forEach(function(key) {
+        const match = key.match(/^ptre-([a-z]+)-(\d+)-(.+)$/);
+        if (match) {
+            const c = match[1];
+            const u = match[2];
+            const uniKey = c + '-' + u;
+            if (!uniMap[uniKey]) {
+                uniMap[uniKey] = { country: c, universe: u, keys: [] };
+            }
+            uniMap[uniKey].keys.push(key);
+        }
+    });
+
+    var content = '<div class="ptreCategoryTitle">Tampermonkey Keys per Universe</div>';
+    content += 'All stored keys grouped by universe. The Team Key (TK) is preserved when purging.<br><br>';
+
+    const uniKeys = Object.keys(uniMap).sort();
+    if (uniKeys.length === 0) {
+        content += '<span class="ptreWarning">No per-universe keys found.</span>';
+    } else {
+        content += '<table width="100%">';
+        content += '<tr><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Keys</td><td class="td_cell_radius_0" align="center">Action</td></tr>';
+        uniKeys.forEach(function(uniKey, index) {
+            const entry = uniMap[uniKey];
+            const i = (index + 1) % 2;
+            const isCurrent = (entry.country === country && entry.universe === universe);
+            const hasTK = entry.keys.includes('ptre-' + entry.country + '-' + entry.universe + '-TK');
+            const label = entry.country + '-' + entry.universe
+                + (hasTK ? ' <span class="ptreSuccess">(TK exists)</span>' : ' <span class="ptreWarning">(TK missing)</span>')
+                + (isCurrent ? ' <span class="ptreError">(current)</span>' : '');
+            content += '<tr>';
+            content += '<td class="td_cell_radius_' + i + '">' + label + '</td>';
+            content += '<td class="td_cell_radius_' + i + '" align="center">' + entry.keys.length + '</td>';
+            content += '<td class="td_cell_radius_' + i + '" align="center"><div id="purgeUniKeys_' + entry.country + '_' + entry.universe + '" class="button btn_blue">PURGE</div></td>';
+            content += '</tr>';
+        });
+        content += '</table>';
+    }
+
+    // All logs section
+    content += '<div class="ptreCategoryTitle">All Logs</div>';
+    content += 'Internal logs for all universes.<br><br>';
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    var logsList = [];
+    if (logsJSON != '') {
+        logsList = JSON.parse(logsJSON);
+    }
+    logsList.sort((a, b) => b.ts - a.ts);
+    content += '<table width="100%"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
+    if (logsList.length === 0) {
+        content += '<tr><td class="td_cell_radius_1" colspan="3" align="center"><span class="ptreWarning">No logs.</span></td></tr>';
+    } else {
+        logsList.forEach(function(elem) {
+            content += '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+        });
+    }
+    content += '</table>';
+
+    document.getElementById('ptreMainContent').innerHTML = content;
+
+    uniKeys.forEach(function(uniKey) {
+        const entry = uniMap[uniKey];
+        var btn = document.getElementById('purgeUniKeys_' + entry.country + '_' + entry.universe);
+        if (btn) {
+            btn.addEventListener('click', function() {
+                validatePurgeTamperMonkeyKeys(entry.country, entry.universe, entry.keys.slice());
+            });
+        }
+    });
+
 }
 
 function displayUpdateVersionMessage(message) {
@@ -3816,7 +3899,8 @@ function migrateDataAndCleanStorage() {
         var minTs = currentTime - logsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
-        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs && item.ts <= currentTime));
+        const currentUni = country + "-" + universe;
+        logsList.splice(0, logsList.length, ...logsList.filter(item => item.uni !== currentUni || item.ts >= minTs));
         logsJSON = JSON.stringify(logsList);
         GM_setValue(ptreLogsList, logsJSON);
     }
@@ -3895,5 +3979,43 @@ function garbageCollectGalaxyDataV2(days) {
     if (removedCount > 0) {
         addToLogs("[GC] Cleaned " + removedCount + " old positions");
     }
+}
+
+function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
+    setupMainBox('Delete keys for ' + targetCountry + '-' + targetUniverse + '?', 'TMKeys');
+    const tkKey = 'ptre-' + targetCountry + '-' + targetUniverse + '-TK';
+    const keysToDelete = keys.filter(function(k) { return k !== tkKey; });
+
+    var content = '<span class="ptreError">This will delete ' + keysToDelete.length + ' key(s) for universe ' + targetCountry + '-' + targetUniverse + '.</span><br><br>';
+    content += 'The Team Key (TK) will be preserved.<br><br>';
+    content += '<div id="confirmPurgeUniKeys" class="button btn_blue">PURGE, REALLY?</div>';
+    content += ' <div id="cancelPurgeUniKeys" class="button btn_blue">CANCEL</div>';
+    content += '<br><br>Keys to delete:<br><ul>';
+    keysToDelete.forEach(function(k) {
+        content += '<li>' + k + '</li>';
+    });
+    content += '</ul>';
+
+    document.getElementById('ptreMainContent').innerHTML = content;
+
+    document.getElementById('confirmPurgeUniKeys').addEventListener('click', function() {
+        keysToDelete.forEach(function(k) {
+            GM_deleteValue(k);
+        });
+        // Purge logs for this universe
+        var logsJSON = GM_getValue(ptreLogsList, '');
+        if (logsJSON != '') {
+            var logsList = JSON.parse(logsJSON);
+            var targetUni = targetCountry + '-' + targetUniverse;
+            logsList = logsList.filter(function(item) { return item.uni !== targetUni; });
+            GM_setValue(ptreLogsList, JSON.stringify(logsList));
+        }
+        addToLogs('Purged ' + keysToDelete.length + ' keys for ' + targetCountry + '-' + targetUniverse);
+        displayTamperMonkeyKeys();
+    });
+
+    document.getElementById('cancelPurgeUniKeys').addEventListener('click', function() {
+        displayTamperMonkeyKeys();
+    });
 }
 

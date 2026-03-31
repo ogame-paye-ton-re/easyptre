@@ -13,7 +13,8 @@ function migrateDataAndCleanStorage() {
         var minTs = currentTime - logsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
-        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs && item.ts <= currentTime));
+        const currentUni = country + "-" + universe;
+        logsList.splice(0, logsList.length, ...logsList.filter(item => item.uni !== currentUni || item.ts >= minTs));
         logsJSON = JSON.stringify(logsList);
         GM_setValue(ptreLogsList, logsJSON);
     }
@@ -92,5 +93,43 @@ function garbageCollectGalaxyDataV2(days) {
     if (removedCount > 0) {
         addToLogs("[GC] Cleaned " + removedCount + " old positions");
     }
+}
+
+function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
+    setupMainBox('Delete keys for ' + targetCountry + '-' + targetUniverse + '?', 'TMKeys');
+    const tkKey = 'ptre-' + targetCountry + '-' + targetUniverse + '-TK';
+    const keysToDelete = keys.filter(function(k) { return k !== tkKey; });
+
+    var content = '<span class="ptreError">This will delete ' + keysToDelete.length + ' key(s) for universe ' + targetCountry + '-' + targetUniverse + '.</span><br><br>';
+    content += 'The Team Key (TK) will be preserved.<br><br>';
+    content += '<div id="confirmPurgeUniKeys" class="button btn_blue">PURGE, REALLY?</div>';
+    content += ' <div id="cancelPurgeUniKeys" class="button btn_blue">CANCEL</div>';
+    content += '<br><br>Keys to delete:<br><ul>';
+    keysToDelete.forEach(function(k) {
+        content += '<li>' + k + '</li>';
+    });
+    content += '</ul>';
+
+    document.getElementById('ptreMainContent').innerHTML = content;
+
+    document.getElementById('confirmPurgeUniKeys').addEventListener('click', function() {
+        keysToDelete.forEach(function(k) {
+            GM_deleteValue(k);
+        });
+        // Purge logs for this universe
+        var logsJSON = GM_getValue(ptreLogsList, '');
+        if (logsJSON != '') {
+            var logsList = JSON.parse(logsJSON);
+            var targetUni = targetCountry + '-' + targetUniverse;
+            logsList = logsList.filter(function(item) { return item.uni !== targetUni; });
+            GM_setValue(ptreLogsList, JSON.stringify(logsList));
+        }
+        addToLogs('Purged ' + keysToDelete.length + ' keys for ' + targetCountry + '-' + targetUniverse);
+        displayTamperMonkeyKeys();
+    });
+
+    document.getElementById('cancelPurgeUniKeys').addEventListener('click', function() {
+        displayTamperMonkeyKeys();
+    });
 }
 
