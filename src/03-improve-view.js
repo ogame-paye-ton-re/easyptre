@@ -364,9 +364,7 @@ function improvePageFleet() {
                 displayPTREPopUpMessage(tempMessage);
                 // Update last check TS
                 GM_setValue(ptreLastTechnosRefresh, currentTime);
-                if (document.getElementById("ptreLastTechnosRefreshField")) {
-                    document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
-                }
+                updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
             } else {
                 console.log("[EasyPTRE] Cant find Techs!");
             }

@@ -98,9 +98,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
                         ptreGalaxyEventCount += reponseDecode.event_count;
-                        if (document.getElementById('ptreGalaxyEventCount')) {
-                            document.getElementById('ptreGalaxyEventCount').innerHTML = ptreGalaxyEventCount;
-                        }
+                        updateHtmlById('ptreGalaxyEventCount', ptreGalaxyEventCount);
                         // Display message at the bottom of the galaxy
                         displayGalaxyMiniMessage(reponseDecode.message);
                         // Highlight galaxy events!!!
@@ -155,9 +153,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
-                if (document.getElementById('ptreGalaxyActivityCount')) {
-                    document.getElementById('ptreGalaxyActivityCount').innerHTML = ptreGalaxyActivityCount;
-                }
+                updateHtmlById('ptreGalaxyActivityCount', ptreGalaxyActivityCount);
             } else {
                 displayPTREPopUpMessage(reponseDecode.message);
                 addToLogs(reponseDecode.message);
@@ -274,9 +270,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             consoleDebug("Rank update canceled");
             return;
         }
-        if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-            document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Loading ranks...";
-        }
+        updateHtmlById("ptreGalaxyPlayerRanksPopUp", "Loading ranks...");
         $.ajax({
             url : urlPTREGetRanks + "&team_key=" + TKey + "&player_id=" + playerId,
             type : 'POST',
@@ -315,9 +309,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                         document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
                     }
                 } else {
-                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = reponseDecode.message;
-                    }
+                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", reponseDecode.message);
                     addToLogs(reponseDecode.message);
                 }
             }
@@ -454,9 +446,7 @@ function syncDataWithPTRE(mode = "auto") {
                 consoleDebug('[FROM PTRE] ' + reponseDecode.message);
 
                 // Update info in menu
-                if (document.getElementById("ptreLastDataSyncField")) {
-                    document.getElementById("ptreLastDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
-                }
+                updateHtmlById("ptreLastDataSyncField", getLastUpdateLabel(currentTime));
             } else {
                 addToLogs(reponseDecode.message_debug);
             }
@@ -532,9 +522,7 @@ function syncTargets(mode) {
                     displayMessageInSettings(nb_private + ' private targets ignored. ' + reponseDecode.message + ' ' + count + ' new targets added.');
                 }
                 GM_setValue(ptreLastTargetsSync, currentTime);
-                if (document.getElementById("ptreLastTargetsSyncField")) {
-                    document.getElementById("ptreLastTargetsSyncField").innerHTML = getLastUpdateLabel(currentTime);
-                }
+                updateHtmlById("ptreLastTargetsSyncField", getLastUpdateLabel(currentTime));
                 updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
                 // Refresh targets list if displayed
                 if (document.getElementById('targetsListDiv')) {

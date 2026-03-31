@@ -45,9 +45,7 @@ function displayGalaxyMiniMessage(message) {
 }
 
 function cleanGalaxyMiniMessage() {
-    if (document.getElementById("fleetstatusrow")) {
-        document.getElementById("fleetstatusrow").innerHTML = '';
-    }
+    updateHtmlById("fleetstatusrow", '');
 }
 
 // Display message content on galaxy page

@@ -126,7 +126,7 @@ GM_addStyle(`
     position: fixed;
     top: 30px;
     right: 10px;
-    z-index: 1000;//TODO: changer par 10000
+    z-index: 10000;
     font-size: 10pt;
 }
 #ptreMainBox {
@@ -211,7 +211,7 @@ GM_addStyle(`
     position: fixed;
     bottom: 30px;
     right: 10px;
-    z-index: 1100;
+    z-index: 11000;
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
@@ -236,7 +236,7 @@ GM_addStyle(`
     position: absolute;
     border: solid black 2px;
     background-color: #171d22;
-    z-index: 1001;
+    z-index: 10001;
     padding: 5px;
 }
 #optionPTRE {
@@ -246,7 +246,7 @@ GM_addStyle(`
     position: fixed;
     top: 10px;
     right: 10px;
-    z-index: 1200;
+    z-index: 12000;
     padding: 3px 0;
     cursor: pointer;
 }
@@ -263,7 +263,7 @@ GM_addStyle(`
     font-weight: bold;
     text-align: center;
     line-height: 14px;
-    z-index: 1000;
+    z-index: 10000;
     cursor: pointer;
 }
 `);

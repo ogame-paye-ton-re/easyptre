@@ -107,7 +107,7 @@ function getLastUpdateLabel(ts) {
 
 function updateHtmlById(id, html) {
     const element = document.getElementById(id);
-     if (element) {
+    if (element) {
         element.innerHTML = html;
     }
 }

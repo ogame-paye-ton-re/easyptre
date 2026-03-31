@@ -203,7 +203,7 @@ if (modeEasyPTRE == "ingame") {
         var badge = document.createElement("div");
         badge.id = 'ptreTopRightMenuButton';
         badge.classList.add('button', 'btn_blue');
-        badge.innerHTML = '&#9881; PTRE';
+        badge.innerHTML = '&#9881; EasyPTRE';
         document.body.appendChild(badge);
         document.getElementById('ptreTopRightMenuButton').addEventListener("click", function (event) {
             displayOverview();

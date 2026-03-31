@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 31 mars 2026 18:53:33 CEST
+// Build date: mar. 31 mars 2026 19:35:19 CEST
 // ****************************************
 
 // ****************************************
@@ -235,7 +235,7 @@ if (modeEasyPTRE == "ingame") {
         var badge = document.createElement("div");
         badge.id = 'ptreTopRightMenuButton';
         badge.classList.add('button', 'btn_blue');
-        badge.innerHTML = '&#9881; PTRE';
+        badge.innerHTML = '&#9881; EasyPTRE';
         document.body.appendChild(badge);
         document.getElementById('ptreTopRightMenuButton').addEventListener("click", function (event) {
             displayOverview();
@@ -475,7 +475,7 @@ GM_addStyle(`
     position: fixed;
     top: 30px;
     right: 10px;
-    z-index: 1000;//TODO: changer par 10000
+    z-index: 10000;
     font-size: 10pt;
 }
 #ptreMainBox {
@@ -560,7 +560,7 @@ GM_addStyle(`
     position: fixed;
     bottom: 30px;
     right: 10px;
-    z-index: 1100;
+    z-index: 11000;
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
@@ -585,7 +585,7 @@ GM_addStyle(`
     position: absolute;
     border: solid black 2px;
     background-color: #171d22;
-    z-index: 1001;
+    z-index: 10001;
     padding: 5px;
 }
 #optionPTRE {
@@ -595,7 +595,7 @@ GM_addStyle(`
     position: fixed;
     top: 10px;
     right: 10px;
-    z-index: 1200;
+    z-index: 12000;
     padding: 3px 0;
     cursor: pointer;
 }
@@ -612,7 +612,7 @@ GM_addStyle(`
     font-weight: bold;
     text-align: center;
     line-height: 14px;
-    z-index: 1000;
+    z-index: 10000;
     cursor: pointer;
 }
 `);
@@ -983,9 +983,7 @@ function improvePageFleet() {
                 displayPTREPopUpMessage(tempMessage);
                 // Update last check TS
                 GM_setValue(ptreLastTechnosRefresh, currentTime);
-                if (document.getElementById("ptreLastTechnosRefreshField")) {
-                    document.getElementById("ptreLastTechnosRefreshField").innerHTML = getLastUpdateLabel(currentTime);
-                }
+                updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
             } else {
                 console.log("[EasyPTRE] Cant find Techs!");
             }
@@ -2233,7 +2231,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up';
+    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
@@ -2689,17 +2687,13 @@ function displayAllSharedNotes() {
             }
         })
         .catch(function(e) {
-            if (document.getElementById('ptreMainContent')) {
-                document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">Request failed</span>';
-            }
+            updateHtmlById('ptreMainContent', '<span class="ptreError">Request failed</span>');
             addToLogs('displayAllSharedNotes: ' + e);
         });
 }
 
 function displayUpdateVersionMessage(message) {
-    if (document.getElementById('ptreUpdateVersionMessage')) {
-        document.getElementById('ptreUpdateVersionMessage').innerHTML = message;
-    }
+    updateHtmlById('ptreUpdateVersionMessage', message);
 }
 
 function displayMessageInSettings(message) {
@@ -2821,9 +2815,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                     if (reponseDecode.event_count > 0) {
                         // Update counter indicator
                         ptreGalaxyEventCount += reponseDecode.event_count;
-                        if (document.getElementById('ptreGalaxyEventCount')) {
-                            document.getElementById('ptreGalaxyEventCount').innerHTML = ptreGalaxyEventCount;
-                        }
+                        updateHtmlById('ptreGalaxyEventCount', ptreGalaxyEventCount);
                         // Display message at the bottom of the galaxy
                         displayGalaxyMiniMessage(reponseDecode.message);
                         // Highlight galaxy events!!!
@@ -2878,9 +2870,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
             displayGalaxyMiniMessage(reponseDecode.message);
             if (reponseDecode.code == 1) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
-                if (document.getElementById('ptreGalaxyActivityCount')) {
-                    document.getElementById('ptreGalaxyActivityCount').innerHTML = ptreGalaxyActivityCount;
-                }
+                updateHtmlById('ptreGalaxyActivityCount', ptreGalaxyActivityCount);
             } else {
                 displayPTREPopUpMessage(reponseDecode.message);
                 addToLogs(reponseDecode.message);
@@ -2997,9 +2987,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             consoleDebug("Rank update canceled");
             return;
         }
-        if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-            document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Loading ranks...";
-        }
+        updateHtmlById("ptreGalaxyPlayerRanksPopUp", "Loading ranks...");
         $.ajax({
             url : urlPTREGetRanks + "&team_key=" + TKey + "&player_id=" + playerId,
             type : 'POST',
@@ -3038,9 +3026,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                         document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
                     }
                 } else {
-                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = reponseDecode.message;
-                    }
+                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", reponseDecode.message);
                     addToLogs(reponseDecode.message);
                 }
             }
@@ -3177,9 +3163,7 @@ function syncDataWithPTRE(mode = "auto") {
                 consoleDebug('[FROM PTRE] ' + reponseDecode.message);
 
                 // Update info in menu
-                if (document.getElementById("ptreLastDataSyncField")) {
-                    document.getElementById("ptreLastDataSyncField").innerHTML = getLastUpdateLabel(currentTime);
-                }
+                updateHtmlById("ptreLastDataSyncField", getLastUpdateLabel(currentTime));
             } else {
                 addToLogs(reponseDecode.message_debug);
             }
@@ -3255,9 +3239,7 @@ function syncTargets(mode) {
                     displayMessageInSettings(nb_private + ' private targets ignored. ' + reponseDecode.message + ' ' + count + ' new targets added.');
                 }
                 GM_setValue(ptreLastTargetsSync, currentTime);
-                if (document.getElementById("ptreLastTargetsSyncField")) {
-                    document.getElementById("ptreLastTargetsSyncField").innerHTML = getLastUpdateLabel(currentTime);
-                }
+                updateHtmlById("ptreLastTargetsSyncField", getLastUpdateLabel(currentTime));
                 updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
                 // Refresh targets list if displayed
                 if (document.getElementById('targetsListDiv')) {
@@ -3658,7 +3640,7 @@ function getLastUpdateLabel(ts) {
 
 function updateHtmlById(id, html) {
     const element = document.getElementById(id);
-     if (element) {
+    if (element) {
         element.innerHTML = html;
     }
 }
@@ -3723,9 +3705,7 @@ function displayGalaxyMiniMessage(message) {
 }
 
 function cleanGalaxyMiniMessage() {
-    if (document.getElementById("fleetstatusrow")) {
-        document.getElementById("fleetstatusrow").innerHTML = '';
-    }
+    updateHtmlById("fleetstatusrow", '');
 }
 
 // Display message content on galaxy page

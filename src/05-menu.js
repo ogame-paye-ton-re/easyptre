@@ -429,7 +429,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up';
+    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
@@ -885,17 +885,13 @@ function displayAllSharedNotes() {
             }
         })
         .catch(function(e) {
-            if (document.getElementById('ptreMainContent')) {
-                document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">Request failed</span>';
-            }
+            updateHtmlById('ptreMainContent', '<span class="ptreError">Request failed</span>');
             addToLogs('displayAllSharedNotes: ' + e);
         });
 }
 
 function displayUpdateVersionMessage(message) {
-    if (document.getElementById('ptreUpdateVersionMessage')) {
-        document.getElementById('ptreUpdateVersionMessage').innerHTML = message;
-    }
+    updateHtmlById('ptreUpdateVersionMessage', message);
 }
 
 function displayMessageInSettings(message) {
