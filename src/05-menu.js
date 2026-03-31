@@ -513,7 +513,7 @@ function displayLogs() {
     logsList.sort((a, b) => b.ts - a.ts);
     logsList.forEach(function(elem) {
         if (elem.uni == country + "-" + universe) {
-            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         }
     });
     content+= '</table>';
@@ -954,7 +954,7 @@ function displayTamperMonkeyKeys() {
         content += '<tr><td class="td_cell_radius_1" colspan="3" align="center"><span class="ptreWarning">No logs.</span></td></tr>';
     } else {
         logsList.forEach(function(elem) {
-            content += '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content += '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         });
     }
     content += '</table>';

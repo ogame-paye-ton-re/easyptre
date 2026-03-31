@@ -55,14 +55,16 @@ var ptreEnableConsoleDebugValue = false;
 
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
 var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
+var ptrePageLoadUnixTS = 0;
 
 if (modeEasyPTRE == "ingame") {
     // Only get serverTime one time
-    // this is NOT a UNIX timestamp (UNIX: document.getElementsByName('ogame-timestamp')[0].content)
+    // this is NOT a UNIX timestamp
     ptrePageLoadServerMiliTS = serverTime.getTime();
     ptrePageLoadClientMiliTS = Date.now();
-    console.log("[EasyPTRE] Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
-    console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
+    ptrePageLoadUnixTS = Number(document.getElementsByName('ogame-timestamp')[0].content); // Unix Timestamp
+    console.log("[EasyPTRE] UNIX TS: " + ptrePageLoadUnixTS + " | Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
+    //console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
     universe = splitted[0].slice(1);

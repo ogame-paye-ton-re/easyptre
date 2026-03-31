@@ -13,8 +13,7 @@ function migrateDataAndCleanStorage() {
         var minTs = currentTime - logsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
-        const currentUni = country + "-" + universe;
-        logsList.splice(0, logsList.length, ...logsList.filter(item => item.uni !== currentUni || item.ts >= minTs));
+        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));
         logsJSON = JSON.stringify(logsList);
         GM_setValue(ptreLogsList, logsJSON);
     }
@@ -47,7 +46,7 @@ function migrateDataAndCleanStorage() {
 }
 
 function addToLogs(message) {
-    const currentTime = getIGCurrentTS();
+    const currentTime = getCurrentUnixTS();
     console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];

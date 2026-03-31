@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 31 mars 2026 21:56:47 CEST
+// Build date: mar. 31 mars 2026 22:29:07 CEST
 // ****************************************
 
 // ****************************************
@@ -87,14 +87,16 @@ var ptreEnableConsoleDebugValue = false;
 
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
 var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
+var ptrePageLoadUnixTS = 0;
 
 if (modeEasyPTRE == "ingame") {
     // Only get serverTime one time
-    // this is NOT a UNIX timestamp (UNIX: document.getElementsByName('ogame-timestamp')[0].content)
+    // this is NOT a UNIX timestamp
     ptrePageLoadServerMiliTS = serverTime.getTime();
     ptrePageLoadClientMiliTS = Date.now();
-    console.log("[EasyPTRE] Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
-    console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
+    ptrePageLoadUnixTS = Number(document.getElementsByName('ogame-timestamp')[0].content); // Unix Timestamp
+    console.log("[EasyPTRE] UNIX TS: " + ptrePageLoadUnixTS + " | Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
+    //console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
     universe = splitted[0].slice(1);
@@ -2315,7 +2317,7 @@ function displayLogs() {
     logsList.sort((a, b) => b.ts - a.ts);
     logsList.forEach(function(elem) {
         if (elem.uni == country + "-" + universe) {
-            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content+= '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         }
     });
     content+= '</table>';
@@ -2756,7 +2758,7 @@ function displayTamperMonkeyKeys() {
         content += '<tr><td class="td_cell_radius_1" colspan="3" align="center"><span class="ptreWarning">No logs.</span></td></tr>';
     } else {
         logsList.forEach(function(elem) {
-            content += '<tr><td class="td_cell_radius_1" align="center">' + getLastUpdateLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content += '<tr><td class="td_cell_radius_1" align="center">' + getLogTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
         });
     }
     content += '</table>';
@@ -3721,6 +3723,32 @@ function getLastUpdateLabel(ts) {
     return temp;
 }
 
+function getLogTSLabel(ts) {
+    var temp = "";
+    const currentTime = getCurrentUnixTS();
+
+    if (ts == 0) {
+        return '<span class="ptreError ptreSmall">???</span>';
+    } else if (currentTime >= ts) {
+        var nb_min = (currentTime - ts) / 60;
+        if (nb_min <= 1) {
+            temp = '<span class="ptreSuccess ptreSmall">now</span>';
+        } else if (nb_min < 60) {
+            temp = '<span class="ptreSuccess ptreSmall">' + round(nb_min, 0) + ' mins ago</span>';
+        } else if (nb_min < 24*60) {
+            var nb_h = (currentTime - ts) / 3600;
+            temp = '<span class="ptreWarning ptreSmall">' + round(nb_h, 0) + ' hours ago</span>';
+        } else {
+            temp = '<span class="ptreError ptreSmall">' + round(nb_min/(24*60), 1) + ' days ago</span>';
+        }
+        return temp;
+    } else {
+        let inSec = ts - currentTime;
+        return "In " + inSec + " secs";
+    }
+    return temp;
+}
+
 function updateHtmlById(id, html) {
     const element = document.getElementById(id);
     if (element) {
@@ -3739,6 +3767,11 @@ function getIGCurrentTS() {
 function getIGCurrentMiliTS() {
     const elapsed = Date.now() - ptrePageLoadClientMiliTS;
     return ptrePageLoadServerMiliTS + elapsed;
+}
+
+function getCurrentUnixTS() {
+    const elapsed = Date.now() - ptrePageLoadClientMiliTS;
+    return Math.floor(ptrePageLoadUnixTS + elapsed / 1000);
 }
 
 // ****************************************
@@ -3899,8 +3932,7 @@ function migrateDataAndCleanStorage() {
         var minTs = currentTime - logsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
-        const currentUni = country + "-" + universe;
-        logsList.splice(0, logsList.length, ...logsList.filter(item => item.uni !== currentUni || item.ts >= minTs));
+        logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));
         logsJSON = JSON.stringify(logsList);
         GM_setValue(ptreLogsList, logsJSON);
     }
@@ -3933,7 +3965,7 @@ function migrateDataAndCleanStorage() {
 }
 
 function addToLogs(message) {
-    const currentTime = getIGCurrentTS();
+    const currentTime = getCurrentUnixTS();
     console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
