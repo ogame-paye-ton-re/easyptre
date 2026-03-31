@@ -19,52 +19,6 @@ function migrateDataAndCleanStorage() {
     }
     // End: Clean logs
 
-    // Clean Sharable Data
-    var dataJSON = '';
-    var dataJSONNew = '';
-    dataJSON = GM_getValue(ptreDataToSync, '');
-    var dataList = [];
-    var dataListNew = [];
-    if (dataJSON != '') {
-        // Get current planet list
-        const planetListFromDOM = document.querySelectorAll('.planet-koords');
-        var planetList = [];
-        planetListFromDOM.forEach(function(planet) {
-            planetList.push(planet.textContent.replace(/[\[\]]/g, ""));
-        });
-        dataList = JSON.parse(dataJSON);
-        // Go throught every element
-        dataList.forEach(function(elem) {
-            var keep_elem = 1;
-            if (elem.type == "phalanx") {
-                // Clean relocated planets
-                if (!planetList.includes(elem.coords)) {
-                    consoleDebug("Deleting phalanx (no more planet): " + elem.coords);
-                    keep_elem = 0;
-                }
-                // Clean Old phalanx ID format
-                const regex = /\:/;
-                if (regex.test(elem.id)) {
-                    consoleDebug("Need to remove old ID format: " + elem.id);
-                    keep_elem = 0;
-                }
-            } else {
-                // Wrong / deprecated type
-                consoleDebug("Need to remove wrong / deprecated type: " + elem.type);
-                keep_elem = 0;
-            }
-            // Keep element
-            if (keep_elem == 1) {
-                //console.log("Need to KEEP " + elem.type + ": " + elem.id + " (" + elem.val + ")");
-                dataListNew.push(elem);
-            }
-        });
-        dataJSONNew = JSON.stringify(dataListNew);
-        GM_setValue(ptreDataToSync, dataJSONNew);
-    }
-    //debugSharableData();
-    // End: Clean Sharable Data with wrong format
-
     // Clean LastAvailableVersion Keys from each universe
     const pattern = /LastAvailableVersion/i;
     var count = 0;

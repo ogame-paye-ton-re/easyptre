@@ -126,7 +126,7 @@ GM_addStyle(`
     position: fixed;
     top: 30px;
     right: 10px;
-    z-index: 1000;
+    z-index: 1000;//TODO: changer par 10000
     font-size: 10pt;
 }
 #ptreMainBox {

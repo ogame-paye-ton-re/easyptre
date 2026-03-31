@@ -51,13 +51,18 @@ var ptreGalaxyCache = {};
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
 var ptreDisplayGalaPopup = false;//TODO: at false, during Beta
+var ptreEnableConsoleDebugValue = false;
 
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
 var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
 
 if (modeEasyPTRE == "ingame") {
+    // Only get serverTime one time
+    // this is NOT a UNIX timestamp (UNIX: document.getElementsByName('ogame-timestamp')[0].content)
+    ptrePageLoadServerMiliTS = serverTime.getTime();
     ptrePageLoadClientMiliTS = Date.now();
-    ptrePageLoadServerMiliTS = serverTime.getTime(); // Only get serverTime one time
+    console.log("[EasyPTRE] Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
+    console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
     universe = splitted[0].slice(1);
@@ -93,6 +98,7 @@ const ptreTechnosJSON = ptrePerUniKeysPrefix + "Technos";
 const ptreLastTechnosRefresh = ptrePerUniKeysPrefix + "LastTechnosRefresh";
 const ptrePlayerID = ptrePerUniKeysPrefix + "PlayerID";
 const ptreDataToSync = ptrePerUniKeysPrefix + "DataToSync";
+const ptreEmpireMoonLastRefresh = ptrePerUniKeysPrefix + "EmpireMoonLastRefresh";
 const ptreGalaxyData = ptrePerUniKeysPrefix + "GalaxyDataG"; // Object
 const ptreBuddiesList = ptrePerUniKeysPrefix + "BuddiesList";
 const ptreBuddiesListLastRefresh = ptrePerUniKeysPrefix + "BuddiesListLastRefresh";
@@ -137,6 +143,11 @@ var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + 
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
+
+// Load debug value once
+if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+    ptreEnableConsoleDebugValue = true;
+}
 
 // ****************************************
 // MAIN EXEC
@@ -246,7 +257,9 @@ if (modeEasyPTRE == "ingame") {
 
     // Global Sync
     if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
-        setTimeout(globalPTRESync, 3000);
+        if (!/page=standalone&component=empire/.test(location.href)) {
+            setTimeout(globalPTRESync, 3000);
+        }
     }
 
     // Check for new version only (no need to run it if only browsing)

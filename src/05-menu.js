@@ -19,7 +19,7 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreMainHeaderTop">';
         html += '<span id="ptreMainTitle"></span>';
         html += '<div id="ptreMainHeaderButtons">';
-        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue ptreNavBtn">&#8635; Refresh</div>';
+        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue ptreNavBtn">&#8635; Refresh View</div>';
         html += ' <div id="ptreMainClose" type="button" class="button btn_blue ptreNavBtn">&#10005; Close</div>';
         html += '</div>';
         html += '</div>';
@@ -132,7 +132,7 @@ function displaySettings() {
         } else if (!isValidTeamKey(ptreStoredTK)) {
             divPTRE += '<br><span class="ptreError">Invalid PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
         } else {
-            divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '')+'</span>';
+            divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '???')+'</span>';
         }
         divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
         tdId++;
@@ -154,7 +154,7 @@ function displaySettings() {
             tdId++;
         }
         // Add Buddies to Friends and Phalanx feature
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE.</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE. <a href="/game/index.php?page=ingame&component=buddies">Update</a>. (Last Refresh: ' +getLastUpdateLabel(GM_getValue(ptreBuddiesListLastRefresh, 0)) + ')</span>';
         if (buddiesOn != 'checked') {
             divPTRE += recommendedLabelOn;
         }
@@ -251,26 +251,17 @@ function displayOverview() {
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
     var phalanxCountTotal = 0;
-    var phalanxCount = 0;
     var dnpCount = 0;
     var hotCount = 0;
     var dataList = [];
-    var phalanxAdditionnalMessage = '';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
         dataList.forEach(function(elem) {
             if (elem.type == "phalanx") {
+                // Count total Phalanx
                 phalanxCountTotal++;
-                if (elem.val != -1) {
-                    phalanxCount++;
-                } else if (phalanxAdditionnalMessage == "") {
-                    phalanxAdditionnalMessage = '<span class="ptreSmall ptreError">Missing phalanx: '+buildLinkToMoonBuilding(elem.id)+'</span>';
-                }
             }
         });
-    }
-    if (phalanxAdditionnalMessage == "") {
-        phalanxAdditionnalMessage = '<span class="ptreSmall"><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a></span>';
     }
     const galaEventsList = GM_getValue(ptreGalaxyEventsPos, []);
     const galaEventsCount = galaEventsList.length;
@@ -283,18 +274,24 @@ function displayOverview() {
         }
     });
     var divOV = '<table border="1" width="100%">';
-    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Team shared data (<span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
+    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle"></div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2">';
-    divOV += '<table border="1" width="100%"><tr><td class="td_cell_radius_0">Phalanx:<br>'+phalanxAdditionnalMessage+'</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + phalanxCount + '/' + phalanxCountTotal + '</span></td></tr>';
+    divOV += '<table border="1" width="100%">';
+    divOV += '<tr><td class="td_cell_radius_0">Team Name:</td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + GM_getValue(ptreTeamName, '???') + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Phalanx:<br><span class="ptreSmall">Last Update: </span><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + phalanxCountTotal + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_0">Hot Targets list:<br><span class="ptreSmall">Recent spy reports</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + hotCount + '</span></td></tr>';
-    divOV += '<tr><td class="td_cell_radius_0">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
-    divOV += '<tr><td class="td_cell_radius_1">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Galaxy Events:<br><span class="ptreSmall">Changes non-listed in public API but detected by your Team</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSuccess">' + galaEventsCount + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
+
+    divOV += '<tr><td class="td_cell_radius_1">Last Global Sync:<br><span class="ptreSmall">All data synchronized</span></td><td class="td_cell_radius_1" align="center"><span id="ptreLastGlobalSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0)) + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Last Data Sync:<br><span class="ptreSmall">Phalanx, Hot targets, Do Not Probe list, Galaxy events<br><span id="ptreLastDataSyncMessageField" class="ptreWarning"></span></span></td><td class="td_cell_radius_0" align="center"><span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Last Targets Sync:<br><span class="ptreSmall">Targets list<br><span id="ptreLastTargetsSyncMessageField" class="ptreWarning"></span></span></td><td class="td_cell_radius_1" align="center"><span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span></td></tr>';
     divOV += '</table></td></tr>';
     divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
     // Features disabled when OGL/OGI detected
     if (!isOGLorOGIEnabled()) {
-        divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Targets list (<span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span>)</div></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue">OPEN LIST</div></td></tr>';
+        divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Targets list</div></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue">OPEN LIST</div></td></tr>';
         divOV += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
         divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
     }
@@ -303,7 +300,7 @@ function displayOverview() {
     divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 2) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
     if (isOGLorOGIEnabled()) {
-        divOV += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptre Small">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
+        divOV += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptreSmall">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
     }
     divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
 
@@ -324,7 +321,7 @@ function displayOverview() {
 
     // Action: Sync data to PTRE
     document.getElementById('synctDataWithPTRE').addEventListener("click", function (event) {
-        syncDataWithPTRE('manual');
+        globalPTRESync('manual');
     });
 
     // Action: Display Galaxy Tracking
@@ -371,8 +368,8 @@ function savePTRESettings() {
 
     // Manage imcompatible settings
     // This setting overwrites some other settings
-    galaxyPopupMode = document.getElementById('PTREToogleGalaxyPopup').checked + '';
-    minerMode = document.getElementById('PTREToogleMinerMode').checked + '';
+    var galaxyPopupMode = document.getElementById('PTREToogleGalaxyPopup').checked + '';
+    var minerMode = document.getElementById('PTREToogleMinerMode').checked + '';
     console.log('Popup mode: ' + galaxyPopupMode);
     console.log('Miner mode: ' + minerMode);
 
@@ -744,7 +741,7 @@ function displaySharedData() {
     var phalanxCount = 0;
     var dataJSON = '';
     var dataList = [];
-    var undefElem = 0;
+    var missingPhalanx = 0;
     dataJSON = GM_getValue(ptreDataToSync, '');
     const highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
 
@@ -756,6 +753,7 @@ function displaySharedData() {
             if (elem.type == "phalanx") {
                 let val = elem.val;
                 if (val == -1) {
+                    missingPhalanx++;
                     val = '<span class="ptreWarning">???</span>';
                 }
                 content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + val + '</td></tr>';
@@ -763,7 +761,7 @@ function displaySharedData() {
             }
         });
     }
-    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx (' + undefElem + ')</td></tr></table><br><a href="/game/index.php?page=ingame&component=facilities">Visit every moon\'s buildings to update</a>';
+    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx<br><span class="ptreSmall">Empty: ' + missingPhalanx + '</span></td></tr></table><br><div id="refreshEmpireMoonDataButton" class="button btn_blue">&#8635; UPDATE</div><br><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span>';
 
     content += '</td><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Hot Targets</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Player</td></tr>';
     Object.values(highlightedPlayersList).forEach(function(elem) {
@@ -809,6 +807,14 @@ function displaySharedData() {
     }
 
     document.getElementById('ptreMainContent').innerHTML = content;
+
+    // Action: Empire Moon page refresh
+    if (document.getElementById('refreshEmpireMoonDataButton')) {
+        document.getElementById('refreshEmpireMoonDataButton').addEventListener("click", function (event) {
+            document.getElementById('refreshEmpireMoonDataButton').remove();
+            updateDataFromEmpireMoonPage();
+        });
+    }
 }
 
 function validatePurgeGalaxyTracking() {

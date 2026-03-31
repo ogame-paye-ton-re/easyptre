@@ -66,7 +66,7 @@ function buildLinkToMoonBuilding(moonID) {
 }
 
 function consoleDebug(message) {
-    if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
+    if (ptreEnableConsoleDebugValue === true) {
         console.log('[EasyPTRE] ' + message);
     }
 }
@@ -103,6 +103,13 @@ function getLastUpdateLabel(ts) {
         return "In " + inSec + " secs";
     }
     return temp;
+}
+
+function updateHtmlById(id, html) {
+    const element = document.getElementById(id);
+     if (element) {
+        element.innerHTML = html;
+    }
 }
 
 // Calling serverTime.getTime() multtiple times is buggy.

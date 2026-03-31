@@ -4,6 +4,8 @@
 
 // Add data to sharable structure
 // Element should be like: {type: string_type, id: ID, coords: coords, val: a_value};
+// Not called at the moment
+/*
 function addDataToPTREData(newData, syncToPTRE = true) {
     var dataJSON = '';
     dataJSON = GM_getValue(ptreDataToSync, '');
@@ -14,7 +16,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
     // Look for same entry
     var idASup = -1;
-    dataList.forEach(function(elem) {
+    dataList.forEach(function(elem, i) {
         //console.log("[EasyPTRE] Checking elem " + elem.type + " / " + elem.id);
         if (elem.type == newData.type && elem.id == newData.id) {
             if (elem.val == newData.val) {
@@ -47,122 +49,44 @@ function addDataToPTREData(newData, syncToPTRE = true) {
         setTimeout(syncDataWithPTRE, dataSharingDelay);
     }
 }
+*/
 
 function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE = true) {
-    consoleDebug("[Phalanx] Refresh Moons and Phalanx");
-    let existingMoons = {};
-    let planetFound = 0;
-    let moonFound = 0;
-    let missingPhalanxMessage = "";
+    phalanxLevelNew = Number(phalanxLevelNew);
+    consoleDebug("[Phalanx] Checking Phalanx update for " + moonIdNew + " at " + coordsNew + " (level " + phalanxLevelNew + ")");
 
-    //debugSharableData();
-
-    // Get current planet and moon list (from planet menu)
-    const planetListFromDOM = document.getElementById('planetList');
-    for (const child of planetListFromDOM.children) {
-        if (child.classList.contains("smallplanet")) {
-            let splitted = child.id.split('-');
-            let planetId = Number(splitted[1]);
-            let coords = "";
-            let moonID = 0;
-            //consoleDebug("[Phalanx] Planet ID: " + planetId);
-            const planetElem = child.querySelectorAll('.planet-koords');
-            if (planetElem) {
-                planetFound++;
-                //coords = planetElem[0].innerHTML;
-                //coords = coords.replace(/[\[\]]/g, "");
-                //consoleDebug("[Phalanx] Coords: " + coords);
-                const regex = /\d+:\d+:\d+/;
-                const match = planetElem[0].innerHTML.match(regex);
-                if (match) {
-                    coords = match[0];
-                }
-            }
-            const moonElem = child.querySelectorAll('.icon-moon');
-            if (moonElem && moonElem[0]) {
-                splitted = moonElem[0].id.split('_');
-                moonID = Number(splitted[1]);
-                //consoleDebug("[Phalanx] moonId: " + moonID);
-            }
-            if (coords != "" && moonID != 0) {
-                consoleDebug("[Phalanx] Found current Moon " + moonID + " at " + coords);
-                existingMoons[String(moonID)] = coords;
-                moonFound++;
-            }
-        }
-    }
-    // Mark current moon as listed
-    existingMoons[moonIdNew] = -1;
-    consoleDebug("[Phalanx] Found " + planetFound + " planets and " + moonFound + " moons");
-
-    // Update current data
     var dataJSON = GM_getValue(ptreDataToSync, '');
-    var dataList = [];
-    var dataListNew = [];
-    if (dataJSON != '') {
-        dataList = JSON.parse(dataJSON);
-    }
-    dataList.forEach((elem, index) => {
-        if (elem.type != "phalanx") {
-            // Keep non-phalanx elements
-            dataListNew.push(elem);
-            consoleDebug("[Phalanx] Keep non-phalanx element");
-        } else {
-            // If it's a phalanx
-            consoleDebug("[Phalanx] Found stored Moon " + elem.id + " (" + elem.coords + ")");
-            // Skip moon to add (we add it at the end)
-            if (elem.id != moonIdNew) {
-                // Check if moon is really existing
-                if (existingMoons[elem.id] && existingMoons[elem.id] != -1) {
-                    if (elem.coords == existingMoons[elem.id]) {
-                        // If the moon is still at the same place
-                        consoleDebug("[Phalanx] Keep: This moon exists and is at the same spot");
-                        dataListNew.push(elem);
-                    } else {
-                        // If moon moved, we update the coords
-                        consoleDebug("[Phalanx] Update: This moon exists BUT has been moved from "+elem.coords+" to "+existingMoons[elem.id]);
-                        let phalanx = {type: "phalanx", id: elem.id, coords: existingMoons[elem.id], val: elem.val};
-                        dataListNew.push(phalanx);
-                    }
-                    // Mark this moon as listed
-                    existingMoons[elem.id] = -1;
-                    // Generate message to an missing phalanx
-                    if (elem.val == -1) {
-                        missingPhalanxMessage = " - Missing phalanx: "+buildLinkToMoonBuilding(elem.id);
-                    }
-                } else {
-                    consoleDebug("[Phalanx] Drop: Cant find this moon " + elem.id);
-                }
+    var dataList = dataJSON != '' ? JSON.parse(dataJSON) : [];
+
+    var found = false;
+    var needToSave = false;
+
+    dataList.forEach(function(elem) {
+        if (elem.type == "phalanx" && elem.id == moonIdNew) {
+            found = true;
+            if (elem.coords == coordsNew && elem.val == phalanxLevelNew) {
+                consoleDebug("[Phalanx] Already up to date, no change");
             } else {
-                consoleDebug("[Phalanx] Skipping current moon (added after)");
+                consoleDebug("[Phalanx] Updated: coords " + elem.coords + " -> " + coordsNew + ", level " + elem.val + " -> " + phalanxLevelNew);
+                elem.coords = coordsNew;
+                elem.val = phalanxLevelNew;
+                needToSave = true;
             }
         }
     });
-    // This is the moon to update
-    //consoleDebug("[Phalanx] Update: This is the moon to update");
-    let phalanx = {type: "phalanx", id: moonIdNew, coords: coordsNew, val: phalanxLevelNew};
-    dataListNew.push(phalanx);
 
-    // Adding moons not listed
-    Object.entries(existingMoons).forEach(([key, value]) => {
-        if (value != -1) {
-            consoleDebug("[Phalanx] Moon " + key + " at " + value + " is missing from list: adding it!");
-            let phalanx = {type: "phalanx", id: key, coords: value, val: -1};
-            dataListNew.push(phalanx);
+    if (!found) {
+        consoleDebug("[Phalanx] New entry, inserting");
+        dataList.push({type: "phalanx", id: moonIdNew, coords: coordsNew, val: phalanxLevelNew});
+        needToSave = true;
+    }
+
+    if (needToSave) {
+        GM_setValue(ptreDataToSync, JSON.stringify(dataList));
+        displayPTREPopUpMessage("Phalanx updated");
+        if (syncToPTRE === true) {
+            setTimeout(syncDataWithPTRE, dataSharingDelay);
         }
-    });
-
-    // Save list
-    dataJSON = JSON.stringify(dataListNew);
-    GM_setValue(ptreDataToSync, dataJSON);
-
-    //debugSharableData();
-
-    displayPTREPopUpMessage("Phalanx updated" + missingPhalanxMessage);
-
-    // Sync data to PTRE
-    if (syncToPTRE === true) {
-        setTimeout(syncDataWithPTRE, dataSharingDelay);
     }
 }
 

@@ -462,6 +462,7 @@ function syncDataWithPTRE(mode = "auto") {
             }
             if (mode == 'manual') {
                 displayMessageInSettings(reponseDecode.message_debug);
+                updateHtmlById("ptreLastDataSyncMessageField", reponseDecode.message_debug);
             }
         }
     });
@@ -534,6 +535,7 @@ function syncTargets(mode) {
                 if (document.getElementById("ptreLastTargetsSyncField")) {
                     document.getElementById("ptreLastTargetsSyncField").innerHTML = getLastUpdateLabel(currentTime);
                 }
+                updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
                 // Refresh targets list if displayed
                 if (document.getElementById('targetsListDiv')) {
                     displayPTRETargetsList();
@@ -541,8 +543,79 @@ function syncTargets(mode) {
             } else {
                 displayMessageInSettings(reponseDecode.message);
                 addToLogs(reponseDecode.message);
+                updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
             }
         }
+    });
+}
+
+// Get Empire page as JSON
+// Update Phalanx
+function updateDataFromEmpireMoonPage() {
+    consoleDebug("[EasyPTRE] Fetching Empire Moon Page");
+    const currentTime = getIGCurrentTS();
+    return fetch('https://' + window.location.host + '/game/index.php?page=ajax&component=empire&ajax=1&planetType=1&asJson=1', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+        var data = JSON.parse(result.mergedArray);
+        var planets = data.planets;
+        if (!planets || planets.length === 0) {
+            addToLogs('[EMPIRE] No planets found in JSON response');
+            displayMessageInSettings('No phalanx data found in Empire Moon page');
+            return;
+        }
+
+        var newPhalanxList = [];
+        planets.forEach(function(planet) {
+            var moonID = String(planet.id);
+            // on récupère "[1:2:3]"
+            var coordRaw = planet.coordinates;
+            var match = coordRaw.match(/\[(\d+):(\d+):(\d+)\]/);
+            if (!match) {
+                consoleDebug('[EMPIRE] Cant parse coords for moon ' + moonID + ': ' + coordRaw);
+                return;
+            }
+            var coords = match[1] + ':' + match[2] + ':' + match[3];
+            var phalanxLevel = parseInt(planet['42'], 10);
+            if (isNaN(phalanxLevel)) {
+                consoleDebug('[EMPIRE] No phalanx (42) for moon ' + moonID);
+                return;
+            }
+            consoleDebug('[EMPIRE] ' + coords + ' (' + moonID + ') → phalanx: ' + phalanxLevel);
+            newPhalanxList.push({type: "phalanx", id: moonID, coords: coords, val: phalanxLevel});
+        });
+
+        if (newPhalanxList.length > 0) {
+            var dataJSON = GM_getValue(ptreDataToSync, '');
+            var dataList = [];
+            if (dataJSON != '') {
+                dataList = JSON.parse(dataJSON);
+            }
+            var dataListNew = dataList.filter(function(elem) { return elem.type !== "phalanx"; });
+            newPhalanxList.forEach(function(entry) { dataListNew.push(entry); });
+            GM_setValue(ptreDataToSync, JSON.stringify(dataListNew));
+
+            //setTimeout(syncDataWithPTRE, dataSharingDelay);
+
+            var levels = newPhalanxList.map(function(e) { return e.val; });
+            var levelMin = Math.min.apply(null, levels);
+            var levelMax = Math.max.apply(null, levels);
+
+            GM_setValue(ptreEmpireMoonLastRefresh, currentTime);
+            updateHtmlById("ptreEmpireMoonLastRefreshField", getLastUpdateLabel(currentTime));
+
+            addToLogs('Updated ' + newPhalanxList.length + ' phalanx (min: ' + levelMin + ' | max: ' + levelMax + ')');
+            displayMessageInSettings('Phalanx updated: ' + newPhalanxList.length + ' moons (min: ' + levelMin + ' | max: ' + levelMax + ')');
+        } else {
+            addToLogs('[EMPIRE] No phalanx found in JSON response');
+            displayMessageInSettings('No phalanx data found in Empire Moon page');
+        }
+    })
+    .catch(function(error) {
+        console.error("[EasyPTRE] Can't fetch empire data ", error);
+        displayMessageInSettings('Failed to fetch Empire Moon page');
     });
 }
 

@@ -240,7 +240,7 @@ function improvePageAny() {
 // Add PTRE buttons to messages page
 function improvePageMessages() {
     console.log("[EasyPTRE] Improving Messages Page");
-    if (!isOGLorOGIEnabled() && !isOGLorOGIEnabled()) {
+    if (!isOGLorOGIEnabled()) {
         if (GM_getValue(ptreTeamKey) != '') {
             // Update Message Page (spy report part)
             setTimeout(addPTREStuffsToMessagesPage, 1000);
@@ -385,11 +385,11 @@ function improvePageFacilities() {
             var phalanxLevel = levelSpan.getAttribute('data-value');
             var coords = document.getElementsByName('ogame-planet-coordinates')[0].content;
             var moonID = document.getElementsByName('ogame-planet-id')[0].content;
-            consoleDebug(coords + ': Found Phalanx level '+phalanxLevel);
+            consoleDebug("[Phalanx] " + coords + ': Found Phalanx level '+phalanxLevel);
             refreshPhalanxStorage(moonID, coords, phalanxLevel);
         }
     } else {
-        consoleDebug("Cant find technologies element");
+        consoleDebug("[Phalanx] Cant find technologies element");
     }
 }
 
