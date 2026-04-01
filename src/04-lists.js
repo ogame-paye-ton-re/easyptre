@@ -46,7 +46,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
     // Sync data to PTRE
     if (syncToPTRE === true) {
-        setTimeout(syncDataWithPTRE, dataSharingDelay);
+        setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
     }
 }
 */
@@ -85,7 +85,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
         GM_setValue(ptreDataToSync, JSON.stringify(dataList));
         displayPTREPopUpMessage("Phalanx updated");
         if (syncToPTRE === true) {
-            setTimeout(syncDataWithPTRE, dataSharingDelay);
+            setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
         }
     }
 }

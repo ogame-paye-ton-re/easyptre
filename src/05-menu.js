@@ -402,7 +402,7 @@ function savePTRESettings() {
     addToLogs('Saving settings (Miner mode: ' + minerMode + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
     document.getElementById('ptreMenuImg').src = imgPTRESaveOK;
-    setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, menuImageDisplayTime);
+    setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, ptreMenuImageDisplayTime);
 }
 
 function displayHelp() {
@@ -497,7 +497,7 @@ function displayToolsCompatibility() {
 function displayLogs() {
     ptreCurrentView = displayLogs;
     setupMainBox('Logs', 'Logs');
-    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
+    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br>Logs are kept '+ ptreLogsRetentionDuration +' days.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -792,8 +792,8 @@ function displaySharedData() {
         const lastDataSync = GM_getValue(ptreLastDataSync, 0);
         const lastCheck = GM_getValue(ptreLastUpdateCheck, 0);
         const lastGlobalSync = GM_getValue(ptreLastGlobalSync, 0);
-        const nextGlobalSync = Math.round((lastGlobalSync + globalPTRESyncTimeout - currentTime) / 3600);
-        const syncTimeout = globalPTRESyncTimeout / 3600;
+        const nextGlobalSync = Math.round((lastGlobalSync + ptreGlobalPTRESyncTimeout - currentTime) / 3600);
+        const syncTimeout = ptreGlobalPTRESyncTimeout / 3600;
         content += '<hr><div class="ptreCategoryTitle">Debug</div>';
         content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + getLastUpdateLabel(lastGlobalSync) + '<br>';
         content += 'Next Global Sync in ' + nextGlobalSync + 'h<br><br>';
@@ -958,8 +958,9 @@ function displayUpdateVersionMessage(message) {
 }
 
 function displayMessageInSettings(message) {
-    if (document.getElementById('messageDivInPanel')) {
-        document.getElementById('messageDivInPanel').innerHTML = message;
+    const mess = document.getElementById('messageDivInPanel');
+    if (mess) {
+        mess.innerHTML = message;
     } else {
         displayPTREPopUpMessage(message);
     }

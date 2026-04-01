@@ -39,7 +39,7 @@ function updateLastAvailableVersion(force = false) {
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
     var currentUnixTS = getCurrentUnixTS();
 
-    if (force === true || currentUnixTS > lastCheckTime + versionCheckTimeout) {
+    if (force === true || currentUnixTS > lastCheckTime + ptreVersionCheckTimeout) {
         consoleDebug("Checking last version available");
         GM_xmlhttpRequest({
             method:'GET',
@@ -72,7 +72,7 @@ function updateLastAvailableVersion(force = false) {
             }
         });
     } else {
-        var temp = lastCheckTime + versionCheckTimeout - currentUnixTS;
+        var temp = lastCheckTime + ptreVersionCheckTimeout - currentUnixTS;
         //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }

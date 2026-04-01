@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 01 avril 2026 20:59:33 CEST
+// Build date: mer. 01 avril 2026 21:57:02 CEST
 // ****************************************
 
 // ****************************************
@@ -44,16 +44,15 @@ if (/ptre.chez.gg/.test(location.href)) {
 
 // Settings
 const ptreMessageDisplayTime = 5*1000;
-const menuImageDisplayTime = 3*1000;
+const ptreMenuImageDisplayTime = 3*1000;
 const ptrePushDelayMiliSec = 500;
-const versionCheckTimeout = 6*60*60;
-const technosCheckTimeout = 15*60;
-const dataSharingDelay = 200;
-const improvePageDelay = 200;
+const ptreVersionCheckTimeout = 6*60*60;
+const ptreTechnosCheckTimeout = 15*60;
+const ptreDataSharingDelay = 200;
+const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
-const deepSpacePlayerId = 99999;
-const logsRetentionDuration = 15*24*60*60;
-const globalPTRESyncTimeout = 24*60*60;
+const ptreLogsRetentionDuration = 15*24*60*60;
+const ptreGlobalPTRESyncTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 15; // nb of days we keep planets infos
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated
@@ -61,7 +60,7 @@ const ptreBorderStyleDnpList = "3px solid red"; // For player part of the Do Not
 // TODO: [LOW] Set ptreAGRTargetListMaxSize
 
 // Consts
-const toolName = 'EasyPTRE';
+const ptreToolName = 'EasyPTRE';
 const ptreID = "ptre-id";
 const ptreMissingTKMessage = "NO PTRE TEAM KEY: Add a Team Key via EasyPTRE settings";
 
@@ -161,10 +160,10 @@ var imgSupPlayer = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAA
 // PTRE URLs
 var galaxyContentLinkTest = "https:\/\/"+server+"\/game\/index.php?page=ingame&component=galaxy&action=fetchGalaxyContent&ajax=1&asJson=1";
 var urlToScriptMetaInfos = 'https://openuserjs.org/meta/GeGe_GM/EasyPTRE.meta.js';
-var ptreCommonUrlParams = '?tool=' + toolName + '&country=' + country + '&univers=' + universe;
+var ptreCommonUrlParams = '?tool=' + ptreToolName + '&country=' + country + '&univers=' + universe;
 var ptreEasyPTREUrlParams = ptreCommonUrlParams + '&version=' + GM_info.script.version + '&current_player_id=' + currentPlayerID + '&ptre_id=' + GM_getValue(ptreID, '');
 // Common endpoints (with OGL / OGI / EasyPTRE)
-var urlPTREImportSR = 'https://ptre.chez.gg/scripts/oglight_import.php?tool=' + toolName;
+var urlPTREImportSR = 'https://ptre.chez.gg/scripts/oglight_import.php?tool=' + ptreToolName;
 var urlPTREPushActivity = 'https://ptre.chez.gg/scripts/oglight_import_player_activity.php' + ptreCommonUrlParams;
 var urlPTRESyncTargets = 'https://ptre.chez.gg/scripts/api_sync_target_list.php' + ptreCommonUrlParams;
 var urlPTREGetPlayerInfos = 'https://ptre.chez.gg/scripts/oglight_get_player_infos.php' + ptreCommonUrlParams;
@@ -192,7 +191,7 @@ if (modeEasyPTRE == "ingame") {
     // Add EasyPTRE menu
     if (!/page=standalone&component=empire/.test(location.href)) {
         // Setup Menu Button
-        var ptreMenuName = toolName;
+        var ptreMenuName = ptreToolName;
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         var updateClass = '';
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
@@ -247,7 +246,7 @@ if (modeEasyPTRE == "ingame") {
     // Run on all pages
     if (!/page=standalone&component=empire/.test(location.href)) {
         consoleDebug("Any page detected");
-        setTimeout(improvePageAny, improvePageDelay);
+        setTimeout(improvePageAny, ptreImprovePageDelay);
     }
 
     // Toogle events on Overview page
@@ -260,39 +259,39 @@ if (modeEasyPTRE == "ingame") {
     // Galaxy page: Set routines
     if (/component=galaxy/.test(location.href)) {
         consoleDebug("Galaxy page detected");
-        setTimeout(improvePageGalaxy, improvePageDelay);
+        setTimeout(improvePageGalaxy, ptreImprovePageDelay);
         setTimeout(checkForPTREUpdate, 200);
     }
 
     // Message page: Add PTRE send SR button
     if (/component=messages/.test(location.href)) {
         consoleDebug("Message page detected");
-        setTimeout(improvePageMessages, improvePageDelay);
+        setTimeout(improvePageMessages, ptreImprovePageDelay);
     }
 
     // Save fleeters techs in order to send it to simulator from PTRE pages
     // Huge QOL to not add them manually
     if (/page=ingame&component=fleetdispatch/.test(location.href)) {
         consoleDebug("Fleet page detected");
-        setTimeout(improvePageFleet, improvePageDelay);
+        setTimeout(improvePageFleet, ptreImprovePageDelay);
     }
 
     // Capture Phalanx level
     if (/page=ingame&component=facilities/.test(location.href)) {
         consoleDebug("Facilities page detected");
-        setTimeout(improvePageFacilities, improvePageDelay);
+        setTimeout(improvePageFacilities, ptreImprovePageDelay);
     }
 
     // Buddies Page
     if (/page=ingame&component=buddies/.test(location.href)) {
         consoleDebug("Buddies page detected");
-        setTimeout(improvePageBuddies, improvePageDelay);
+        setTimeout(improvePageBuddies, ptreImprovePageDelay);
     }
 
     // Dont run background tasks on Empire page
     if (!/page=standalone&component=empire/.test(location.href)) {
         // Global Sync
-        if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
+        if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + ptreGlobalPTRESyncTimeout)) {
             setTimeout(globalPTRESync, 3000);
         }
 
@@ -482,7 +481,7 @@ GM_addStyle(`
     font-size: 10pt;
 }
 #ptreMainBox {
-    width: 720px;
+    width: 750px;
     background-color: #171d22;
     border: 2px solid black;
     border-radius: 8px;
@@ -1000,7 +999,7 @@ function improvePageGalaxy() {
 function improvePageFleet() {
     console.log("[EasyPTRE] Improving Fleet Page");
     var currentTime = getIGCurrentTS();
-    if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
+    if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + ptreTechnosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
         if (spanElement) {
             var tooltipContent = spanElement.getAttribute('data-tooltip-title');
@@ -1509,7 +1508,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
     // Sync data to PTRE
     if (syncToPTRE === true) {
-        setTimeout(syncDataWithPTRE, dataSharingDelay);
+        setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
     }
 }
 */
@@ -1548,7 +1547,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
         GM_setValue(ptreDataToSync, JSON.stringify(dataList));
         displayPTREPopUpMessage("Phalanx updated");
         if (syncToPTRE === true) {
-            setTimeout(syncDataWithPTRE, dataSharingDelay);
+            setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
         }
     }
 }
@@ -2237,7 +2236,7 @@ function savePTRESettings() {
     addToLogs('Saving settings (Miner mode: ' + minerMode + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
     document.getElementById('ptreMenuImg').src = imgPTRESaveOK;
-    setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, menuImageDisplayTime);
+    setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, ptreMenuImageDisplayTime);
 }
 
 function displayHelp() {
@@ -2332,7 +2331,7 @@ function displayToolsCompatibility() {
 function displayLogs() {
     ptreCurrentView = displayLogs;
     setupMainBox('Logs', 'Logs');
-    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
+    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br>Logs are kept '+ ptreLogsRetentionDuration +' days.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -2627,8 +2626,8 @@ function displaySharedData() {
         const lastDataSync = GM_getValue(ptreLastDataSync, 0);
         const lastCheck = GM_getValue(ptreLastUpdateCheck, 0);
         const lastGlobalSync = GM_getValue(ptreLastGlobalSync, 0);
-        const nextGlobalSync = Math.round((lastGlobalSync + globalPTRESyncTimeout - currentTime) / 3600);
-        const syncTimeout = globalPTRESyncTimeout / 3600;
+        const nextGlobalSync = Math.round((lastGlobalSync + ptreGlobalPTRESyncTimeout - currentTime) / 3600);
+        const syncTimeout = ptreGlobalPTRESyncTimeout / 3600;
         content += '<hr><div class="ptreCategoryTitle">Debug</div>';
         content += 'Last Global Sync (every ' + syncTimeout + 'h): ' + getLastUpdateLabel(lastGlobalSync) + '<br>';
         content += 'Next Global Sync in ' + nextGlobalSync + 'h<br><br>';
@@ -2793,8 +2792,9 @@ function displayUpdateVersionMessage(message) {
 }
 
 function displayMessageInSettings(message) {
-    if (document.getElementById('messageDivInPanel')) {
-        document.getElementById('messageDivInPanel').innerHTML = message;
+    const mess = document.getElementById('messageDivInPanel');
+    if (mess) {
+        mess.innerHTML = message;
     } else {
         displayPTREPopUpMessage(message);
     }
@@ -3363,8 +3363,9 @@ function updateDataFromEmpireMoonPage() {
         var data = JSON.parse(result.mergedArray);
         var planets = data.planets;
         if (!planets || planets.length === 0) {
-            addToLogs('[EMPIRE] No planets found in JSON response');
+            addToLogs('[EMPIRE] No planets found in Empire');
             displayMessageInSettings('No phalanx data found in Empire Moon page');
+            updateHtmlById("ptreEmpireMoonLastRefreshField", 'No phalanx data found in Empire Moon page');
             return;
         }
 
@@ -3398,8 +3399,6 @@ function updateDataFromEmpireMoonPage() {
             newPhalanxList.forEach(function(entry) { dataListNew.push(entry); });
             GM_setValue(ptreDataToSync, JSON.stringify(dataListNew));
 
-            //setTimeout(syncDataWithPTRE, dataSharingDelay);
-
             var levels = newPhalanxList.map(function(e) { return e.val; });
             var levelMin = Math.min.apply(null, levels);
             var levelMax = Math.max.apply(null, levels);
@@ -3412,11 +3411,13 @@ function updateDataFromEmpireMoonPage() {
         } else {
             addToLogs('[EMPIRE] No phalanx found in JSON response');
             displayMessageInSettings('No phalanx data found in Empire Moon page');
+            updateHtmlById("ptreEmpireMoonLastRefreshField", 'No phalanx data found in Empire Moon page');
         }
     })
     .catch(function(error) {
         console.error("[EasyPTRE] Can't fetch empire data ", error);
         displayMessageInSettings('Failed to fetch Empire Moon page');
+        updateHtmlById("ptreEmpireMoonLastRefreshField", 'Failed to fetch Empire Moon page');
     });
 }
 
@@ -3461,7 +3462,7 @@ function updateLastAvailableVersion(force = false) {
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
     var currentUnixTS = getCurrentUnixTS();
 
-    if (force === true || currentUnixTS > lastCheckTime + versionCheckTimeout) {
+    if (force === true || currentUnixTS > lastCheckTime + ptreVersionCheckTimeout) {
         consoleDebug("Checking last version available");
         GM_xmlhttpRequest({
             method:'GET',
@@ -3494,7 +3495,7 @@ function updateLastAvailableVersion(force = false) {
             }
         });
     } else {
-        var temp = lastCheckTime + versionCheckTimeout - currentUnixTS;
+        var temp = lastCheckTime + ptreVersionCheckTimeout - currentUnixTS;
         //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }
@@ -3940,7 +3941,7 @@ function migrateDataAndCleanStorage() {
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
     if (logsJSON != '') {
-        var minTs = currentTime - logsRetentionDuration;
+        var minTs = currentTime - ptreLogsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
         logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));

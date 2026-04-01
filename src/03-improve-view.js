@@ -374,7 +374,7 @@ function improvePageGalaxy() {
 function improvePageFleet() {
     console.log("[EasyPTRE] Improving Fleet Page");
     var currentTime = getIGCurrentTS();
-    if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + technosCheckTimeout) {
+    if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + ptreTechnosCheckTimeout) {
         var spanElement = document.querySelector('.show_fleet_apikey');
         if (spanElement) {
             var tooltipContent = spanElement.getAttribute('data-tooltip-title');

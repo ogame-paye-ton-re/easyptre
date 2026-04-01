@@ -12,16 +12,15 @@ if (/ptre.chez.gg/.test(location.href)) {
 
 // Settings
 const ptreMessageDisplayTime = 5*1000;
-const menuImageDisplayTime = 3*1000;
+const ptreMenuImageDisplayTime = 3*1000;
 const ptrePushDelayMiliSec = 500;
-const versionCheckTimeout = 6*60*60;
-const technosCheckTimeout = 15*60;
-const dataSharingDelay = 200;
-const improvePageDelay = 200;
+const ptreVersionCheckTimeout = 6*60*60;
+const ptreTechnosCheckTimeout = 15*60;
+const ptreDataSharingDelay = 200;
+const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
-const deepSpacePlayerId = 99999;
-const logsRetentionDuration = 15*24*60*60;
-const globalPTRESyncTimeout = 24*60*60;
+const ptreLogsRetentionDuration = 15*24*60*60;
+const ptreGlobalPTRESyncTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 15; // nb of days we keep planets infos
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated
@@ -29,7 +28,7 @@ const ptreBorderStyleDnpList = "3px solid red"; // For player part of the Do Not
 // TODO: [LOW] Set ptreAGRTargetListMaxSize
 
 // Consts
-const toolName = 'EasyPTRE';
+const ptreToolName = 'EasyPTRE';
 const ptreID = "ptre-id";
 const ptreMissingTKMessage = "NO PTRE TEAM KEY: Add a Team Key via EasyPTRE settings";
 
@@ -129,10 +128,10 @@ var imgSupPlayer = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAA
 // PTRE URLs
 var galaxyContentLinkTest = "https:\/\/"+server+"\/game\/index.php?page=ingame&component=galaxy&action=fetchGalaxyContent&ajax=1&asJson=1";
 var urlToScriptMetaInfos = 'https://openuserjs.org/meta/GeGe_GM/EasyPTRE.meta.js';
-var ptreCommonUrlParams = '?tool=' + toolName + '&country=' + country + '&univers=' + universe;
+var ptreCommonUrlParams = '?tool=' + ptreToolName + '&country=' + country + '&univers=' + universe;
 var ptreEasyPTREUrlParams = ptreCommonUrlParams + '&version=' + GM_info.script.version + '&current_player_id=' + currentPlayerID + '&ptre_id=' + GM_getValue(ptreID, '');
 // Common endpoints (with OGL / OGI / EasyPTRE)
-var urlPTREImportSR = 'https://ptre.chez.gg/scripts/oglight_import.php?tool=' + toolName;
+var urlPTREImportSR = 'https://ptre.chez.gg/scripts/oglight_import.php?tool=' + ptreToolName;
 var urlPTREPushActivity = 'https://ptre.chez.gg/scripts/oglight_import_player_activity.php' + ptreCommonUrlParams;
 var urlPTRESyncTargets = 'https://ptre.chez.gg/scripts/api_sync_target_list.php' + ptreCommonUrlParams;
 var urlPTREGetPlayerInfos = 'https://ptre.chez.gg/scripts/oglight_get_player_infos.php' + ptreCommonUrlParams;
@@ -160,7 +159,7 @@ if (modeEasyPTRE == "ingame") {
     // Add EasyPTRE menu
     if (!/page=standalone&component=empire/.test(location.href)) {
         // Setup Menu Button
-        var ptreMenuName = toolName;
+        var ptreMenuName = ptreToolName;
         var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
         var updateClass = '';
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
@@ -215,7 +214,7 @@ if (modeEasyPTRE == "ingame") {
     // Run on all pages
     if (!/page=standalone&component=empire/.test(location.href)) {
         consoleDebug("Any page detected");
-        setTimeout(improvePageAny, improvePageDelay);
+        setTimeout(improvePageAny, ptreImprovePageDelay);
     }
 
     // Toogle events on Overview page
@@ -228,39 +227,39 @@ if (modeEasyPTRE == "ingame") {
     // Galaxy page: Set routines
     if (/component=galaxy/.test(location.href)) {
         consoleDebug("Galaxy page detected");
-        setTimeout(improvePageGalaxy, improvePageDelay);
+        setTimeout(improvePageGalaxy, ptreImprovePageDelay);
         setTimeout(checkForPTREUpdate, 200);
     }
 
     // Message page: Add PTRE send SR button
     if (/component=messages/.test(location.href)) {
         consoleDebug("Message page detected");
-        setTimeout(improvePageMessages, improvePageDelay);
+        setTimeout(improvePageMessages, ptreImprovePageDelay);
     }
 
     // Save fleeters techs in order to send it to simulator from PTRE pages
     // Huge QOL to not add them manually
     if (/page=ingame&component=fleetdispatch/.test(location.href)) {
         consoleDebug("Fleet page detected");
-        setTimeout(improvePageFleet, improvePageDelay);
+        setTimeout(improvePageFleet, ptreImprovePageDelay);
     }
 
     // Capture Phalanx level
     if (/page=ingame&component=facilities/.test(location.href)) {
         consoleDebug("Facilities page detected");
-        setTimeout(improvePageFacilities, improvePageDelay);
+        setTimeout(improvePageFacilities, ptreImprovePageDelay);
     }
 
     // Buddies Page
     if (/page=ingame&component=buddies/.test(location.href)) {
         consoleDebug("Buddies page detected");
-        setTimeout(improvePageBuddies, improvePageDelay);
+        setTimeout(improvePageBuddies, ptreImprovePageDelay);
     }
 
     // Dont run background tasks on Empire page
     if (!/page=standalone&component=empire/.test(location.href)) {
         // Global Sync
-        if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + globalPTRESyncTimeout)) {
+        if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + ptreGlobalPTRESyncTimeout)) {
             setTimeout(globalPTRESync, 3000);
         }
 

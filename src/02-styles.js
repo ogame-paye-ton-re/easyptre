@@ -130,7 +130,7 @@ GM_addStyle(`
     font-size: 10pt;
 }
 #ptreMainBox {
-    width: 720px;
+    width: 750px;
     background-color: #171d22;
     border: 2px solid black;
     border-radius: 8px;
