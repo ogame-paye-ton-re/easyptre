@@ -91,27 +91,28 @@ function improveGalaxyTable() {
             if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
                 galaEventDetected = true;
             }
-            // We add the button for every player OR for empty position with an event
-            if (newSystemToStore[pos].playerId > -1 || galaEventDetected === true) {
-                var btn = document.createElement("span");
-                btn.dataset.galaxy = galaxy;
-                btn.dataset.system = system;
-                btn.dataset.pos = pos;
-                btn.dataset.playerId = newSystemToStore[pos].playerId;
-                btn.dataset.playerName = additionnalSSInfos[pos].playerName;
-                // We sort status by most important first
-                if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "dnp" && highlightedPlayersList[newSystemToStore[pos].playerId]["ts"] >= currentTime) {
-                    btn.style.border = ptreBorderStyleDnpList;
-                    //consoleDebug("===> "+playerName+" is part of DNP list");
-                } else if (galaEventDetected === true) {
-                    btn.style.border = ptreBorderStyleGalaxyEvent;
-                    //consoleDebug("===> "+galaxy+":"+system+":"+pos+" is a Galaxy Event");
-                } else if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") {
-                    btn.style.border = ptreBorderStyleHotList;
-                    //consoleDebug("===> "+playerName+" is part of HOT list");
-                }
-                // Display button only if settings allow it
-                if (ptreDisplayGalaPopup === true) {
+            // Display button only if settings allow it
+            if (ptreDisplayGalaPopup === true) {
+                // We add the button for every player OR for empty position with an event
+                if (newSystemToStore[pos].playerId > -1 || galaEventDetected === true) {
+                    var btn = document.createElement("span");
+                    btn.dataset.galaxy = galaxy;
+                    btn.dataset.system = system;
+                    btn.dataset.pos = pos;
+                    btn.dataset.playerId = newSystemToStore[pos].playerId;
+                    btn.dataset.playerName = additionnalSSInfos[pos].playerName;
+                    // We sort status by most important first
+                    if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "dnp" && highlightedPlayersList[newSystemToStore[pos].playerId]["ts"] >= currentTime) {
+                        btn.style.border = ptreBorderStyleDnpList;
+                        //consoleDebug("===> "+playerName+" is part of DNP list");
+                    } else if (galaEventDetected === true) {
+                        btn.style.border = ptreBorderStyleGalaxyEvent;
+                        //consoleDebug("===> "+galaxy+":"+system+":"+pos+" is a Galaxy Event");
+                    } else if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") {
+                        btn.style.border = ptreBorderStyleHotList;
+                        //consoleDebug("===> "+playerName+" is part of HOT list");
+                    }
+                    // Display button
                     btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
                     cellPlayerName.appendChild(btn);
                     // Add action
@@ -266,7 +267,7 @@ function improvePageMessages() {
 function improvePageGalaxy() {
     console.log("[EasyPTRE] Improving Galaxy Page");
     const minerMode = GM_getValue(ptreEnableMinerMode, 'false');
-    const galaxyPopupMode = GM_getValue(ptreEnableGalaxyPopup, 'false');
+    const galaxyPopupMode = GM_getValue(ptreEnableGalaxyPopup, 'true');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
     let tkComment = "";
@@ -290,8 +291,8 @@ function improvePageGalaxy() {
         toolComment+= "OGI ";
     }
     // Enable Galaxy Pop-up for the entire galaxy browsing session
-    if (galaxyPopupMode == 'true' && minerMode == 'false') {
-        ptreDisplayGalaPopup = true;
+    if (galaxyPopupMode == 'false' || minerMode == 'true') {
+        ptreDisplayGalaPopup = false;
     }
 
     // Prepare galaxy check and update
