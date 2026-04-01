@@ -114,7 +114,7 @@ function displaySettings() {
         const betaMessage = '<br><span class="ptreSmall ptreSuccess">No Beta feature, at the moment. Previous one: Galaxy Pop-up (jan 2026).</span>';
         const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">Recommended: ON.</span>';
         const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">Recommended: OFF.</span>';
-        const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner if you want to enable it.</span>';
+        const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner Mode if you want to enable it.</span>';
 
         // Get every settings
         var improveAGRTableOn = (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true' ? 'checked' : '');
@@ -432,7 +432,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up<br>- [Feature] Add TamperMonkey Keys management menu<br>- [Fix] Fix galaxy popup conflict with OGLight';
+    content+= '<div class="ptreSubTitle">0.15.0 (apr 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up<br>- [Feature] Add TamperMonkey Keys management menu<br>- [Fix] Fix galaxy popup conflict with OGLight';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';

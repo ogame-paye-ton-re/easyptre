@@ -20,6 +20,7 @@ function improveGalaxyTable() {
     var additionnalSSInfos = {};
     var activitiesInfos = {};
     var activitiesToSend = 0;
+    const imgSize = 16;
 
     const start = performance.now();
     const currentMiliTime = getIGCurrentMiliTS();
@@ -50,7 +51,6 @@ function improveGalaxyTable() {
         // Browse every rows
         const row = document.getElementById('galaxyRow' + pos);
         if (row) {
-            //TODO: GET additionnalSSInfos[pos].playerStatus
             // Planet ID
             const planetDiv = row.querySelector('.cellPlanet .microplanet');
             if (planetDiv) {
@@ -64,33 +64,58 @@ function improveGalaxyTable() {
             const cellPlayerName = row.querySelector('.cellPlayerName');
             if (cellPlayerName && cellPlayerName.children.length > 0) {
                 // Get Player
-                const cellPlayerName = row.querySelector('.cellPlayerName');
-                if (cellPlayerName) {
-                    const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
-                    if (playerSpan) {
-                        // Player ID
-                        const rel = playerSpan.getAttribute('rel');
-                        newSystemToStore[pos].playerId = Number(rel.replace(/\D/g, ''));
-                        // Player rank
-                        additionnalSSInfos[pos].playerRank = Number(document.getElementById(playerSpan.getAttribute('rel'))?.querySelector('li.rank a')?.textContent);
-                        // Player name
-                        const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
-                        additionnalSSInfos[pos].playerName = playerSpanName.childNodes[0].textContent.trim();
-                    } else if (cellPlayerName.querySelector('.ownPlayerRow')) {
-                        // This is OUR row. No playerID is provided, we replace it.
-                        newSystemToStore[pos].playerId = Number(currentPlayerID);
-                        additionnalSSInfos[pos].playerName = currentPlayerName;
-                        // TODO: add own rank
+                const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
+                if (playerSpan) {
+                    // Player status
+                    const preElem = cellPlayerName.querySelector('pre');
+                    if (preElem) {
+                        var statusTemp = '';
+                        preElem.querySelectorAll('span').forEach(function(span) {
+                            const statusMatch = span.className.match(/status_abbr_(\w+)/);
+                            if (statusMatch) {
+                                const status = statusMatch[1];
+                                //console.log('[EasyPTRE] [GALAXY] [' + galaxy + ':' + system + ':' + pos + '] status: "' + status + '"');
+                                if (status === 'inactive') {
+                                    statusTemp += 'i';
+                                }
+                                if (status === 'longinactive') {
+                                    statusTemp += 'I';
+                                }
+                                if (status === 'vacation') {
+                                    statusTemp += 'v';
+                                }
+                                if (status === 'admin') {
+                                    statusTemp += 'a';
+                                }
+                            }
+                        });
+                        if (statusTemp !== '') {
+                            //console.log('[EasyPTRE] [GALAXY] [' + galaxy + ':' + system + ':' + pos + '] Status: ' + statusTemp);
+                            additionnalSSInfos[pos].playerStatus = statusTemp;
+                        }
                     }
+                    // Player ID
+                    const rel = playerSpan.getAttribute('rel');
+                    newSystemToStore[pos].playerId = Number(rel.replace(/\D/g, ''));
+                    // Player rank
+                    additionnalSSInfos[pos].playerRank = Number(document.getElementById(playerSpan.getAttribute('rel'))?.querySelector('li.rank a')?.textContent);
+                    // Player name
+                    const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
+                    if (playerSpanName) {
+                        additionnalSSInfos[pos].playerName = playerSpanName.childNodes[0].textContent.trim();
+                    }
+                } else if (cellPlayerName.querySelector('.ownPlayerRow')) {
+                    // This is OUR row. No playerID is provided, we replace it.
+                    newSystemToStore[pos].playerId = Number(currentPlayerID);
+                    additionnalSSInfos[pos].playerName = currentPlayerName;
+                    // TODO: add own rank
                 }
             }
 
             // Check if an event already exists for this position
             // We are comparing to already saved events from PTRE DB (saved in local)
-            let galaEventDetected = false;
-            if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
-                galaEventDetected = true;
-            }
+            const galaEventDetected = galaEventsList.includes(galaxy+":"+system+":"+pos);
+
             // Display button only if settings allow it
             if (ptreDisplayGalaPopup === true) {
                 // We add the button for every player OR for empty position with an event
@@ -113,7 +138,7 @@ function improveGalaxyTable() {
                         //consoleDebug("===> "+playerName+" is part of HOT list");
                     }
                     // Display button
-                    btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
+                    btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="' + imgSize + 'px" width="' + imgSize + 'px"></a>';
                     cellPlayerName.appendChild(btn);
                     // Add action
                     btn.addEventListener('click', function (event) {

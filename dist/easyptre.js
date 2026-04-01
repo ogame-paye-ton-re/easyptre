@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 01 avril 2026 13:54:09 CEST
+// Build date: mer. 01 avril 2026 18:41:47 CEST
 // ****************************************
 
 // ****************************************
@@ -642,6 +642,7 @@ function improveGalaxyTable() {
     var additionnalSSInfos = {};
     var activitiesInfos = {};
     var activitiesToSend = 0;
+    const imgSize = 16;
 
     const start = performance.now();
     const currentMiliTime = getIGCurrentMiliTS();
@@ -672,7 +673,6 @@ function improveGalaxyTable() {
         // Browse every rows
         const row = document.getElementById('galaxyRow' + pos);
         if (row) {
-            //TODO: GET additionnalSSInfos[pos].playerStatus
             // Planet ID
             const planetDiv = row.querySelector('.cellPlanet .microplanet');
             if (planetDiv) {
@@ -686,33 +686,58 @@ function improveGalaxyTable() {
             const cellPlayerName = row.querySelector('.cellPlayerName');
             if (cellPlayerName && cellPlayerName.children.length > 0) {
                 // Get Player
-                const cellPlayerName = row.querySelector('.cellPlayerName');
-                if (cellPlayerName) {
-                    const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
-                    if (playerSpan) {
-                        // Player ID
-                        const rel = playerSpan.getAttribute('rel');
-                        newSystemToStore[pos].playerId = Number(rel.replace(/\D/g, ''));
-                        // Player rank
-                        additionnalSSInfos[pos].playerRank = Number(document.getElementById(playerSpan.getAttribute('rel'))?.querySelector('li.rank a')?.textContent);
-                        // Player name
-                        const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
-                        additionnalSSInfos[pos].playerName = playerSpanName.childNodes[0].textContent.trim();
-                    } else if (cellPlayerName.querySelector('.ownPlayerRow')) {
-                        // This is OUR row. No playerID is provided, we replace it.
-                        newSystemToStore[pos].playerId = Number(currentPlayerID);
-                        additionnalSSInfos[pos].playerName = currentPlayerName;
-                        // TODO: add own rank
+                const playerSpan = cellPlayerName.querySelector('span[rel^="player"]');
+                if (playerSpan) {
+                    // Player status
+                    const preElem = cellPlayerName.querySelector('pre');
+                    if (preElem) {
+                        var statusTemp = '';
+                        preElem.querySelectorAll('span').forEach(function(span) {
+                            const statusMatch = span.className.match(/status_abbr_(\w+)/);
+                            if (statusMatch) {
+                                const status = statusMatch[1];
+                                //console.log('[EasyPTRE] [GALAXY] [' + galaxy + ':' + system + ':' + pos + '] status: "' + status + '"');
+                                if (status === 'inactive') {
+                                    statusTemp += 'i';
+                                }
+                                if (status === 'longinactive') {
+                                    statusTemp += 'I';
+                                }
+                                if (status === 'vacation') {
+                                    statusTemp += 'v';
+                                }
+                                if (status === 'admin') {
+                                    statusTemp += 'a';
+                                }
+                            }
+                        });
+                        if (statusTemp !== '') {
+                            //console.log('[EasyPTRE] [GALAXY] [' + galaxy + ':' + system + ':' + pos + '] Status: ' + statusTemp);
+                            additionnalSSInfos[pos].playerStatus = statusTemp;
+                        }
                     }
+                    // Player ID
+                    const rel = playerSpan.getAttribute('rel');
+                    newSystemToStore[pos].playerId = Number(rel.replace(/\D/g, ''));
+                    // Player rank
+                    additionnalSSInfos[pos].playerRank = Number(document.getElementById(playerSpan.getAttribute('rel'))?.querySelector('li.rank a')?.textContent);
+                    // Player name
+                    const playerSpanName = row.querySelector('.galaxyCell .playerName.tooltipRel');
+                    if (playerSpanName) {
+                        additionnalSSInfos[pos].playerName = playerSpanName.childNodes[0].textContent.trim();
+                    }
+                } else if (cellPlayerName.querySelector('.ownPlayerRow')) {
+                    // This is OUR row. No playerID is provided, we replace it.
+                    newSystemToStore[pos].playerId = Number(currentPlayerID);
+                    additionnalSSInfos[pos].playerName = currentPlayerName;
+                    // TODO: add own rank
                 }
             }
 
             // Check if an event already exists for this position
             // We are comparing to already saved events from PTRE DB (saved in local)
-            let galaEventDetected = false;
-            if (galaEventsList.includes(galaxy+":"+system+":"+pos)) {
-                galaEventDetected = true;
-            }
+            const galaEventDetected = galaEventsList.includes(galaxy+":"+system+":"+pos);
+
             // Display button only if settings allow it
             if (ptreDisplayGalaPopup === true) {
                 // We add the button for every player OR for empty position with an event
@@ -735,7 +760,7 @@ function improveGalaxyTable() {
                         //consoleDebug("===> "+playerName+" is part of HOT list");
                     }
                     // Display button
-                    btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
+                    btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="' + imgSize + 'px" width="' + imgSize + 'px"></a>';
                     cellPlayerName.appendChild(btn);
                     // Add action
                     btn.addEventListener('click', function (event) {
@@ -1920,7 +1945,7 @@ function displaySettings() {
         const betaMessage = '<br><span class="ptreSmall ptreSuccess">No Beta feature, at the moment. Previous one: Galaxy Pop-up (jan 2026).</span>';
         const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">Recommended: ON.</span>';
         const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">Recommended: OFF.</span>';
-        const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner if you want to enable it.</span>';
+        const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner Mode if you want to enable it.</span>';
 
         // Get every settings
         var improveAGRTableOn = (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true' ? 'checked' : '');
@@ -2238,7 +2263,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-    content+= '<div class="ptreSubTitle">0.15.0 (mar 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up<br>- [Feature] Add TamperMonkey Keys management menu<br>- [Fix] Fix galaxy popup conflict with OGLight';
+    content+= '<div class="ptreSubTitle">0.15.0 (apr 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up<br>- [Feature] Add TamperMonkey Keys management menu<br>- [Fix] Fix galaxy popup conflict with OGLight';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';
     content+= '<div class="ptreSubTitle">0.14.2 (mar 2026)</div>- [Feature] Add in-memory cache during galaxy browsing<br>- [Feature] Add little alert when TeamKey is missing or EasyPTRE not up-to-date<br>- [Fix] Fix timestamp management<br>- [Fix] Several code cleaning and optimizations';
