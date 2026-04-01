@@ -30,14 +30,14 @@ function migrateDataAndCleanStorage() {
 }
 
 function addToLogs(message) {
-    const currentTime = getCurrentUnixTS();
+    const currentUnixTS = getCurrentUnixTS();
     console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {
         logsList = JSON.parse(logsJSON);
     }
-    var newLog = {ts: currentTime, uni: country + "-" + universe, log: message};
+    var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
     logsList.push(newLog);
 
     logsJSON = JSON.stringify(logsList);

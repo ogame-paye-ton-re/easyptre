@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 31 mars 2026 23:26:30 CEST
+// Build date: mer. 01 avril 2026 08:44:32 CEST
 // ****************************************
 
 // ****************************************
@@ -1962,7 +1962,7 @@ function displaySettings() {
             tdId++;
         }
         // Add Buddies to Friends and Phalanx feature
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE. <a href="/game/index.php?page=ingame&component=buddies">Update</a>. (Last Refresh: ' +getLastUpdateLabel(GM_getValue(ptreBuddiesListLastRefresh, 0)) + ')</span>';
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE. <a href="/game/index.php?page=ingame&component=buddies">Update</a>.<br>(Last Refresh: ' +getLastUpdateLabel(GM_getValue(ptreBuddiesListLastRefresh, 0)) + ')</span>';
         if (buddiesOn != 'checked') {
             divPTRE += recommendedLabelOn;
         }
@@ -3726,25 +3726,25 @@ function getLastUpdateLabel(ts) {
 
 function getUnixTSLabel(ts) {
     var temp = "";
-    const currentTime = getCurrentUnixTS();
+    const currentUnixTS = getCurrentUnixTS();
 
     if (ts == 0) {
         return '<span class="ptreError ptreSmall">???</span>';
-    } else if (currentTime >= ts) {
-        var nb_min = (currentTime - ts) / 60;
+    } else if (currentUnixTS >= ts) {
+        var nb_min = (currentUnixTS - ts) / 60;
         if (nb_min <= 1) {
             temp = '<span class="ptreSuccess ptreSmall">now</span>';
         } else if (nb_min < 60) {
             temp = '<span class="ptreSuccess ptreSmall">' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
-            var nb_h = (currentTime - ts) / 3600;
+            var nb_h = (currentUnixTS - ts) / 3600;
             temp = '<span class="ptreWarning ptreSmall">' + round(nb_h, 0) + ' hours ago</span>';
         } else {
             temp = '<span class="ptreError ptreSmall">' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
         return temp;
     } else {
-        let inSec = ts - currentTime;
+        let inSec = ts - currentUnixTS;
         return "In " + inSec + " secs";
     }
     return temp;
@@ -3950,14 +3950,14 @@ function migrateDataAndCleanStorage() {
 }
 
 function addToLogs(message) {
-    const currentTime = getCurrentUnixTS();
+    const currentUnixTS = getCurrentUnixTS();
     console.log('[EasyPTRE] ' + message);
     var logsJSON = GM_getValue(ptreLogsList, '');
     var logsList = [];
     if (logsJSON != '') {
         logsList = JSON.parse(logsJSON);
     }
-    var newLog = {ts: currentTime, uni: country + "-" + universe, log: message};
+    var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
     logsList.push(newLog);
 
     logsJSON = JSON.stringify(logsList);
