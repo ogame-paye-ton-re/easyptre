@@ -24,7 +24,7 @@ function migrateDataAndCleanStorage() {
     if (lastGlobalSyncTemp != 0) {
         if (lastGlobalSyncTemp > currentTime) {
             GM_setValue(ptreLastGlobalSync, currentTime);
-            addToLogs("Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+            addToLogs("[GC] Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
         }
     }
 }
@@ -107,7 +107,7 @@ function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
             logsList = logsList.filter(function(item) { return item.uni !== targetUni; });
             GM_setValue(ptreLogsList, JSON.stringify(logsList));
         }
-        addToLogs('Purged ' + keysToDelete.length + ' keys for ' + targetCountry + '-' + targetUniverse);
+        addToLogs('[PURGE] Purged ' + keysToDelete.length + ' keys for ' + targetCountry + '-' + targetUniverse);
         displayTamperMonkeyKeys();
     });
 

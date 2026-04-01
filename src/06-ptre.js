@@ -127,7 +127,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                     // Something went wrong
                     displayGalaxyMiniMessage(reponseDecode.message);
                     displayPTREPopUpMessage(reponseDecode.message);
-                    addToLogs(reponseDecode.message);
+                    addToLogs('[GALA PUSH] ' + reponseDecode.message);
                 }
             }
         });
@@ -156,7 +156,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
                 updateHtmlById('ptreGalaxyActivityCount', ptreGalaxyActivityCount);
             } else {
                 displayPTREPopUpMessage(reponseDecode.message);
-                addToLogs(reponseDecode.message);
+                addToLogs('[ACTI PUSH] ' + reponseDecode.message);
             }
         }
     });
@@ -184,7 +184,7 @@ function getPlayerInfos(playerID, pseudo) {
                     content+= '</table>';
                 } else {
                     content+= '<span class="ptreError">' + reponse.message + '</span>';
-                    addToLogs(reponse.message);
+                    addToLogs('[PLAYER INFOS] ' + reponse.message);
                 }
                 content+= '</center>';
                 document.getElementById('ptreMainContent').innerHTML = content;
@@ -218,6 +218,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                             document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
+                            addToLogs('[POP-UP] ' + reponseDecode.message);
                         }
                         // Update note content
                         if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
@@ -310,7 +311,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                     }
                 } else {
                     updateHtmlById("ptreGalaxyPlayerRanksPopUp", reponseDecode.message);
-                    addToLogs(reponseDecode.message);
+                    addToLogs('[RANKS] ' + reponseDecode.message);
                 }
             }
         });
@@ -359,7 +360,7 @@ function getPhalanxInfosFromGala() {
             var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
-                addToLogs(reponseDecode.message_debug);
+                addToLogs('[F&PHA] ' + reponseDecode.message_debug);
             }
             displayGalaxyMessageContent(warning+message);
         }
@@ -387,7 +388,7 @@ function getGEEInfosFromGala() {
             var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
-                addToLogs(reponseDecode.message_debug);
+                addToLogs('[GEE] ' + reponseDecode.message_debug);
             }
             displayGalaxyMessageContent(message);
         }
@@ -448,7 +449,7 @@ function syncDataWithPTRE(mode = "auto") {
                 // Update info in menu
                 updateHtmlById("ptreLastDataSyncField", getLastUpdateLabel(currentTime));
             } else {
-                addToLogs(reponseDecode.message_debug);
+                addToLogs('[SYNC DATA] ' + reponseDecode.message_debug);
             }
             if (mode == 'manual') {
                 displayMessageInSettings(reponseDecode.message_debug);
@@ -530,7 +531,7 @@ function syncTargets(mode) {
                 }
             } else {
                 displayMessageInSettings(reponseDecode.message);
-                addToLogs(reponseDecode.message);
+                addToLogs('[SYNC TARGETS] ' + reponseDecode.message);
                 updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
             }
         }
@@ -593,7 +594,7 @@ function updateDataFromEmpireMoonPage() {
             GM_setValue(ptreEmpireMoonLastRefresh, currentTime);
             updateHtmlById("ptreEmpireMoonLastRefreshField", getLastUpdateLabel(currentTime));
 
-            addToLogs('Updated ' + newPhalanxList.length + ' phalanx (min: ' + levelMin + ' | max: ' + levelMax + ')');
+            addToLogs('[EMPIRE] Updated ' + newPhalanxList.length + ' phalanx (min: ' + levelMin + ' | max: ' + levelMax + ')');
             displayMessageInSettings('Phalanx updated: ' + newPhalanxList.length + ' moons (min: ' + levelMin + ' | max: ' + levelMax + ')');
         } else {
             addToLogs('[EMPIRE] No phalanx found in JSON response');

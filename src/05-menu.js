@@ -399,7 +399,7 @@ function savePTRESettings() {
     } else {
         displayMessageInSettings('Wrong Team Key Format');
     }
-    addToLogs('Saving settings (Miner mode: ' + minerMode + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
+    addToLogs('[SETTINGS] Saving settings (Miner mode: ' + minerMode + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
     document.getElementById('ptreMenuImg').src = imgPTRESaveOK;
     setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, ptreMenuImageDisplayTime);
@@ -516,7 +516,7 @@ function displayLogs() {
     document.getElementById('ptreMainContent').innerHTML = content;
     document.getElementById('purgeLogs').addEventListener("click", function (event) {
         GM_deleteValue(ptreLogsList);
-        addToLogs("Logs cleaned");
+        addToLogs("[PURGE] Logs cleaned");
         displayLogs();
     });
 }
@@ -832,7 +832,7 @@ function validatePurgeGalaxyTracking() {
         }
         ptreGalaxyCache = {}; // Clear in-memory cache after purge
         displayGalaxyTracking();
-        addToLogs("Purged Galaxy data");
+        addToLogs("[PURGE] Galaxy data");
     });
 }
 
@@ -864,12 +864,12 @@ function displayAllSharedNotes() {
                 });
             } else {
                 document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + reponseDecode.message + '</span>';
-                addToLogs(reponseDecode.message);
+                addToLogs('[NOTES] ' + reponseDecode.message);
             }
         })
         .catch(function(e) {
             updateHtmlById('ptreMainContent', '<span class="ptreError">Request failed</span>');
-            addToLogs('displayAllSharedNotes: ' + e);
+            addToLogs('[NOTES] ' + e);
         });
 }
 

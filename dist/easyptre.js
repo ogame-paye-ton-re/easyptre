@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 01 avril 2026 21:57:02 CEST
+// Build date: mer. 01 avril 2026 22:23:31 CEST
 // ****************************************
 
 // ****************************************
@@ -1110,7 +1110,7 @@ function improveAGRSpyTable(mutationList, observer) {
                                     if (reponse.code == 1) {
                                         document.getElementById('sendSRFromAGRTable-'+apiKeyRE).remove();
                                     } else {
-                                        addToLogs(reponse.message_verbose);
+                                        addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
                                 }
@@ -1163,7 +1163,7 @@ function addPTREStuffsToMessagesPage() {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
-                                        addToLogs(reponse.message_verbose);
+                                        addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
                                 }
@@ -1244,7 +1244,7 @@ function addPTREStuffsToMessagesPage() {
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);
-                            addToLogs(reponseDecode.message);
+                            addToLogs('[C-SPY] ' + reponseDecode.message);
                         }
                     }
                 });
@@ -1432,7 +1432,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                                 updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
                                 consoleDebug("Added player "+playerName+" to DNP ("+ts_tmp+")");
                             } else {
-                                addToLogs(reponseDecode.message);
+                                addToLogs('[DNP] ' + reponseDecode.message);
                             }
                         }
                     });
@@ -2233,7 +2233,7 @@ function savePTRESettings() {
     } else {
         displayMessageInSettings('Wrong Team Key Format');
     }
-    addToLogs('Saving settings (Miner mode: ' + minerMode + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
+    addToLogs('[SETTINGS] Saving settings (Miner mode: ' + minerMode + ' | Beta mode: ' + document.getElementById('PTREToogleBetaMode').checked + ')');
     // Update menu image and remove it after few sec
     document.getElementById('ptreMenuImg').src = imgPTRESaveOK;
     setTimeout(function() {document.getElementById('ptreMenuImg').src = imgPTRE;}, ptreMenuImageDisplayTime);
@@ -2350,7 +2350,7 @@ function displayLogs() {
     document.getElementById('ptreMainContent').innerHTML = content;
     document.getElementById('purgeLogs').addEventListener("click", function (event) {
         GM_deleteValue(ptreLogsList);
-        addToLogs("Logs cleaned");
+        addToLogs("[PURGE] Logs cleaned");
         displayLogs();
     });
 }
@@ -2666,7 +2666,7 @@ function validatePurgeGalaxyTracking() {
         }
         ptreGalaxyCache = {}; // Clear in-memory cache after purge
         displayGalaxyTracking();
-        addToLogs("Purged Galaxy data");
+        addToLogs("[PURGE] Galaxy data");
     });
 }
 
@@ -2698,12 +2698,12 @@ function displayAllSharedNotes() {
                 });
             } else {
                 document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + reponseDecode.message + '</span>';
-                addToLogs(reponseDecode.message);
+                addToLogs('[NOTES] ' + reponseDecode.message);
             }
         })
         .catch(function(e) {
             updateHtmlById('ptreMainContent', '<span class="ptreError">Request failed</span>');
-            addToLogs('displayAllSharedNotes: ' + e);
+            addToLogs('[NOTES] ' + e);
         });
 }
 
@@ -2940,7 +2940,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                     // Something went wrong
                     displayGalaxyMiniMessage(reponseDecode.message);
                     displayPTREPopUpMessage(reponseDecode.message);
-                    addToLogs(reponseDecode.message);
+                    addToLogs('[GALA PUSH] ' + reponseDecode.message);
                 }
             }
         });
@@ -2969,7 +2969,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
                 updateHtmlById('ptreGalaxyActivityCount', ptreGalaxyActivityCount);
             } else {
                 displayPTREPopUpMessage(reponseDecode.message);
-                addToLogs(reponseDecode.message);
+                addToLogs('[ACTI PUSH] ' + reponseDecode.message);
             }
         }
     });
@@ -2997,7 +2997,7 @@ function getPlayerInfos(playerID, pseudo) {
                     content+= '</table>';
                 } else {
                     content+= '<span class="ptreError">' + reponse.message + '</span>';
-                    addToLogs(reponse.message);
+                    addToLogs('[PLAYER INFOS] ' + reponse.message);
                 }
                 content+= '</center>';
                 document.getElementById('ptreMainContent').innerHTML = content;
@@ -3031,6 +3031,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                             document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
+                            addToLogs('[POP-UP] ' + reponseDecode.message);
                         }
                         // Update note content
                         if (document.getElementById("ptreGalaxyPlayerNote-" + playerId)) {
@@ -3123,7 +3124,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                     }
                 } else {
                     updateHtmlById("ptreGalaxyPlayerRanksPopUp", reponseDecode.message);
-                    addToLogs(reponseDecode.message);
+                    addToLogs('[RANKS] ' + reponseDecode.message);
                 }
             }
         });
@@ -3172,7 +3173,7 @@ function getPhalanxInfosFromGala() {
             var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
-                addToLogs(reponseDecode.message_debug);
+                addToLogs('[F&PHA] ' + reponseDecode.message_debug);
             }
             displayGalaxyMessageContent(warning+message);
         }
@@ -3200,7 +3201,7 @@ function getGEEInfosFromGala() {
             var reponseDecode = JSON.parse(reponse);
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
-                addToLogs(reponseDecode.message_debug);
+                addToLogs('[GEE] ' + reponseDecode.message_debug);
             }
             displayGalaxyMessageContent(message);
         }
@@ -3261,7 +3262,7 @@ function syncDataWithPTRE(mode = "auto") {
                 // Update info in menu
                 updateHtmlById("ptreLastDataSyncField", getLastUpdateLabel(currentTime));
             } else {
-                addToLogs(reponseDecode.message_debug);
+                addToLogs('[SYNC DATA] ' + reponseDecode.message_debug);
             }
             if (mode == 'manual') {
                 displayMessageInSettings(reponseDecode.message_debug);
@@ -3343,7 +3344,7 @@ function syncTargets(mode) {
                 }
             } else {
                 displayMessageInSettings(reponseDecode.message);
-                addToLogs(reponseDecode.message);
+                addToLogs('[SYNC TARGETS] ' + reponseDecode.message);
                 updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
             }
         }
@@ -3406,7 +3407,7 @@ function updateDataFromEmpireMoonPage() {
             GM_setValue(ptreEmpireMoonLastRefresh, currentTime);
             updateHtmlById("ptreEmpireMoonLastRefreshField", getLastUpdateLabel(currentTime));
 
-            addToLogs('Updated ' + newPhalanxList.length + ' phalanx (min: ' + levelMin + ' | max: ' + levelMax + ')');
+            addToLogs('[EMPIRE] Updated ' + newPhalanxList.length + ' phalanx (min: ' + levelMin + ' | max: ' + levelMax + ')');
             displayMessageInSettings('Phalanx updated: ' + newPhalanxList.length + ' moons (min: ' + levelMin + ' | max: ' + levelMax + ')');
         } else {
             addToLogs('[EMPIRE] No phalanx found in JSON response');
@@ -3558,7 +3559,7 @@ function checkForPTREUpdate() {
                         if (reponseDecode.update == 1) {
                             consoleDebug("Update needed!");
                             displayPTREPopUpMessage("New update available");
-                            addToLogs("New update available");
+                            addToLogs("[UPDATE] New update available");
                             setTimeout(syncDataWithPTRE, 100);
                         } else {
                             consoleDebug("NO Update needed");
@@ -3625,7 +3626,7 @@ async function globalPTRESync(mode = "auto") {
     GM_setValue(ptreLastGlobalSync, currentTime);
     updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
     var tempDuration = Date.now() - miliTS;
-    addToLogs("Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
+    addToLogs("[SYNC] Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 
 // ****************************************
@@ -3955,7 +3956,7 @@ function migrateDataAndCleanStorage() {
     if (lastGlobalSyncTemp != 0) {
         if (lastGlobalSyncTemp > currentTime) {
             GM_setValue(ptreLastGlobalSync, currentTime);
-            addToLogs("Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+            addToLogs("[GC] Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
         }
     }
 }
@@ -4038,7 +4039,7 @@ function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
             logsList = logsList.filter(function(item) { return item.uni !== targetUni; });
             GM_setValue(ptreLogsList, JSON.stringify(logsList));
         }
-        addToLogs('Purged ' + keysToDelete.length + ' keys for ' + targetCountry + '-' + targetUniverse);
+        addToLogs('[PURGE] Purged ' + keysToDelete.length + ' keys for ' + targetCountry + '-' + targetUniverse);
         displayTamperMonkeyKeys();
     });
 

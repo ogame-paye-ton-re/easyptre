@@ -135,7 +135,7 @@ function checkForPTREUpdate() {
                         if (reponseDecode.update == 1) {
                             consoleDebug("Update needed!");
                             displayPTREPopUpMessage("New update available");
-                            addToLogs("New update available");
+                            addToLogs("[UPDATE] New update available");
                             setTimeout(syncDataWithPTRE, 100);
                         } else {
                             consoleDebug("NO Update needed");
@@ -202,6 +202,6 @@ async function globalPTRESync(mode = "auto") {
     GM_setValue(ptreLastGlobalSync, currentTime);
     updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
     var tempDuration = Date.now() - miliTS;
-    addToLogs("Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
+    addToLogs("[SYNC] Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 

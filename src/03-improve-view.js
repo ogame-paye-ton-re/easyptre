@@ -485,7 +485,7 @@ function improveAGRSpyTable(mutationList, observer) {
                                     if (reponse.code == 1) {
                                         document.getElementById('sendSRFromAGRTable-'+apiKeyRE).remove();
                                     } else {
-                                        addToLogs(reponse.message_verbose);
+                                        addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
                                 }
@@ -538,7 +538,7 @@ function addPTREStuffsToMessagesPage() {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
-                                        addToLogs(reponse.message_verbose);
+                                        addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
                                 }
@@ -619,7 +619,7 @@ function addPTREStuffsToMessagesPage() {
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);
-                            addToLogs(reponseDecode.message);
+                            addToLogs('[C-SPY] ' + reponseDecode.message);
                         }
                     }
                 });
@@ -807,7 +807,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                                 updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
                                 consoleDebug("Added player "+playerName+" to DNP ("+ts_tmp+")");
                             } else {
-                                addToLogs(reponseDecode.message);
+                                addToLogs('[DNP] ' + reponseDecode.message);
                             }
                         }
                     });
