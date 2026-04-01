@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 01 avril 2026 18:52:42 CEST
+// Build date: mer. 01 avril 2026 20:59:33 CEST
 // ****************************************
 
 // ****************************************
@@ -1845,10 +1845,8 @@ function setupMainBox(title, navKey) {
         if (!isValidTeamKey(GM_getValue(ptreTeamKey, ''))) {
             defaultMessageDivInPanel = ptreMissingTKMessage;
         }
-        var agrEnabled = false;
-        if (isAGREnabled()) {
-            agrEnabled = true;
-        }
+        const agrEnabled = isAGREnabled();
+
         var html = '<div id="ptreMainBox">';
         html += '<div id="ptreMainHeader">';
         html += '<div id="ptreMainHeaderTop">';
@@ -2091,6 +2089,21 @@ function displayOverview() {
     var phalanxCountTotal = 0;
     var dnpCount = 0;
     var hotCount = 0;
+    var oglOrOgiEnabled = false;
+    var toolComment = "";
+
+    if (isAGREnabled()) {
+        toolComment+= "AGR ";
+    }
+    if (isOGLEnabled()) {
+        oglOrOgiEnabled = true;
+        toolComment+= "OGLight ";
+    }
+    if (isOGIEnabled()) {
+        oglOrOgiEnabled = true;
+        toolComment+= "Infinity ";
+    }
+
     var dataList = [];
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
@@ -2112,7 +2125,7 @@ function displayOverview() {
         }
     });
     var divOV = '<table border="1" width="100%">';
-    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle"></div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div> <div id="displaySharedData" class="button btn_blue">DETAILS</div></td></tr>';
+    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle"></div></td><td class="td_cell" align="right"><div id="synctDataWithPTRE" class="button btn_blue">&#8635; SYNC DATA</div></td></tr>';
     divOV += '<tr><td class="td_cell" colspan="2">';
     divOV += '<table border="1" width="100%">';
     divOV += '<tr><td class="td_cell_radius_0">Team Name:<br><a href="https://ptre.chez.gg/" target="_blank">Manage Team on ptre.chez.gg</a></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + GM_getValue(ptreTeamName, '???') + '</span></td></tr>';
@@ -2122,30 +2135,12 @@ function displayOverview() {
     divOV += '<tr><td class="td_cell_radius_0">Do Not Probe list:<br><span class="ptreSmall">Added via galaxy</span></td><td class="td_cell_radius_0" align="center"><span class="ptreSuccess">' + dnpCount + '</span></td></tr>';
 
     divOV += '<tr><td class="td_cell_radius_1">Last Global Sync:<br><span class="ptreSmall">All data synchronized</span></td><td class="td_cell_radius_1" align="center"><span id="ptreLastGlobalSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastGlobalSync, 0)) + '</span></td></tr>';
-    divOV += '<tr><td class="td_cell_radius_0">Last Data Sync:<br><span class="ptreSmall">Phalanx, Hot targets, Do Not Probe list, Galaxy events<br><span id="ptreLastDataSyncMessageField" class="ptreWarning"></span></span></td><td class="td_cell_radius_0" align="center"><span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Last Data Sync:<br><span class="ptreSmall">Phalanx, Hot Spy reports, Do Not Probe list, Galaxy events<br><span id="ptreLastDataSyncMessageField" class="ptreWarning"></span></span></td><td class="td_cell_radius_0" align="center"><span id="ptreLastDataSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastDataSync, 0)) + '</span></td></tr>';
     divOV += '<tr><td class="td_cell_radius_1">Last Targets Sync:<br><span class="ptreSmall">Targets list<br><span id="ptreLastTargetsSyncMessageField" class="ptreWarning"></span></span></td><td class="td_cell_radius_1" align="center"><span id="ptreLastTargetsSyncField">' + getLastUpdateLabel(GM_getValue(ptreLastTargetsSync, 0)) + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_0">Lifeforms researchs update:<br><span class="ptreSmall"><a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet menu to update</a>. Synced to <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">PTRE Lifeforms Researchs</a></span></td><td class="td_cell_radius_0" align="center"><span id="ptreLastTechnosRefreshField">' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + '</span></td></tr>';
+    divOV += '<tr><td class="td_cell_radius_1">Detected tool:<br><span class="ptreSmall">Other tools running</span></td><td class="td_cell_radius_1" align="center">' + toolComment + '</td></tr>';
     divOV += '</table></td></tr>';
     divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-
-    // Features disabled when OGL/OGI detected
-    if (!isOGLorOGIEnabled()) {
-        divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Targets list</div></td><td class="td_cell" align="right"><div id="displayTargetsList" class="button btn_blue">OPEN LIST</div></td></tr>';
-        divOV += '<tr><td class="td_cell" align="center" colspan="2"><a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=players_list" target="_blank">Manage PTRE targets via website.</a></td></tr>';
-        divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-    }
-
-    // Galaxy Data
-    divOV += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Galaxy data (V' + GM_getValue(ptreGalaxyStorageVersion, 2) + ')</div></td><td class="td_cell" align="right"><div id="displayGalaxyTracking" class="button btn_blue">DETAILS</div></td></tr>';
-    divOV += '<tr><td class="td_cell" colspan="2" align="center">'+displayTotalSystemsSaved()+'</td></tr>';
-    if (isOGLorOGIEnabled()) {
-        divOV += '<tr><td colspan="2" class="td_cell" align="center"><span class="ptreSuccess ptreSmall">OGL/OGI enabled: some EasyPTRE features are disabled.</span> <div id="btnOGLOGIDetails" type="button" class="button btn_blue">DETAILS</div></td></tr>';
-    }
-    divOV += '<tr><td class="td_cell" align="center" colspan="2"><hr /></td></tr>';
-
-    // Lifeforms Menu
-    divOV += '<tr><td class="td_cell" colspan="2"><div class="ptreCategoryTitle">Lifeforms researchs (<span id="ptreLastTechnosRefreshField">' + getLastUpdateLabel(GM_getValue(ptreLastTechnosRefresh, 0)) + '</span>)</div></td></tr>';
-    divOV += '<tr><td class="td_cell" align="center" colspan="2"><a href="/game/index.php?page=ingame&component=fleetdispatch">Fleet menu to update</a> - <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Check it out on PTRE</a></td></tr>';
-
     divOV += '</table>';
 
     // Update version message in footer
@@ -2366,12 +2361,15 @@ function displayGalaxyTracking() {
     setupMainBox('Galaxy', 'Galaxy');
 
     var content = '<div class="ptreCategoryTitle">Galaxy details</div>';
+    if (isOGLorOGIEnabled()) {
+        content += '<span class="ptreWarning">OGLight or OGInfinity is enabled: EasyPTRE is not managing galaxy pushs.<br>EasyPTRE still get Galaxy events to highlight updated positions.</span><br><br>';
+    }
     content+='Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + ' | Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
 
     const allGalaxyKeys = GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort();
 
     content+='<table><tr>';
-    content+='<td class="td_cell_radius_0" align="center">Galaxy key</td>';
+    content+='<td class="td_cell_radius_0" align="center">Galaxy</td>';
     content+='<td class="td_cell_radius_0" align="center">Systems in storage</td>';
     content+='<td class="td_cell_radius_0" align="center">Systems in cache</td>';
     content+='<td class="td_cell_radius_0" align="center">Cache status</td>';
@@ -2392,7 +2390,7 @@ function displayGalaxyTracking() {
             statusLabel = '<span class="ptreWarning">cache ahead (+' + (cachedCount - storedCount) + ')</span>';
         }
         content+='<tr>';
-        content+='<td class="td_cell_radius_1" align="center">' + key + '</td>';
+        content+='<td class="td_cell_radius_1" align="center">G' + gala + '</td>';
         content+='<td class="td_cell_radius_1" align="center">' + storedCount + '</td>';
         content+='<td class="td_cell_radius_1" align="center">' + cachedCount + '</td>';
         content+='<td class="td_cell_radius_1" align="center">' + statusLabel + '</td>';
@@ -2671,24 +2669,6 @@ function validatePurgeGalaxyTracking() {
         displayGalaxyTracking();
         addToLogs("Purged Galaxy data");
     });
-}
-
-function displayTotalSystemsSaved() {
-    var countGala = 0;
-    var countSsystem = 0;
-
-    if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
-        for(var gala = 1; gala <= 15 ; gala++) {
-            var galaxyData = GM_getValue(ptreGalaxyData+gala, '');
-            if (galaxyData != '') {
-                countGala++;
-                countSsystem = countSsystem + Object.keys(galaxyData).length;
-            }
-        }
-        return 'Tracked Galaxies: <span class="ptreSuccess">'+countGala+'</span> | Tracked Systems: <span class="ptreSuccess">'+countSsystem+'</span>';
-    } else {
-        return '<span class="ptreError">Wrong Galaxy Cache Version</span>';
-    }
 }
 
 function displayAllSharedNotes() {
