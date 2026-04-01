@@ -133,6 +133,7 @@ GM_addStyle(`
     width: 720px;
     background-color: #171d22;
     border: 2px solid black;
+    border-radius: 8px;
 }
 #ptreMainHeader {
     display: flex;
@@ -140,6 +141,7 @@ GM_addStyle(`
     padding: 5px 10px;
     border-bottom: 1px solid #2a3540;
     background-color: #101518;
+    border-radius: 8px;
 }
 #ptreMainHeaderTop {
     display: flex;
@@ -206,6 +208,7 @@ GM_addStyle(`
     font-size: 9pt;
     text-align: center;
     min-height: 16px;
+    border-radius: 8px;
 }
 #boxPTREMessage {
     position: fixed;
@@ -235,6 +238,7 @@ GM_addStyle(`
     width-min: 250px;
     position: absolute;
     border: solid black 2px;
+    border-radius: 8px;
     background-color: #171d22;
     z-index: 10001;
     padding: 5px;
