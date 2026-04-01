@@ -50,7 +50,7 @@ var ptreGalaxyInitMiliTS = 0;
 var ptreGalaxyCache = {};
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
-var ptreDisplayGalaPopup = false;//TODO: at false, during Beta
+var ptreDisplayGalaPopup = true;
 var ptreEnableConsoleDebugValue = false;
 
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)

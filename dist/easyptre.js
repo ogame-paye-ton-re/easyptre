@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mer. 01 avril 2026 08:44:32 CEST
+// Build date: mer. 01 avril 2026 08:55:01 CEST
 // ****************************************
 
 // ****************************************
@@ -82,7 +82,7 @@ var ptreGalaxyInitMiliTS = 0;
 var ptreGalaxyCache = {};
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
-var ptreDisplayGalaPopup = false;//TODO: at false, during Beta
+var ptreDisplayGalaPopup = true;
 var ptreEnableConsoleDebugValue = false;
 
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
