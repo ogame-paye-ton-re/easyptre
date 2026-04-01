@@ -116,8 +116,8 @@ function improveGalaxyTable() {
                     btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="16" width="16"></a>';
                     cellPlayerName.appendChild(btn);
                     // Add action
-                    btn.addEventListener('click', function () {
-                        //openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos);
+                    btn.addEventListener('click', function (event) {
+                        event.stopPropagation();
                         openPTREGalaxyActions(this.dataset.galaxy, this.dataset.system, this.dataset.pos, this.dataset.playerId, this.dataset.playerName);
                     });
                 }
