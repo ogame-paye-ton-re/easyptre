@@ -226,18 +226,6 @@ function displaySettings() {
         savePTRESettings();
         displaySettings();
     });
-
-    // Check last script version
-    updateLastAvailableVersion(false);
-
-    // Sync targets
-    if (currentTime > (GM_getValue(ptreLastTargetsSync, 0) + 15*60)) {
-        setTimeout(syncTargets, 1000);
-    }
-    // Sync Data
-    if (currentTime > (GM_getValue(ptreLastDataSync, 0) + 15*60)) {
-        setTimeout(syncDataWithPTRE, 2000);
-    }
 }
 
 // Displays overview (team data, targets, galaxy, lifeforms)
@@ -349,10 +337,18 @@ function displayOverview() {
         });
     }
 
+    // Global Sync
+    if (currentTime > (GM_getValue(ptreLastGlobalSync, 0) + 15*60)) {
+        setTimeout(globalPTRESync, 1000);
+    }
+
     // Run garbage collection
     if (currentUnixTS > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
         runGarbageCollection();
     }
+
+    // Check last script version
+    updateLastAvailableVersion(false);
 }
 
 function savePTRESettings() {

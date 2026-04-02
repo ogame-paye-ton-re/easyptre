@@ -176,12 +176,11 @@ function runAutoCheckForPTREUpdate() {
 
 // Sync all data with PTRE
 async function globalPTRESync(mode = "auto") {
-    const miliTS = Date.now();
+    const startMiliTS = Date.now();
     const currentTime = getIGCurrentTS();
-    const lastGlobalSyncTemp = Number(GM_getValue(ptreLastGlobalSync, 0));
 
-    if (currentTime < lastGlobalSyncTemp + 60) {
-        consoleDebug("[SYNC] globalPTRESync skipped (60-sec cooldown)");
+    if (currentTime < Number(GM_getValue(ptreLastGlobalSync, 0)) + 60) {
+        consoleDebug("[SYNC] Global sync skipped (60-sec cooldown)");
         updateHtmlById("ptreLastDataSyncMessageField", "Global sync skipped (60-sec cooldown)");
         updateHtmlById("ptreLastTargetsSyncMessageField", "Global sync skipped (60-sec cooldown)");
         return;
@@ -198,7 +197,7 @@ async function globalPTRESync(mode = "auto") {
 
     GM_setValue(ptreLastGlobalSync, currentTime);
     updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
-    var tempDuration = Date.now() - miliTS;
+    var tempDuration = Date.now() - startMiliTS;
     addToLogs("[SYNC] Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 

@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 22:05:21 CEST
+// Build date: jeu. 02 avril 2026 22:24:26 CEST
 // ****************************************
 
 // ****************************************
@@ -2040,18 +2040,6 @@ function displaySettings() {
         savePTRESettings();
         displaySettings();
     });
-
-    // Check last script version
-    updateLastAvailableVersion(false);
-
-    // Sync targets
-    if (currentTime > (GM_getValue(ptreLastTargetsSync, 0) + 15*60)) {
-        setTimeout(syncTargets, 1000);
-    }
-    // Sync Data
-    if (currentTime > (GM_getValue(ptreLastDataSync, 0) + 15*60)) {
-        setTimeout(syncDataWithPTRE, 2000);
-    }
 }
 
 // Displays overview (team data, targets, galaxy, lifeforms)
@@ -2163,10 +2151,18 @@ function displayOverview() {
         });
     }
 
+    // Global Sync
+    if (currentTime > (GM_getValue(ptreLastGlobalSync, 0) + 15*60)) {
+        setTimeout(globalPTRESync, 1000);
+    }
+
     // Run garbage collection
     if (currentUnixTS > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
         runGarbageCollection();
     }
+
+    // Check last script version
+    updateLastAvailableVersion(false);
 }
 
 function savePTRESettings() {
@@ -3585,12 +3581,11 @@ function runAutoCheckForPTREUpdate() {
 
 // Sync all data with PTRE
 async function globalPTRESync(mode = "auto") {
-    const miliTS = Date.now();
+    const startMiliTS = Date.now();
     const currentTime = getIGCurrentTS();
-    const lastGlobalSyncTemp = Number(GM_getValue(ptreLastGlobalSync, 0));
 
-    if (currentTime < lastGlobalSyncTemp + 60) {
-        consoleDebug("[SYNC] globalPTRESync skipped (60-sec cooldown)");
+    if (currentTime < Number(GM_getValue(ptreLastGlobalSync, 0)) + 60) {
+        consoleDebug("[SYNC] Global sync skipped (60-sec cooldown)");
         updateHtmlById("ptreLastDataSyncMessageField", "Global sync skipped (60-sec cooldown)");
         updateHtmlById("ptreLastTargetsSyncMessageField", "Global sync skipped (60-sec cooldown)");
         return;
@@ -3607,7 +3602,7 @@ async function globalPTRESync(mode = "auto") {
 
     GM_setValue(ptreLastGlobalSync, currentTime);
     updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
-    var tempDuration = Date.now() - miliTS;
+    var tempDuration = Date.now() - startMiliTS;
     addToLogs("[SYNC] Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 
