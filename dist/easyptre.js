@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 23:15:16 CEST
+// Build date: jeu. 02 avril 2026 23:39:43 CEST
 // ****************************************
 
 // ****************************************
@@ -3216,11 +3216,13 @@ function syncDataWithPTRE(mode = "auto") {
             var reponseDecode = JSON.parse(reponse);
             if (reponseDecode.code == 1) {
                 consoleDebug("[DATA] Received data from PTRE. TS "+reponseDecode.timestamp);
+                // Update Team name
                 GM_setValue(ptreTeamName, reponseDecode.team_name);
+
                 // Update highlighted players received from PTRE
-                //var temp = JSON.parse(JSON.stringify(reponseDecode.player_highlight_array));
                 GM_deleteValue(ptreHighlightedPlayers);
                 var temp = reponseDecode.player_highlight_array;
+                // Convert TS from Unix to IG (ts received is a duration, not a TS)
                 Object.keys(temp).forEach(i => {
                     if (temp[i].ts && temp[i].ts > 0) {
                         temp[i].ts += currentTime;
@@ -3237,17 +3239,14 @@ function syncDataWithPTRE(mode = "auto") {
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
 
-                consoleDebug('[FROM PTRE] ' + reponseDecode.message);
-
                 // Update info in menu
                 updateHtmlById("ptreLastDataSyncField", getLastUpdateLabel(currentTime));
             } else {
                 addToLogs('[SYNC DATA] ' + reponseDecode.message_debug);
             }
-            if (mode == 'manual') {
-                displayMessageInSettings(reponseDecode.message_debug);
-                updateHtmlById("ptreLastDataSyncMessageField", reponseDecode.message_debug);
-            }
+            consoleDebug('[FROM PTRE] ' + reponseDecode.message);
+            displayMessageInSettings(reponseDecode.message_debug);
+            updateHtmlById("ptreLastDataSyncMessageField", reponseDecode.message_debug);
         }
     });
 }
@@ -3312,12 +3311,14 @@ function syncTargets(mode) {
                         count++;
                     }
                 });
-                if (mode == "manual") {
-                    displayMessageInSettings(nb_private + ' private targets ignored. ' + reponseDecode.message + ' ' + count + ' new targets added.');
-                }
+
+                // Update configuration
                 GM_setValue(ptreLastTargetsSync, currentTime);
+
+                // Update info in menu
+                displayMessageInSettings(nb_private + ' private targets ignored. ' + reponseDecode.message + ' ' + count + ' new targets added.');
                 updateHtmlById("ptreLastTargetsSyncField", getLastUpdateLabel(currentTime));
-                updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
+
                 // Refresh targets list if displayed
                 if (document.getElementById('targetsListDiv')) {
                     displayPTRETargetsList();
@@ -3325,8 +3326,8 @@ function syncTargets(mode) {
             } else {
                 displayMessageInSettings(reponseDecode.message);
                 addToLogs('[SYNC TARGETS] ' + reponseDecode.message);
-                updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
             }
+            updateHtmlById("ptreLastTargetsSyncMessageField", reponseDecode.message);
         }
     });
 }
