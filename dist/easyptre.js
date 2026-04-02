@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 21:53:24 CEST
+// Build date: jeu. 02 avril 2026 22:05:21 CEST
 // ****************************************
 
 // ****************************************
@@ -53,6 +53,7 @@ const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const ptreLogsRetentionDuration = 15*24*60*60;
 const ptreGlobalPTRESyncTimeout = 12*60*60;
+const ptreGarbageCollectionTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 15; // nb of days we keep planets infos
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated
@@ -2056,6 +2057,7 @@ function displaySettings() {
 // Displays overview (team data, targets, galaxy, lifeforms)
 function displayOverview() {
     const currentTime = getIGCurrentTS();
+    const currentUnixTS = getCurrentUnixTS();
     ptreCurrentView = displayOverview;
     setupMainBox('EasyPTRE Overview', 'Overview');
 
@@ -2162,7 +2164,9 @@ function displayOverview() {
     }
 
     // Run garbage collection
-    runGarbageCollection();
+    if (currentUnixTS > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
+        runGarbageCollection();
+    }
 }
 
 function savePTRESettings() {
@@ -2708,7 +2712,8 @@ function displayTamperMonkeyKeys() {
         }
     });
 
-    var content = '<div class="ptreCategoryTitle">Tampermonkey Keys per Universe</div>';
+    var content = '<div class="ptreCategoryTitle">Garbage Collection</div>Last run: ' + getUnixTSLabel(GM_getValue(ptreLastGarbageCollection, 0)) + ' (every ' + (ptreGarbageCollectionTimeout/3600) + 'h)<br><br>';
+    content += '<div class="ptreCategoryTitle">Tampermonkey Keys per Universe</div>';
     content += 'All stored keys grouped by universe. The Team Key (TK) is preserved when purging.<br><br>';
 
     const uniKeys = Object.keys(uniMap).sort();

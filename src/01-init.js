@@ -21,6 +21,7 @@ const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const ptreLogsRetentionDuration = 15*24*60*60;
 const ptreGlobalPTRESyncTimeout = 12*60*60;
+const ptreGarbageCollectionTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 15; // nb of days we keep planets infos
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated

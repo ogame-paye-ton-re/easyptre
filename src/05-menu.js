@@ -243,6 +243,7 @@ function displaySettings() {
 // Displays overview (team data, targets, galaxy, lifeforms)
 function displayOverview() {
     const currentTime = getIGCurrentTS();
+    const currentUnixTS = getCurrentUnixTS();
     ptreCurrentView = displayOverview;
     setupMainBox('EasyPTRE Overview', 'Overview');
 
@@ -349,7 +350,9 @@ function displayOverview() {
     }
 
     // Run garbage collection
-    runGarbageCollection();
+    if (currentUnixTS > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
+        runGarbageCollection();
+    }
 }
 
 function savePTRESettings() {
@@ -895,7 +898,8 @@ function displayTamperMonkeyKeys() {
         }
     });
 
-    var content = '<div class="ptreCategoryTitle">Tampermonkey Keys per Universe</div>';
+    var content = '<div class="ptreCategoryTitle">Garbage Collection</div>Last run: ' + getUnixTSLabel(GM_getValue(ptreLastGarbageCollection, 0)) + ' (every ' + (ptreGarbageCollectionTimeout/3600) + 'h)<br><br>';
+    content += '<div class="ptreCategoryTitle">Tampermonkey Keys per Universe</div>';
     content += 'All stored keys grouped by universe. The Team Key (TK) is preserved when purging.<br><br>';
 
     const uniKeys = Object.keys(uniMap).sort();
