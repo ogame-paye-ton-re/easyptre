@@ -173,7 +173,7 @@ function runAutoCheckForPTREUpdate() {
     }
 }
 
-// Sync all data once a day
+// Sync all data with PTRE
 async function globalPTRESync(mode = "auto") {
     const miliTS = Date.now();
     const currentTime = getIGCurrentTS();
