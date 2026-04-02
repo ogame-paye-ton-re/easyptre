@@ -40,7 +40,7 @@ function updateLastAvailableVersion(force = false) {
     const currentUnixTS = getCurrentUnixTS();
 
     if (force === true || currentUnixTS > lastCheckTime + ptreVersionCheckTimeout) {
-        consoleDebug("Checking last version available");
+        consoleDebug("[OPENJS] Checking last version available");
         GM_xmlhttpRequest({
             method:'GET',
             url:urlToScriptMetaInfos,
@@ -51,8 +51,8 @@ function updateLastAvailableVersion(force = false) {
                     var tab = result.responseText.split('//');
                     var availableVersion = tab[2].match(/\d+\.\d+.\d+/);
                     availableVersion = availableVersion[0];
-                    consoleDebug("Current version: " + GM_info.script.version);
-                    consoleDebug("Last version: " + availableVersion);
+                    consoleDebug("[OPENJS] Current version: " + GM_info.script.version);
+                    consoleDebug("[OPENJS] Last version: " + availableVersion);
                     GM_setValue(ptreLastAvailableVersion, availableVersion);
                     GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
                     if (availableVersion !== GM_info.script.version) {
@@ -62,18 +62,19 @@ function updateLastAvailableVersion(force = false) {
                             document.getElementById('ptreMenuName').classList.add('ptreError');
                         }
                         displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
-                        consoleDebug('Version ' + availableVersion + ' is available');
+                        consoleDebug('[OPENJS] Version ' + availableVersion + ' is available');
                     } else {
                         displayUpdateVersionMessage('<span class="ptreSuccess">EasyPTRE is up to date</span>');
                     }
                 } else {
                     displayUpdateVersionMessage('<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>');
+                    consoleDebug('[OPENJS] Error while checking script version: ' + result.status + ' (' + result.statusText + ')');
                 }
             }
         });
     } else {
         var temp = lastCheckTime + ptreVersionCheckTimeout - currentUnixTS;
-        //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
+        //consoleDebug("[OPENJS] Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }
 
@@ -121,7 +122,7 @@ function checkForPTREUpdate() {
     if (TKey != '') {
         const currentTime = getIGCurrentTS();
         if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
-            consoleDebug("Checking for Updates...");
+            consoleDebug("[LIVE] Checking for Updates...");
             $.ajax({
                 url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0),
                 type : 'POST',
@@ -133,12 +134,12 @@ function checkForPTREUpdate() {
                         updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
                         // Is update needed?
                         if (reponseDecode.update == 1) {
-                            consoleDebug("Update needed!");
+                            consoleDebug("[LIVE] Update needed!");
                             displayPTREPopUpMessage("New update available");
-                            addToLogs("[UPDATE] New update available");
+                            addToLogs("[LIVE] New update available");
                             setTimeout(syncDataWithPTRE, 100);
                         } else {
-                            consoleDebug("NO Update needed");
+                            consoleDebug("[LIVE] NO Update needed");
                         }
                     }
                 }
@@ -161,7 +162,7 @@ function runAutoCheckForPTREUpdate() {
     if (cooldown > 0) {
         // Should we check?
         if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
-            consoleDebug("Need to Check For Updates");
+            consoleDebug("[LIVE] Need to Check For Updates");
             checkForPTREUpdate();
         }
         if (!_autoCheckScheduled) {
@@ -169,7 +170,7 @@ function runAutoCheckForPTREUpdate() {
             setTimeout(runAutoCheckForPTREUpdate, 10*1000);
         }
     } else {
-        consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
+        consoleDebug("[LIVE] Auto-Check For Updates is DISABLED: nothing to do.");
     }
 }
 

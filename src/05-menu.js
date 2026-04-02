@@ -368,8 +368,8 @@ function savePTRESettings() {
     // This setting overwrites some other settings
     var galaxyPopupMode = document.getElementById('PTREToogleGalaxyPopup').checked + '';
     var minerMode = document.getElementById('PTREToogleMinerMode').checked + '';
-    console.log('Popup mode: ' + galaxyPopupMode);
-    console.log('Miner mode: ' + minerMode);
+    //console.log('Popup mode: ' + galaxyPopupMode);
+    //console.log('Miner mode: ' + minerMode);
 
     if (minerMode == 'true') {
         galaxyPopupMode = 'false';

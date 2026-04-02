@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 19:46:14 CEST
+// Build date: jeu. 02 avril 2026 21:03:44 CEST
 // ****************************************
 
 // ****************************************
@@ -190,7 +190,7 @@ if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
 if (modeEasyPTRE == "ingame") {
     // Run on EVERY pages (except Empire page)
     if (!/page=standalone&component=empire/.test(location.href)) {
-        consoleDebug("Any page detected");
+        consoleDebug("[INIT] Any page detected");
         setTimeout(improvePageAny, ptreImprovePageDelay);
 
         // Global Sync (no need to run it if only browsing pages)
@@ -215,25 +215,25 @@ if (modeEasyPTRE == "ingame") {
         }
     } else if (/component=galaxy/.test(location.href)) {
         // Galaxy page: Set routines
-        consoleDebug("Galaxy page detected");
+        consoleDebug("[INIT] Galaxy page detected");
         setTimeout(improvePageGalaxy, ptreImprovePageDelay);
         setTimeout(checkForPTREUpdate, 200);//TODO:
     } else if (/component=messages/.test(location.href)) {
         // Message page: Add PTRE send SR button
-        consoleDebug("Message page detected");
+        consoleDebug("[INIT] Message page detected");
         setTimeout(improvePageMessages, ptreImprovePageDelay);
     } else if (/page=ingame&component=fleetdispatch/.test(location.href)) {
         // Save fleeters techs in order to send it to simulator from PTRE pages
         // Huge QOL to not add them manually
-        consoleDebug("Fleet page detected");
+        consoleDebug("[INIT] Fleet page detected");
         setTimeout(improvePageFleet, ptreImprovePageDelay);
     } else if (/page=ingame&component=facilities/.test(location.href)) {
         // Capture Phalanx level
-        consoleDebug("Facilities page detected");
+        consoleDebug("[INIT] Facilities page detected");
         setTimeout(improvePageFacilities, ptreImprovePageDelay);
     } else if (/page=ingame&component=buddies/.test(location.href)) {
         // Buddies Page
-        consoleDebug("Buddies page detected");
+        consoleDebug("[INIT] Buddies page detected");
         setTimeout(improvePageBuddies, ptreImprovePageDelay);
     }
 }
@@ -252,21 +252,21 @@ if (modeEasyPTRE == "ptre") {
     // Display Lifeforms research on PTRE Lifeforms page
     if (/ptre.chez.gg\/\?page=lifeforms_researchs/.test(location.href)){
         if (universe != 0) {
-            console.log("[EasyPTRE] PTRE Lifeforms page detected: "+country+"-"+universe);
+            console.log("[EasyPTRE] [LF] PTRE Lifeforms page detected: "+country+"-"+universe);
             const json = GM_getValue(ptreTechnosJSON, '');
             if (json != '') {
                 tab = parsePlayerResearchs(json, "tab");
                 document.getElementById("tech_from_easyptre").innerHTML = tab;
-                console.log("[EasyPTRE] Updating lifeforms page");
+                console.log("[EasyPTRE] [LF] Updating lifeforms page");
             } else {
-                console.log("[EasyPTRE] No lifeforms data saved");
+                console.log("[EasyPTRE] [LF] No lifeforms data saved");
             }
         }
     }
 
     // Update PTRE Spy Report Pages
     if (/ptre.chez.gg\/\?iid/.test(location.href)){
-        console.log("[EasyPTRE] PTRE Spy Report page detected: "+country+"-"+universe);
+        console.log("[EasyPTRE] [SR] PTRE Spy Report page detected: "+country+"-"+universe);
         const json = GM_getValue(ptreTechnosJSON, '');
         if (json != '') {
             const linkElement = document.getElementById("simulate_link");
@@ -275,9 +275,9 @@ if (modeEasyPTRE == "ptre") {
             hrefValue = hrefValue.replace("replaceme", prefill);
             linkElement.setAttribute("href", hrefValue);
             document.getElementById("simulator_comment").innerHTML = "This link contains your LF techs";
-            console.log("[EasyPTRE] Updating simulator link");
+            console.log("[EasyPTRE] [SR] Updating simulator link");
         } else {
-            console.log("[EasyPTRE] No lifeforms data saved");
+            console.log("[EasyPTRE] [SR] No lifeforms data saved");
         }
     }
 }
@@ -999,7 +999,7 @@ function improvePageFleet() {
                 GM_setValue(ptreLastTechnosRefresh, currentTime);
                 updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
             } else {
-                console.log("[EasyPTRE] Cant find Techs!");
+                console.log("[EasyPTRE] [FLEET] Cant find Techs!");
             }
         }
     }
@@ -1016,21 +1016,21 @@ function improvePageFacilities() {
             var phalanxLevel = levelSpan.getAttribute('data-value');
             var coords = document.getElementsByName('ogame-planet-coordinates')[0].content;
             var moonID = document.getElementsByName('ogame-planet-id')[0].content;
-            consoleDebug("[Phalanx] " + coords + ': Found Phalanx level '+phalanxLevel);
+            consoleDebug("[PHALANX] " + coords + ': Found Phalanx level '+phalanxLevel);
             refreshPhalanxStorage(moonID, coords, phalanxLevel);
         }
     } else {
-        consoleDebug("[Phalanx] Cant find technologies element");
+        consoleDebug("[PHALANX] Cant find technologies element");
     }
 }
 
 // Parse Buddies page
 function improvePageBuddies() {
-    console.log("[EasyPTRE] Improving Buddies Page");
+    console.log("[EasyPTRE] [BUDDIES] Improving Buddies Page");
     const currentTime = getIGCurrentTS();
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
-    consoleDebug(playerIds);
+    consoleDebug("[BUDDIES] " + playerIds);
     const dataJSON = JSON.stringify(playerIds);
     GM_setValue(ptreBuddiesList, dataJSON);
     GM_setValue(ptreBuddiesListLastRefresh, currentTime);
@@ -1044,7 +1044,7 @@ function improveAGRSpyTable(mutationList, observer) {
         observer.disconnect();
         var TKey = GM_getValue(ptreTeamKey, '');
         if (TKey != '') {
-            console.log("[EasyPTRE] Updating AGR Spy Table");
+            console.log("[EasyPTRE] [SPY-TABLE] Updating AGR Spy Table");
             var table = document.getElementsByClassName("ago_reports")[0];
             for (var i = 0, row; row = table.rows[i]; i++) {
                 var nbCol = row.cells.length;
@@ -1087,7 +1087,7 @@ function improveAGRSpyTable(mutationList, observer) {
                             });
                         });
                     } else {
-                        console.log("[EasyPTRE] Error. Cant find data element: m" + messageID);
+                        console.log("[EasyPTRE] [SPY-TABLE] Error. Cant find data element: m" + messageID);
                     }
                 }
             }
@@ -1218,7 +1218,7 @@ function addPTREStuffsToMessagesPage() {
                         }
                     }
                 });
-                console.log('[EasyPTRE] Pushing counter spy messages');
+                console.log('[EasyPTRE] [PUSH] Pushing counter spy messages');
             }
         }
     }
@@ -1226,7 +1226,7 @@ function addPTREStuffsToMessagesPage() {
 
 // Called when user clicks on the PTRE icon in galaxy view
 function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
-    consoleDebug("Click on pos " + galaxy + ":" + system + ":" + pos);
+    consoleDebug("[POP-UP] Click on pos " + galaxy + ":" + system + ":" + pos);
     const currentTime = getIGCurrentTS();
 
     // Close PTRE menu
@@ -1380,7 +1380,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             // DNP button
             if (document.getElementById('btnDNP')) {
                 document.getElementById('btnDNP').addEventListener("click", function (event) {
-                    consoleDebug("Adding " + playerId + " to DNP list");
+                    consoleDebug("[DNP] Adding " + playerId + " to DNP list");
                     // Push data to PTRE
                     $.ajax({
                         url : urlPTREIngameAction + '&team_key=' + GM_getValue(ptreTeamKey, ''),
@@ -1400,7 +1400,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                                 GM_setValue(ptreHighlightedPlayers, temp);
                                 // Enable Live
                                 updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
-                                consoleDebug("Added player "+playerName+" to DNP ("+ts_tmp+")");
+                                consoleDebug("[DNP] Added player "+playerName+" to DNP ("+ts_tmp+")");
                             } else {
                                 addToLogs('[DNP] ' + reponseDecode.message);
                             }
@@ -1485,7 +1485,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
 function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE = true) {
     phalanxLevelNew = Number(phalanxLevelNew);
-    consoleDebug("[Phalanx] Checking Phalanx update for " + moonIdNew + " at " + coordsNew + " (level " + phalanxLevelNew + ")");
+    consoleDebug("[PHALANX] Checking Phalanx update for " + moonIdNew + " at " + coordsNew + " (level " + phalanxLevelNew + ")");
 
     var dataJSON = GM_getValue(ptreDataToSync, '');
     var dataList = dataJSON != '' ? JSON.parse(dataJSON) : [];
@@ -1497,9 +1497,9 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
         if (elem.type == "phalanx" && elem.id == moonIdNew) {
             found = true;
             if (elem.coords == coordsNew && elem.val == phalanxLevelNew) {
-                consoleDebug("[Phalanx] Already up to date, no change");
+                consoleDebug("[PHALANX] Already up to date, no change");
             } else {
-                consoleDebug("[Phalanx] Updated: coords " + elem.coords + " -> " + coordsNew + ", level " + elem.val + " -> " + phalanxLevelNew);
+                consoleDebug("[PHALANX] Updated: coords " + elem.coords + " -> " + coordsNew + ", level " + elem.val + " -> " + phalanxLevelNew);
                 elem.coords = coordsNew;
                 elem.val = phalanxLevelNew;
                 needToSave = true;
@@ -1508,7 +1508,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
     });
 
     if (!found) {
-        consoleDebug("[Phalanx] New entry, inserting");
+        consoleDebug("[PHALANX] New entry, inserting");
         dataList.push({type: "phalanx", id: moonIdNew, coords: coordsNew, val: phalanxLevelNew});
         needToSave = true;
     }
@@ -1516,6 +1516,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
     if (needToSave) {
         GM_setValue(ptreDataToSync, JSON.stringify(dataList));
         displayPTREPopUpMessage("Phalanx updated");
+        consoleDebug("[PHALANX] 1 phalanx updated");
         if (syncToPTRE === true) {
             setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
         }
@@ -1615,7 +1616,7 @@ function addPlayerToList(playerId, playerPseudo, type) {
                 // We want to detect and notify when an AGR target is added
                 ret_code = 1;
             }
-            consoleDebug('Player ' + playerPseudo + ' has been added to ' + type + ' list');
+            consoleDebug('[LIST] [' + type + '] Player ' + playerPseudo + ' has been added to ' + type + ' list');
             return [ret_code, 'Player has been added to ' + type + ' list'];
         }
     } else {
@@ -1643,14 +1644,14 @@ function toogleTargetPrivateStatus(playerId) {
         if (idASup != -1) {
             targetList.splice(idASup, 1);
             status = 'shareable (sync to share)';
-            consoleDebug("Deleting private player (" + idASup + "): " + playerId);
+            consoleDebug("[LIST] [AGR] Deleting private player (" + idASup + "): " + playerId);
         }
     }
     if (idASup == -1) {
         var player = {id: playerId};
         targetList.push(player);
         status = 'private';
-        consoleDebug("Adding private player " + playerId);
+        consoleDebug("[LIST] [AGR] Adding private player " + playerId);
     }
     // Save new list
     targetJSON = JSON.stringify(targetList);
@@ -1686,12 +1687,12 @@ function debugListContent() {
 
     targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var targetList = JSON.parse(targetJSON);
-    console.log("[EasyPTRE] AGR list: ");
+    console.log("[EasyPTRE] [AGR] list: ");
     console.log(targetList);
 
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     targetList = JSON.parse(targetJSON);
-    console.log("[EasyPTRE] PTRE list: ");
+    console.log("[EasyPTRE] [PTRE] list: ");
     console.log(targetList);
 }
 
@@ -1776,6 +1777,7 @@ function getAGRPlayerIDFromPseudo(playerPseudo) {
 // Target: 66 => YES
 // To attack: 67 => YES
 function updateLocalAGRList() {
+    console.log("[LIST] [AGR] Update AGR local list");
     var tabAgo = document.getElementsByClassName('ago_panel_overview');
 
     var count = 0;
@@ -1799,6 +1801,7 @@ function updateLocalAGRList() {
     }
     if (count > 0) {
         displayPTREPopUpMessage(count + ' targets added to AGR list');
+        console.log("[LIST] [AGR] " + count + " targets added to AGR list");
     }
 }
 
@@ -2172,8 +2175,8 @@ function savePTRESettings() {
     // This setting overwrites some other settings
     var galaxyPopupMode = document.getElementById('PTREToogleGalaxyPopup').checked + '';
     var minerMode = document.getElementById('PTREToogleMinerMode').checked + '';
-    console.log('Popup mode: ' + galaxyPopupMode);
-    console.log('Miner mode: ' + minerMode);
+    //console.log('Popup mode: ' + galaxyPopupMode);
+    //console.log('Miner mode: ' + minerMode);
 
     if (minerMode == 'true') {
         galaxyPopupMode = 'false';
@@ -2984,7 +2987,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
     if (TKey != '') {
         // Check if Galaxy Box is still waiting the infos
         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId) || document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-            consoleDebug("Getting Player notes");
+            consoleDebug("[POP-UP] Getting Player notes");
             if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                 document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
             }
@@ -2996,7 +2999,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 type: 'POST',
                 success: function (reponse) {
                     var reponseDecode = JSON.parse(reponse);
-                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
+                    consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
@@ -3026,7 +3029,7 @@ function pushPlayerNote(playerId) {
                 document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Saving note...";
             }
             const note = $("#ptreGalaxyPlayerNote-" + playerId).val();
-            consoleDebug("Saving note for " + playerId);
+            consoleDebug("[IG NOTES] Saving note for " + playerId);
             $.ajax({
                 url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=set&player_id=" + playerId,
                 type: 'POST',
@@ -3035,7 +3038,7 @@ function pushPlayerNote(playerId) {
                 },
                 success: function (reponse) {
                     var reponseDecode = JSON.parse(reponse);
-                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
+                    consoleDebug("[IG NOTES] [FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
                     }
@@ -3051,7 +3054,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
     if (TKey != '') {
         // Check if Galaxy Box is still waiting the infos
         if (!document.getElementById("ptreGalaxyPlayerRanksPlaceholder-" + playerId)) {
-            consoleDebug("Rank update canceled");
+            consoleDebug("[POP-UP] Rank update canceled");
             return;
         }
         updateHtmlById("ptreGalaxyPlayerRanksPopUp", "Loading ranks...");
@@ -3061,7 +3064,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             cache: false,
             success : function(reponse){
                 var reponseDecode = JSON.parse(reponse);
-                consoleDebug("[FROM PTRE] " + reponseDecode.message);
+                consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
@@ -3434,7 +3437,7 @@ function updateLastAvailableVersion(force = false) {
     const currentUnixTS = getCurrentUnixTS();
 
     if (force === true || currentUnixTS > lastCheckTime + ptreVersionCheckTimeout) {
-        consoleDebug("Checking last version available");
+        consoleDebug("[OPENJS] Checking last version available");
         GM_xmlhttpRequest({
             method:'GET',
             url:urlToScriptMetaInfos,
@@ -3445,8 +3448,8 @@ function updateLastAvailableVersion(force = false) {
                     var tab = result.responseText.split('//');
                     var availableVersion = tab[2].match(/\d+\.\d+.\d+/);
                     availableVersion = availableVersion[0];
-                    consoleDebug("Current version: " + GM_info.script.version);
-                    consoleDebug("Last version: " + availableVersion);
+                    consoleDebug("[OPENJS] Current version: " + GM_info.script.version);
+                    consoleDebug("[OPENJS] Last version: " + availableVersion);
                     GM_setValue(ptreLastAvailableVersion, availableVersion);
                     GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
                     if (availableVersion !== GM_info.script.version) {
@@ -3456,18 +3459,19 @@ function updateLastAvailableVersion(force = false) {
                             document.getElementById('ptreMenuName').classList.add('ptreError');
                         }
                         displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
-                        consoleDebug('Version ' + availableVersion + ' is available');
+                        consoleDebug('[OPENJS] Version ' + availableVersion + ' is available');
                     } else {
                         displayUpdateVersionMessage('<span class="ptreSuccess">EasyPTRE is up to date</span>');
                     }
                 } else {
                     displayUpdateVersionMessage('<span class="ptreError">Error ' + result.status + ' (' + result.statusText + ')</span>');
+                    consoleDebug('[OPENJS] Error while checking script version: ' + result.status + ' (' + result.statusText + ')');
                 }
             }
         });
     } else {
         var temp = lastCheckTime + ptreVersionCheckTimeout - currentUnixTS;
-        //consoleDebug("Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
+        //consoleDebug("[OPENJS] Skipping automatic EasyPTRE version check. Next check in " + round(temp, 0) + " seconds (at least)");
     }
 }
 
@@ -3515,7 +3519,7 @@ function checkForPTREUpdate() {
     if (TKey != '') {
         const currentTime = getIGCurrentTS();
         if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
-            consoleDebug("Checking for Updates...");
+            consoleDebug("[LIVE] Checking for Updates...");
             $.ajax({
                 url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0),
                 type : 'POST',
@@ -3527,12 +3531,12 @@ function checkForPTREUpdate() {
                         updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
                         // Is update needed?
                         if (reponseDecode.update == 1) {
-                            consoleDebug("Update needed!");
+                            consoleDebug("[LIVE] Update needed!");
                             displayPTREPopUpMessage("New update available");
-                            addToLogs("[UPDATE] New update available");
+                            addToLogs("[LIVE] New update available");
                             setTimeout(syncDataWithPTRE, 100);
                         } else {
-                            consoleDebug("NO Update needed");
+                            consoleDebug("[LIVE] NO Update needed");
                         }
                     }
                 }
@@ -3555,7 +3559,7 @@ function runAutoCheckForPTREUpdate() {
     if (cooldown > 0) {
         // Should we check?
         if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
-            consoleDebug("Need to Check For Updates");
+            consoleDebug("[LIVE] Need to Check For Updates");
             checkForPTREUpdate();
         }
         if (!_autoCheckScheduled) {
@@ -3563,7 +3567,7 @@ function runAutoCheckForPTREUpdate() {
             setTimeout(runAutoCheckForPTREUpdate, 10*1000);
         }
     } else {
-        consoleDebug("Auto-Check For Updates is DISABLED: nothing to do.");
+        consoleDebug("[LIVE] Auto-Check For Updates is DISABLED: nothing to do.");
     }
 }
 
@@ -3906,7 +3910,7 @@ function parsePlayerResearchs(json, mode) {
 
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
-    console.log("[EasyPTRE] Migrate Data and clean storage");
+    console.log("[EasyPTRE] [GC] Migrate Data and clean storage");
     const currentTime = getIGCurrentTS();
     const currentUnixTS = getCurrentUnixTS();
 

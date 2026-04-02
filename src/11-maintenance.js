@@ -4,7 +4,7 @@
 
 // Temp function to clean old version data
 function migrateDataAndCleanStorage() {
-    console.log("[EasyPTRE] Migrate Data and clean storage");
+    console.log("[EasyPTRE] [GC] Migrate Data and clean storage");
     const currentTime = getIGCurrentTS();
     const currentUnixTS = getCurrentUnixTS();
 

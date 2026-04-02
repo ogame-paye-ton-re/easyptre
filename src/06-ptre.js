@@ -201,7 +201,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
     if (TKey != '') {
         // Check if Galaxy Box is still waiting the infos
         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId) || document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-            consoleDebug("Getting Player notes");
+            consoleDebug("[POP-UP] Getting Player notes");
             if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                 document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
             }
@@ -213,7 +213,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 type: 'POST',
                 success: function (reponse) {
                     var reponseDecode = JSON.parse(reponse);
-                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
+                    consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
                     if (reponseDecode.code == 1) {
                         // Message
                         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
@@ -243,7 +243,7 @@ function pushPlayerNote(playerId) {
                 document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Saving note...";
             }
             const note = $("#ptreGalaxyPlayerNote-" + playerId).val();
-            consoleDebug("Saving note for " + playerId);
+            consoleDebug("[IG NOTES] Saving note for " + playerId);
             $.ajax({
                 url: urlPTREIngamePopUp + "&team_key=" + TKey + "&action=set&player_id=" + playerId,
                 type: 'POST',
@@ -252,7 +252,7 @@ function pushPlayerNote(playerId) {
                 },
                 success: function (reponse) {
                     var reponseDecode = JSON.parse(reponse);
-                    consoleDebug("[FROM PTRE] " + reponseDecode.message);
+                    consoleDebug("[IG NOTES] [FROM PTRE] " + reponseDecode.message);
                     if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
                         document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = reponseDecode.message;
                     }
@@ -268,7 +268,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
     if (TKey != '') {
         // Check if Galaxy Box is still waiting the infos
         if (!document.getElementById("ptreGalaxyPlayerRanksPlaceholder-" + playerId)) {
-            consoleDebug("Rank update canceled");
+            consoleDebug("[POP-UP] Rank update canceled");
             return;
         }
         updateHtmlById("ptreGalaxyPlayerRanksPopUp", "Loading ranks...");
@@ -278,7 +278,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             cache: false,
             success : function(reponse){
                 var reponseDecode = JSON.parse(reponse);
-                consoleDebug("[FROM PTRE] " + reponseDecode.message);
+                consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
                     if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {

@@ -53,7 +53,7 @@ function addDataToPTREData(newData, syncToPTRE = true) {
 
 function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE = true) {
     phalanxLevelNew = Number(phalanxLevelNew);
-    consoleDebug("[Phalanx] Checking Phalanx update for " + moonIdNew + " at " + coordsNew + " (level " + phalanxLevelNew + ")");
+    consoleDebug("[PHALANX] Checking Phalanx update for " + moonIdNew + " at " + coordsNew + " (level " + phalanxLevelNew + ")");
 
     var dataJSON = GM_getValue(ptreDataToSync, '');
     var dataList = dataJSON != '' ? JSON.parse(dataJSON) : [];
@@ -65,9 +65,9 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
         if (elem.type == "phalanx" && elem.id == moonIdNew) {
             found = true;
             if (elem.coords == coordsNew && elem.val == phalanxLevelNew) {
-                consoleDebug("[Phalanx] Already up to date, no change");
+                consoleDebug("[PHALANX] Already up to date, no change");
             } else {
-                consoleDebug("[Phalanx] Updated: coords " + elem.coords + " -> " + coordsNew + ", level " + elem.val + " -> " + phalanxLevelNew);
+                consoleDebug("[PHALANX] Updated: coords " + elem.coords + " -> " + coordsNew + ", level " + elem.val + " -> " + phalanxLevelNew);
                 elem.coords = coordsNew;
                 elem.val = phalanxLevelNew;
                 needToSave = true;
@@ -76,7 +76,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
     });
 
     if (!found) {
-        consoleDebug("[Phalanx] New entry, inserting");
+        consoleDebug("[PHALANX] New entry, inserting");
         dataList.push({type: "phalanx", id: moonIdNew, coords: coordsNew, val: phalanxLevelNew});
         needToSave = true;
     }
@@ -84,6 +84,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
     if (needToSave) {
         GM_setValue(ptreDataToSync, JSON.stringify(dataList));
         displayPTREPopUpMessage("Phalanx updated");
+        consoleDebug("[PHALANX] 1 phalanx updated");
         if (syncToPTRE === true) {
             setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
         }
@@ -183,7 +184,7 @@ function addPlayerToList(playerId, playerPseudo, type) {
                 // We want to detect and notify when an AGR target is added
                 ret_code = 1;
             }
-            consoleDebug('Player ' + playerPseudo + ' has been added to ' + type + ' list');
+            consoleDebug('[LIST] [' + type + '] Player ' + playerPseudo + ' has been added to ' + type + ' list');
             return [ret_code, 'Player has been added to ' + type + ' list'];
         }
     } else {
@@ -211,14 +212,14 @@ function toogleTargetPrivateStatus(playerId) {
         if (idASup != -1) {
             targetList.splice(idASup, 1);
             status = 'shareable (sync to share)';
-            consoleDebug("Deleting private player (" + idASup + "): " + playerId);
+            consoleDebug("[LIST] [AGR] Deleting private player (" + idASup + "): " + playerId);
         }
     }
     if (idASup == -1) {
         var player = {id: playerId};
         targetList.push(player);
         status = 'private';
-        consoleDebug("Adding private player " + playerId);
+        consoleDebug("[LIST] [AGR] Adding private player " + playerId);
     }
     // Save new list
     targetJSON = JSON.stringify(targetList);
@@ -254,12 +255,12 @@ function debugListContent() {
 
     targetJSON = GM_getValue(ptreAGRPlayerListJSON, '');
     var targetList = JSON.parse(targetJSON);
-    console.log("[EasyPTRE] AGR list: ");
+    console.log("[EasyPTRE] [AGR] list: ");
     console.log(targetList);
 
     targetJSON = GM_getValue(ptrePTREPlayerListJSON, '');
     targetList = JSON.parse(targetJSON);
-    console.log("[EasyPTRE] PTRE list: ");
+    console.log("[EasyPTRE] [PTRE] list: ");
     console.log(targetList);
 }
 
@@ -344,6 +345,7 @@ function getAGRPlayerIDFromPseudo(playerPseudo) {
 // Target: 66 => YES
 // To attack: 67 => YES
 function updateLocalAGRList() {
+    console.log("[LIST] [AGR] Update AGR local list");
     var tabAgo = document.getElementsByClassName('ago_panel_overview');
 
     var count = 0;
@@ -367,6 +369,7 @@ function updateLocalAGRList() {
     }
     if (count > 0) {
         displayPTREPopUpMessage(count + ' targets added to AGR list');
+        console.log("[LIST] [AGR] " + count + " targets added to AGR list");
     }
 }
 

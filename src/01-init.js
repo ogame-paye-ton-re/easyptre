@@ -158,7 +158,7 @@ if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
 if (modeEasyPTRE == "ingame") {
     // Run on EVERY pages (except Empire page)
     if (!/page=standalone&component=empire/.test(location.href)) {
-        consoleDebug("Any page detected");
+        consoleDebug("[INIT] Any page detected");
         setTimeout(improvePageAny, ptreImprovePageDelay);
 
         // Global Sync (no need to run it if only browsing pages)
@@ -183,25 +183,25 @@ if (modeEasyPTRE == "ingame") {
         }
     } else if (/component=galaxy/.test(location.href)) {
         // Galaxy page: Set routines
-        consoleDebug("Galaxy page detected");
+        consoleDebug("[INIT] Galaxy page detected");
         setTimeout(improvePageGalaxy, ptreImprovePageDelay);
         setTimeout(checkForPTREUpdate, 200);//TODO:
     } else if (/component=messages/.test(location.href)) {
         // Message page: Add PTRE send SR button
-        consoleDebug("Message page detected");
+        consoleDebug("[INIT] Message page detected");
         setTimeout(improvePageMessages, ptreImprovePageDelay);
     } else if (/page=ingame&component=fleetdispatch/.test(location.href)) {
         // Save fleeters techs in order to send it to simulator from PTRE pages
         // Huge QOL to not add them manually
-        consoleDebug("Fleet page detected");
+        consoleDebug("[INIT] Fleet page detected");
         setTimeout(improvePageFleet, ptreImprovePageDelay);
     } else if (/page=ingame&component=facilities/.test(location.href)) {
         // Capture Phalanx level
-        consoleDebug("Facilities page detected");
+        consoleDebug("[INIT] Facilities page detected");
         setTimeout(improvePageFacilities, ptreImprovePageDelay);
     } else if (/page=ingame&component=buddies/.test(location.href)) {
         // Buddies Page
-        consoleDebug("Buddies page detected");
+        consoleDebug("[INIT] Buddies page detected");
         setTimeout(improvePageBuddies, ptreImprovePageDelay);
     }
 }
@@ -220,21 +220,21 @@ if (modeEasyPTRE == "ptre") {
     // Display Lifeforms research on PTRE Lifeforms page
     if (/ptre.chez.gg\/\?page=lifeforms_researchs/.test(location.href)){
         if (universe != 0) {
-            console.log("[EasyPTRE] PTRE Lifeforms page detected: "+country+"-"+universe);
+            console.log("[EasyPTRE] [LF] PTRE Lifeforms page detected: "+country+"-"+universe);
             const json = GM_getValue(ptreTechnosJSON, '');
             if (json != '') {
                 tab = parsePlayerResearchs(json, "tab");
                 document.getElementById("tech_from_easyptre").innerHTML = tab;
-                console.log("[EasyPTRE] Updating lifeforms page");
+                console.log("[EasyPTRE] [LF] Updating lifeforms page");
             } else {
-                console.log("[EasyPTRE] No lifeforms data saved");
+                console.log("[EasyPTRE] [LF] No lifeforms data saved");
             }
         }
     }
 
     // Update PTRE Spy Report Pages
     if (/ptre.chez.gg\/\?iid/.test(location.href)){
-        console.log("[EasyPTRE] PTRE Spy Report page detected: "+country+"-"+universe);
+        console.log("[EasyPTRE] [SR] PTRE Spy Report page detected: "+country+"-"+universe);
         const json = GM_getValue(ptreTechnosJSON, '');
         if (json != '') {
             const linkElement = document.getElementById("simulate_link");
@@ -243,9 +243,9 @@ if (modeEasyPTRE == "ptre") {
             hrefValue = hrefValue.replace("replaceme", prefill);
             linkElement.setAttribute("href", hrefValue);
             document.getElementById("simulator_comment").innerHTML = "This link contains your LF techs";
-            console.log("[EasyPTRE] Updating simulator link");
+            console.log("[EasyPTRE] [SR] Updating simulator link");
         } else {
-            console.log("[EasyPTRE] No lifeforms data saved");
+            console.log("[EasyPTRE] [SR] No lifeforms data saved");
         }
     }
 }

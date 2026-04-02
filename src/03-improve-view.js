@@ -441,7 +441,7 @@ function improvePageFleet() {
                 GM_setValue(ptreLastTechnosRefresh, currentTime);
                 updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
             } else {
-                console.log("[EasyPTRE] Cant find Techs!");
+                console.log("[EasyPTRE] [FLEET] Cant find Techs!");
             }
         }
     }
@@ -458,21 +458,21 @@ function improvePageFacilities() {
             var phalanxLevel = levelSpan.getAttribute('data-value');
             var coords = document.getElementsByName('ogame-planet-coordinates')[0].content;
             var moonID = document.getElementsByName('ogame-planet-id')[0].content;
-            consoleDebug("[Phalanx] " + coords + ': Found Phalanx level '+phalanxLevel);
+            consoleDebug("[PHALANX] " + coords + ': Found Phalanx level '+phalanxLevel);
             refreshPhalanxStorage(moonID, coords, phalanxLevel);
         }
     } else {
-        consoleDebug("[Phalanx] Cant find technologies element");
+        consoleDebug("[PHALANX] Cant find technologies element");
     }
 }
 
 // Parse Buddies page
 function improvePageBuddies() {
-    console.log("[EasyPTRE] Improving Buddies Page");
+    console.log("[EasyPTRE] [BUDDIES] Improving Buddies Page");
     const currentTime = getIGCurrentTS();
     const playerLinks = document.querySelectorAll('a[data-playerid]');
     const playerIds = Array.from(playerLinks).map(link => link.getAttribute('data-playerid'));
-    consoleDebug(playerIds);
+    consoleDebug("[BUDDIES] " + playerIds);
     const dataJSON = JSON.stringify(playerIds);
     GM_setValue(ptreBuddiesList, dataJSON);
     GM_setValue(ptreBuddiesListLastRefresh, currentTime);
@@ -486,7 +486,7 @@ function improveAGRSpyTable(mutationList, observer) {
         observer.disconnect();
         var TKey = GM_getValue(ptreTeamKey, '');
         if (TKey != '') {
-            console.log("[EasyPTRE] Updating AGR Spy Table");
+            console.log("[EasyPTRE] [SPY-TABLE] Updating AGR Spy Table");
             var table = document.getElementsByClassName("ago_reports")[0];
             for (var i = 0, row; row = table.rows[i]; i++) {
                 var nbCol = row.cells.length;
@@ -529,7 +529,7 @@ function improveAGRSpyTable(mutationList, observer) {
                             });
                         });
                     } else {
-                        console.log("[EasyPTRE] Error. Cant find data element: m" + messageID);
+                        console.log("[EasyPTRE] [SPY-TABLE] Error. Cant find data element: m" + messageID);
                     }
                 }
             }
@@ -660,7 +660,7 @@ function addPTREStuffsToMessagesPage() {
                         }
                     }
                 });
-                console.log('[EasyPTRE] Pushing counter spy messages');
+                console.log('[EasyPTRE] [PUSH] Pushing counter spy messages');
             }
         }
     }
@@ -668,7 +668,7 @@ function addPTREStuffsToMessagesPage() {
 
 // Called when user clicks on the PTRE icon in galaxy view
 function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
-    consoleDebug("Click on pos " + galaxy + ":" + system + ":" + pos);
+    consoleDebug("[POP-UP] Click on pos " + galaxy + ":" + system + ":" + pos);
     const currentTime = getIGCurrentTS();
 
     // Close PTRE menu
@@ -822,7 +822,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
             // DNP button
             if (document.getElementById('btnDNP')) {
                 document.getElementById('btnDNP').addEventListener("click", function (event) {
-                    consoleDebug("Adding " + playerId + " to DNP list");
+                    consoleDebug("[DNP] Adding " + playerId + " to DNP list");
                     // Push data to PTRE
                     $.ajax({
                         url : urlPTREIngameAction + '&team_key=' + GM_getValue(ptreTeamKey, ''),
@@ -842,7 +842,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                                 GM_setValue(ptreHighlightedPlayers, temp);
                                 // Enable Live
                                 updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
-                                consoleDebug("Added player "+playerName+" to DNP ("+ts_tmp+")");
+                                consoleDebug("[DNP] Added player "+playerName+" to DNP ("+ts_tmp+")");
                             } else {
                                 addToLogs('[DNP] ' + reponseDecode.message);
                             }
