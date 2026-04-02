@@ -497,7 +497,7 @@ function displayToolsCompatibility() {
 function displayLogs() {
     ptreCurrentView = displayLogs;
     setupMainBox('Logs', 'Logs');
-    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br>Logs are kept '+ ptreLogsRetentionDuration +' days.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
+    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br>Logs are kept '+ (ptreLogsRetentionDuration/(24*60*60)) +' days.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -515,8 +515,7 @@ function displayLogs() {
 
     document.getElementById('ptreMainContent').innerHTML = content;
     document.getElementById('purgeLogs').addEventListener("click", function (event) {
-        GM_deleteValue(ptreLogsList);
-        addToLogs("[PURGE] Logs cleaned");
+        cleanCurrentUniverseLogs();
         displayLogs();
     });
 }

@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 22:50:41 CEST
+// Build date: jeu. 02 avril 2026 23:08:11 CEST
 // ****************************************
 
 // ****************************************
@@ -2311,7 +2311,7 @@ function displayToolsCompatibility() {
 function displayLogs() {
     ptreCurrentView = displayLogs;
     setupMainBox('Logs', 'Logs');
-    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br>Logs are kept '+ ptreLogsRetentionDuration +' days.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
+    var content = 'Internal logs only (errors, migrations, etc) for debug purposes if you share it with developer.<br>Logs are kept '+ (ptreLogsRetentionDuration/(24*60*60)) +' days.<br><br><div id="purgeLogs" type="button" class="button btn_blue">PURGE LOGS</div><br><br>';
     content+= '<table id="logTable"><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Log</td></tr>';
 
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -2329,8 +2329,7 @@ function displayLogs() {
 
     document.getElementById('ptreMainContent').innerHTML = content;
     document.getElementById('purgeLogs').addEventListener("click", function (event) {
-        GM_deleteValue(ptreLogsList);
-        addToLogs("[PURGE] Logs cleaned");
+        cleanCurrentUniverseLogs();
         displayLogs();
     });
 }
@@ -3924,6 +3923,18 @@ function addToLogs(message) {
 
     logsJSON = JSON.stringify(logsList);
     GM_setValue(ptreLogsList, logsJSON);
+}
+
+// Clean universe logs
+function cleanCurrentUniverseLogs() {
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    if (logsJSON != '') {
+        var logsList = JSON.parse(logsJSON);
+        logsList = logsList.filter(function(item) { return item.uni !== country + "-" + universe; });
+        logsJSON = JSON.stringify(logsList);
+        GM_setValue(ptreLogsList, logsJSON);
+        addToLogs('[PURGE] Cleaned logs for ' + country + '-' + universe);
+    }
 }
 
 // Garbage collection function

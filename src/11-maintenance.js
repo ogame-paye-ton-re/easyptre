@@ -17,6 +17,18 @@ function addToLogs(message) {
     GM_setValue(ptreLogsList, logsJSON);
 }
 
+// Clean universe logs
+function cleanCurrentUniverseLogs() {
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    if (logsJSON != '') {
+        var logsList = JSON.parse(logsJSON);
+        logsList = logsList.filter(function(item) { return item.uni !== country + "-" + universe; });
+        logsJSON = JSON.stringify(logsList);
+        GM_setValue(ptreLogsList, logsJSON);
+        addToLogs('[PURGE] Cleaned logs for ' + country + '-' + universe);
+    }
+}
+
 // Garbage collection function
 // Cleans logs
 // Check migrated timers
