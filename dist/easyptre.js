@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 21:47:41 CEST
+// Build date: jeu. 02 avril 2026 21:53:24 CEST
 // ****************************************
 
 // ****************************************
@@ -1911,137 +1911,137 @@ function displaySettings() {
     ptreCurrentView = displaySettings;
     setupMainBox('EasyPTRE Settings', 'Settings');
 
-        var ptreStoredTK = GM_getValue(ptreTeamKey, '');
+    var ptreStoredTK = GM_getValue(ptreTeamKey, '');
 
-        // Check if AGR is enabled
-        var isAGROn = false;
-        if (isAGREnabled()) {
-            isAGROn = true;
-        }
+    // Check if AGR is enabled
+    var isAGROn = false;
+    if (isAGREnabled()) {
+        isAGROn = true;
+    }
 
-        //const betaMessage = '<br><span class="ptreSmall ptreError">Enables Beta features that might be unpolished.</span>';
-        const betaMessage = '<br><span class="ptreSmall ptreSuccess">No Beta feature, at the moment. Previous one: Galaxy Pop-up (jan 2026).</span>';
-        const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">Recommended: ON.</span>';
-        const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">Recommended: OFF.</span>';
-        const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner Mode if you want to enable it.</span>';
+    //const betaMessage = '<br><span class="ptreSmall ptreError">Enables Beta features that might be unpolished.</span>';
+    const betaMessage = '<br><span class="ptreSmall ptreSuccess">No Beta feature, at the moment. Previous one: Galaxy Pop-up (jan 2026).</span>';
+    const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">Recommended: ON.</span>';
+    const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">Recommended: OFF.</span>';
+    const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner Mode if you want to enable it.</span>';
 
-        // Get every settings
-        var improveAGRTableOn = (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true' ? 'checked' : '');
-        var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
-        var galaxyPopupOn = (GM_getValue(ptreEnableGalaxyPopup, 'true') == 'true' ? 'checked' : '');
-        var toogleEventsOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
-        var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
-        var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
-        var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
+    // Get every settings
+    var improveAGRTableOn = (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true' ? 'checked' : '');
+    var buddiesOn = (GM_getValue(ptreAddBuddiesToFriendsAndPhalanx, 'true') == 'true' ? 'checked' : '');
+    var galaxyPopupOn = (GM_getValue(ptreEnableGalaxyPopup, 'true') == 'true' ? 'checked' : '');
+    var toogleEventsOn = (GM_getValue(ptreToogleEventsOverview, 'false') == 'true' ? 'checked' : '');
+    var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
+    var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
+    var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
 
-        var tdId = 0;
-        var divPTRE = '<table border="1" width="100%">';
-        // Settings
-        divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">&#128190; SAVE</div></td></tr>';
-        divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
-        if (ptreStoredTK == '') {
-            divPTRE += '<br><span class="ptreError">Add your PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
-        } else if (!isValidTeamKey(ptreStoredTK)) {
-            divPTRE += '<br><span class="ptreError">Invalid PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
-        } else {
-            divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '???')+'</span>';
-        }
-        divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
-        tdId++;
-        // Separator
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;" colspan="2"><hr></td></tr>';
-        tdId++;
-        // If AGR is detected
-        if (isAGROn) {
-            // AGR Spy Table Improvement
-            divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Improve AGR Spy Table:';
-            if (improveAGRTableOn != 'checked') {
-                divPTRE += recommendedLabelOn;
-            }
-            divPTRE += '</td>';
-            divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREImproveAGRSpyTable" type="checkbox" ';
-            divPTRE += improveAGRTableOn;
-            divPTRE += ' />';
-            divPTRE += '</td></tr>';
-            tdId++;
-        }
-        // Add Buddies to Friends and Phalanx feature
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE. <a href="/game/index.php?page=ingame&component=buddies">Update</a>.<br>(Last Refresh: ' +getLastUpdateLabel(GM_getValue(ptreBuddiesListLastRefresh, 0)) + ')</span>';
-        if (buddiesOn != 'checked') {
+    var tdId = 0;
+    var divPTRE = '<table border="1" width="100%">';
+    // Settings
+    divPTRE += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Settings</div></td><td class="td_cell" align="right"><div id="btnSaveOptPTRE" type="button" class="button btn_blue">&#128190; SAVE</div></td></tr>';
+    divPTRE += '<tr><td colspan="2"><table width="100%"><tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'"><div>PTRE Team Key:';
+    if (ptreStoredTK == '') {
+        divPTRE += '<br><span class="ptreError">Add your PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
+    } else if (!isValidTeamKey(ptreStoredTK)) {
+        divPTRE += '<br><span class="ptreError">Invalid PTRE TEAM KEY</span><br><span class="ptreSmall ptreError">Looks like: TM-????-????-????-????</span>';
+    } else {
+        divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '???')+'</span>';
+    }
+    divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
+    tdId++;
+    // Separator
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;" colspan="2"><hr></td></tr>';
+    tdId++;
+    // If AGR is detected
+    if (isAGROn) {
+        // AGR Spy Table Improvement
+        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Improve AGR Spy Table:';
+        if (improveAGRTableOn != 'checked') {
             divPTRE += recommendedLabelOn;
         }
         divPTRE += '</td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREAddBuddiesToFriendsAndPhalanx" type="checkbox" ';
-        divPTRE += buddiesOn;
+        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREImproveAGRSpyTable" type="checkbox" ';
+        divPTRE += improveAGRTableOn;
         divPTRE += ' />';
         divPTRE += '</td></tr>';
         tdId++;
-        // Enable Galaxy Pop-up
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Galaxy Pop-up:<br><span class="ptreSmall">Add a PTRE icon close to players in galaxy view.</span>';
-        if (galaxyPopupOn != 'checked') {
-            divPTRE += recommendedLabelOn;
-        }
-        var tempCheckbox = '';
-        if (MinerModeOn == 'checked') {
-            divPTRE += minerModeOnLabel;
-            tempCheckbox = ' disabled';
-        }
-        divPTRE += '</td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleGalaxyPopup" type="checkbox" ';
-        divPTRE += galaxyPopupOn;
-        divPTRE += tempCheckbox;
-        divPTRE += ' />';
-        divPTRE += '</td></tr>';
-        tdId++;
-        // Toogle Events on Overview Page
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptreSmall">Works well with option "Always show events" set to "Hide".</span></td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleEventOnOverviewPage" type="checkbox" ';
-        divPTRE += toogleEventsOn;
-        divPTRE += ' />';
-        divPTRE += '</td></tr>';
-        tdId++;
-        // Beta Mode
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:'+betaMessage;
-        divPTRE += '</td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleBetaMode" type="checkbox" ';
-        divPTRE += BetaModeOn;
-        divPTRE += ' />';
-        divPTRE += '</td></tr>';
-        tdId++;
-        // Console Debug mode
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Debug Mode:<br><span class="ptreSmall">Displays debug information in the console.</span></td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREEnableConsoleDebug" type="checkbox" ';
-        divPTRE += debugMode;
-        divPTRE += ' />';
-        divPTRE += '</td></tr>';
-        tdId++;
-        // Separator
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;" colspan="2"><hr></td></tr>';
-        tdId++;
-        // Miner Mode
-        divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Miner Mode:<br><span class="ptreSmall">If you do not want every UX improvements, but you still want to help your Team.<br>This will disable some active features (Galaxy Toolbar, Galaxy pop-up).</span>';
-        if (MinerModeOn == 'checked') {
-            divPTRE += recommendedLabelOff;
-        }
-        divPTRE += '</td>';
-        divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleMinerMode" type="checkbox" ';
-        divPTRE += MinerModeOn;
-        divPTRE += ' />';
-        divPTRE += '</td></tr>';
-        tdId++;
-        // End Settings
-        divPTRE += '</table>';
+    }
+    // Add Buddies to Friends and Phalanx feature
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Add Buddies to Friends & Phalanx feature:<br><span class="ptreSmall">List is not shared, nor stored by PTRE. <a href="/game/index.php?page=ingame&component=buddies">Update</a>.<br>(Last Refresh: ' +getLastUpdateLabel(GM_getValue(ptreBuddiesListLastRefresh, 0)) + ')</span>';
+    if (buddiesOn != 'checked') {
+        divPTRE += recommendedLabelOn;
+    }
+    divPTRE += '</td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREAddBuddiesToFriendsAndPhalanx" type="checkbox" ';
+    divPTRE += buddiesOn;
+    divPTRE += ' />';
+    divPTRE += '</td></tr>';
+    tdId++;
+    // Enable Galaxy Pop-up
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Galaxy Pop-up:<br><span class="ptreSmall">Add a PTRE icon close to players in galaxy view.</span>';
+    if (galaxyPopupOn != 'checked') {
+        divPTRE += recommendedLabelOn;
+    }
+    var tempCheckbox = '';
+    if (MinerModeOn == 'checked') {
+        divPTRE += minerModeOnLabel;
+        tempCheckbox = ' disabled';
+    }
+    divPTRE += '</td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleGalaxyPopup" type="checkbox" ';
+    divPTRE += galaxyPopupOn;
+    divPTRE += tempCheckbox;
+    divPTRE += ' />';
+    divPTRE += '</td></tr>';
+    tdId++;
+    // Toogle Events on Overview Page
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Toogle Events on Overview Page:<br><span class="ptreSmall">Works well with option "Always show events" set to "Hide".</span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleEventOnOverviewPage" type="checkbox" ';
+    divPTRE += toogleEventsOn;
+    divPTRE += ' />';
+    divPTRE += '</td></tr>';
+    tdId++;
+    // Beta Mode
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:'+betaMessage;
+    divPTRE += '</td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleBetaMode" type="checkbox" ';
+    divPTRE += BetaModeOn;
+    divPTRE += ' />';
+    divPTRE += '</td></tr>';
+    tdId++;
+    // Console Debug mode
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Debug Mode:<br><span class="ptreSmall">Displays debug information in the console.</span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREEnableConsoleDebug" type="checkbox" ';
+    divPTRE += debugMode;
+    divPTRE += ' />';
+    divPTRE += '</td></tr>';
+    tdId++;
+    // Separator
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;" colspan="2"><hr></td></tr>';
+    tdId++;
+    // Miner Mode
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Miner Mode:<br><span class="ptreSmall">If you do not want every UX improvements, but you still want to help your Team.<br>This will disable some active features (Galaxy Toolbar, Galaxy pop-up).</span>';
+    if (MinerModeOn == 'checked') {
+        divPTRE += recommendedLabelOff;
+    }
+    divPTRE += '</td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREToogleMinerMode" type="checkbox" ';
+    divPTRE += MinerModeOn;
+    divPTRE += ' />';
+    divPTRE += '</td></tr>';
+    tdId++;
+    // End Settings
+    divPTRE += '</table>';
 
-        document.getElementById('ptreMainContent').innerHTML = divPTRE;
+    document.getElementById('ptreMainContent').innerHTML = divPTRE;
 
-        // Action: Save
-        document.getElementById('btnSaveOptPTRE').addEventListener("click", function (event) {
-            savePTRESettings();
-            displaySettings();
-        });
+    // Action: Save
+    document.getElementById('btnSaveOptPTRE').addEventListener("click", function (event) {
+        savePTRESettings();
+        displaySettings();
+    });
 
-        // Check last script version
-        updateLastAvailableVersion(false);
+    // Check last script version
+    updateLastAvailableVersion(false);
 
     // Sync targets
     if (currentTime > (GM_getValue(ptreLastTargetsSync, 0) + 15*60)) {
