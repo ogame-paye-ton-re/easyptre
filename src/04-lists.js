@@ -345,7 +345,7 @@ function getAGRPlayerIDFromPseudo(playerPseudo) {
 // Target: 66 => YES
 // To attack: 67 => YES
 function updateLocalAGRList() {
-    console.log("[LIST] [AGR] Update AGR local list");
+    console.log("[EasyPTRE] [LIST] [AGR] Update AGR local list");
     var tabAgo = document.getElementsByClassName('ago_panel_overview');
 
     var count = 0;
@@ -369,7 +369,7 @@ function updateLocalAGRList() {
     }
     if (count > 0) {
         displayPTREPopUpMessage(count + ' targets added to AGR list');
-        console.log("[LIST] [AGR] " + count + " targets added to AGR list");
+        console.log("[EasyPTRE] [LIST] [AGR] " + count + " targets added to AGR list");
     }
 }
 

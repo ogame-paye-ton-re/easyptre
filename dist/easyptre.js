@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 22:24:26 CEST
+// Build date: jeu. 02 avril 2026 22:35:24 CEST
 // ****************************************
 
 // ****************************************
@@ -1784,7 +1784,7 @@ function getAGRPlayerIDFromPseudo(playerPseudo) {
 // Target: 66 => YES
 // To attack: 67 => YES
 function updateLocalAGRList() {
-    console.log("[LIST] [AGR] Update AGR local list");
+    console.log("[EasyPTRE] [LIST] [AGR] Update AGR local list");
     var tabAgo = document.getElementsByClassName('ago_panel_overview');
 
     var count = 0;
@@ -1808,7 +1808,7 @@ function updateLocalAGRList() {
     }
     if (count > 0) {
         displayPTREPopUpMessage(count + ' targets added to AGR list');
-        console.log("[LIST] [AGR] " + count + " targets added to AGR list");
+        console.log("[EasyPTRE] [LIST] [AGR] " + count + " targets added to AGR list");
     }
 }
 
@@ -2112,8 +2112,7 @@ function displayOverview() {
     // Update version message in footer
     var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
     if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
-        var updateMessageShort = '<span class="ptreError">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>';
-        displayUpdateVersionMessage(updateMessageShort);
+        displayUpdateVersionMessage('<span class="ptreError">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>');
     }
 
     document.getElementById('ptreMainContent').innerHTML = divOV;
@@ -2273,10 +2272,10 @@ function displayChangelog() {
     document.getElementById('ptreMainContent').innerHTML = content;
 }
 
-function displayUpdateBox(updateMessageShort) {
+function displayUpdateBox() {
+    ptreCurrentView = displayUpdateBox;
     setupMainBox('EasyPTRE Updates', 'Updates');
-    var content = updateMessageShort;
-    content += '<div class="ptreCategoryTitle">Check for updates</div>Last check: ' + getUnixTSLabel(GM_getValue(ptreLastAvailableVersionRefresh, 0)) + '<br><br><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION NOW</div><br>';
+    var content = '<div class="ptreCategoryTitle">Check for updates</div>Last check: ' + getUnixTSLabel(GM_getValue(ptreLastAvailableVersionRefresh, 0)) + '<br><br><div id="forceCheckVersionButton" type="button" class="button btn_blue">CHECK VERSION NOW</div><br>';
     content += '<div class="ptreCategoryTitle">Automatic updates</div>Tampermonkey should automatically update EasyPTRE when an update is available. It may take some time to be triggered, though.';
     content += '<div class="ptreCategoryTitle">Manual update</div>If you want to proceed to a manual update here is how to:<br>';
     content += '<br>- Click on Tampermonkey Extension in the top right corner of your browser';
@@ -2295,6 +2294,7 @@ function displayUpdateBox(updateMessageShort) {
 }
 
 function displayToolsCompatibility() {
+    ptreCurrentView = displayToolsCompatibility;
     setupMainBox('Tools Compatibility', 'ToolsCompatibility');
     var content = '';
     if (isOGLEnabled() || isOGIEnabled()) {
