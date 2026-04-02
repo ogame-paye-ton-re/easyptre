@@ -29,6 +29,7 @@ const ptreBorderStyleDnpList = "3px solid red"; // For player part of the Do Not
 // TODO: [LOW] Set ptreAGRTargetListMaxSize
 
 // Consts
+const ptreShipNames = {202:"Small Cargo",203:"Large Cargo",204:"Light Fighter",205:"Heavy Fighter",206:"Cruiser",207:"Battleship",208:"Colony Ship",209:"Recycler",210:"Espionage Probe",211:"Bomber",212:"Solar Satellite",213:"Destroyer",214:"Deathstar",215:"Battlecruiser",217:"Crawler",218:"Reaper",219:"Pathfinder"};
 const ptreToolName = 'EasyPTRE';
 const ptreID = "ptre-id";
 const ptreMissingTKMessage = "NO PTRE TEAM KEY: Add a Team Key via EasyPTRE settings";

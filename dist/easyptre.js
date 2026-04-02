@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 23:57:12 CEST
+// Build date: ven. 03 avril 2026 00:18:39 CEST
 // ****************************************
 
 // ****************************************
@@ -61,6 +61,7 @@ const ptreBorderStyleDnpList = "3px solid red"; // For player part of the Do Not
 // TODO: [LOW] Set ptreAGRTargetListMaxSize
 
 // Consts
+const ptreShipNames = {202:"Small Cargo",203:"Large Cargo",204:"Light Fighter",205:"Heavy Fighter",206:"Cruiser",207:"Battleship",208:"Colony Ship",209:"Recycler",210:"Espionage Probe",211:"Bomber",212:"Solar Satellite",213:"Destroyer",214:"Deathstar",215:"Battlecruiser",217:"Crawler",218:"Reaper",219:"Pathfinder"};
 const ptreToolName = 'EasyPTRE';
 const ptreID = "ptre-id";
 const ptreMissingTKMessage = "NO PTRE TEAM KEY: Add a Team Key via EasyPTRE settings";
@@ -2970,15 +2971,13 @@ function getPlayerInfos(playerID, pseudo) {
                 if (reponse.code == 1) {
                     var tdId = 0;
                     content += '<table border="1" width="100%">';
-                    content += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Player: ' + pseudo + '</div></td><td class="td_cell" align="right">Fleet points: ' + setNumber(reponse.top_sr_fleet_points) + '</td></tr>';
-                    content += '<tr><td class="td_cell" colspan="2"><table width="100%">';
-                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" align="center"><a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
+                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" colspan="3" align="center">Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
                     tdId++;
                     reponse.fleet_json.forEach(function(item) {
-                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
+                        const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
+                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '">' + shipName + '</td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
                         tdId++;
                     });
-                    content += '</table></td></tr>';
                     content += '</table>';
                 } else {
                     content += '<span class="ptreError">' + reponse.message + '</span>';

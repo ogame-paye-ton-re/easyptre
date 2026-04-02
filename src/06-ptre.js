@@ -177,15 +177,13 @@ function getPlayerInfos(playerID, pseudo) {
                 if (reponse.code == 1) {
                     var tdId = 0;
                     content += '<table border="1" width="100%">';
-                    content += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Player: ' + pseudo + '</div></td><td class="td_cell" align="right">Fleet points: ' + setNumber(reponse.top_sr_fleet_points) + '</td></tr>';
-                    content += '<tr><td class="td_cell" colspan="2"><table width="100%">';
-                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" align="center"><a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
+                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" colspan="3" align="center">Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
                     tdId++;
                     reponse.fleet_json.forEach(function(item) {
-                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
+                        const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
+                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '">' + shipName + '</td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
                         tdId++;
                     });
-                    content += '</table></td></tr>';
                     content += '</table>';
                 } else {
                     content += '<span class="ptreError">' + reponse.message + '</span>';
