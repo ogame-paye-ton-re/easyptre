@@ -169,24 +169,28 @@ function getPlayerInfos(playerID, pseudo) {
     const TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
         setupMainBox("Player " + pseudo, null);
-        var content = '<center>';
+        var content = '';
         $.ajax({
             dataType: "json",
             url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
             success: function(reponse) {
                 if (reponse.code == 1) {
-                    content+= '<table width="90%"><tr><td class="td_ship" align="center"><div class="ptreSubTitle">' + pseudo + '</div></td><td class="td_ship" align="center"><div class="ptreSubTitle">' + setNumber(reponse.top_sr_fleet_points) + ' fleet points</div></td></tr>';
-                    content+= '<tr><td class="td_ship" align="center">[<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PROFILE</a>]</td><td class="td_ship" align="center">[<a href="' + reponse.top_sr_link + '" target="_blank">BEST REPORT</a>]</td></tr>';
-                    content+= '<tr><td class="td_ship" colspan="2"><hr></td></tr>';
-                    reponse.fleet_json.forEach(function(item, index, object) {
-                        content+= '<tr><td class="td_ship" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></td><td class="td_ship" align="center"></span><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
+                    var tdId = 0;
+                    content += '<table border="1" width="100%">';
+                    content += '<tr><td class="td_cell"><div class="ptreCategoryTitle">Player: ' + pseudo + '</div></td><td class="td_cell" align="right">Fleet points: ' + setNumber(reponse.top_sr_fleet_points) + '</td></tr>';
+                    content += '<tr><td class="td_cell" colspan="2"><table width="100%">';
+                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" align="center"><a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
+                    tdId++;
+                    reponse.fleet_json.forEach(function(item) {
+                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
+                        tdId++;
                     });
-                    content+= '</table>';
+                    content += '</table></td></tr>';
+                    content += '</table>';
                 } else {
-                    content+= '<span class="ptreError">' + reponse.message + '</span>';
+                    content += '<span class="ptreError">' + reponse.message + '</span>';
                     addToLogs('[PLAYER INFOS] ' + reponse.message);
                 }
-                content+= '</center>';
                 document.getElementById('ptreMainContent').innerHTML = content;
             }
         });
