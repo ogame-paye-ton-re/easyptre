@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 21:09:32 CEST
+// Build date: jeu. 02 avril 2026 21:47:41 CEST
 // ****************************************
 
 // ****************************************
@@ -117,6 +117,7 @@ if (modeEasyPTRE == "ingame") {
 const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not change!
 const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Unix TS
+const ptreLastGarbageCollection = "ptre-LastGarbageCollection";// Unix TS
 const ptreLogsList = "ptre-Logs";// Unix TS
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
@@ -198,13 +199,18 @@ if (modeEasyPTRE == "ingame") {
             setTimeout(globalPTRESync, 3000);
         }
 
-        // Check for new version only (no need to run it if only browsing pages)
+        // Check for new script version only (no need to run it if only browsing pages)
         setTimeout(updateLastAvailableVersion, 4000);
 
         // Prepare next Backend Check
         // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
         // It only check if update is needed, it does not do the update
-        runAutoCheckForPTREUpdate();
+        setTimeout(runAutoCheckForPTREUpdate, 5000);
+
+        // Run garbage collector
+        if (getCurrentUnixTS() > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
+            setTimeout(runGarbageCollection, 6000);
+        }
     }
 
     // SPECIFIC PAGES
@@ -1905,8 +1911,6 @@ function displaySettings() {
     ptreCurrentView = displaySettings;
     setupMainBox('EasyPTRE Settings', 'Settings');
 
-    migrateDataAndCleanStorage();
-
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
 
         // Check if AGR is enabled
@@ -2156,6 +2160,9 @@ function displayOverview() {
             displayToolsCompatibility();
         });
     }
+
+    // Run garbage collection
+    runGarbageCollection();
 }
 
 function savePTRESettings() {
@@ -3587,10 +3594,6 @@ async function globalPTRESync(mode = "auto") {
     updateHtmlById("ptreLastDataSyncMessageField", "Loading...");
     updateHtmlById("ptreLastTargetsSyncMessageField", "Loading...");
 
-    migrateDataAndCleanStorage();
-
-    garbageCollectGalaxyDataV2(ptreGalaxyStorageRetention);
-
     await updateDataFromEmpireMoonPage();
 
     syncTargets();
@@ -3908,11 +3911,32 @@ function parsePlayerResearchs(json, mode) {
 // MAINTENANCE
 // ****************************************
 
-// Temp function to clean old version data
-function migrateDataAndCleanStorage() {
-    console.log("[EasyPTRE] [GC] Migrate Data and clean storage");
+function addToLogs(message) {
+    const currentUnixTS = getCurrentUnixTS();
+    console.log('[EasyPTRE] ' + message);
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    var logsList = [];
+    if (logsJSON != '') {
+        logsList = JSON.parse(logsJSON);
+    }
+    var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
+    logsList.push(newLog);
+
+    logsJSON = JSON.stringify(logsList);
+    GM_setValue(ptreLogsList, logsJSON);
+}
+
+// Garbage collection function
+// Cleans logs
+// Check migrated timers
+// Delete old positions
+// In order to avoid storage being too large for nothing
+// Will make more requests to PTRE when going to newly empty systems, but it's fine
+function runGarbageCollection() {
+    console.log("[EasyPTRE] [GC] Running Garbage Collector...");
     const currentTime = getIGCurrentTS();
     const currentUnixTS = getCurrentUnixTS();
+    const days = ptreGalaxyStorageRetention;
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -3942,31 +3966,11 @@ function migrateDataAndCleanStorage() {
             addToLogs("[GC] Fixed bad Unix TS ptreLastAvailableVersionRefresh (L:" + lastAvailableVersionRefreshTemp + ' / C:' + currentUnixTS + ')');
         }
     }
-}
 
-function addToLogs(message) {
-    const currentUnixTS = getCurrentUnixTS();
-    console.log('[EasyPTRE] ' + message);
-    var logsJSON = GM_getValue(ptreLogsList, '');
-    var logsList = [];
-    if (logsJSON != '') {
-        logsList = JSON.parse(logsJSON);
-    }
-    var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
-    logsList.push(newLog);
-
-    logsJSON = JSON.stringify(logsList);
-    GM_setValue(ptreLogsList, logsJSON);
-}
-
-// Delete old positions
-// In order to avoid storage behind too fat for nothing
-// Will make more request to PTRE when goind to newly empty system, but its fine
-function garbageCollectGalaxyDataV2(days) {
-    var removedCount = 0;
+    // Clean old positions in galaxy storage
     if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
-        const currentTime = getIGCurrentTS();
         const limitTS = currentTime - days*24*60*60;
+        var removedCount = 0;
         for(var gala = 1; gala <= 15 ; gala++) {
             const galaxyData = GM_getValue(ptreGalaxyData+gala, '');
             if (galaxyData != '') {
@@ -3987,10 +3991,11 @@ function garbageCollectGalaxyDataV2(days) {
                 ptreGalaxyCache[gala] = galaxyData; // Keep in-memory cache in sync after GC
             }
         }
+        if (removedCount > 0) {
+            addToLogs("[GC] Cleaned " + removedCount + " old positions");
+        }
     }
-    if (removedCount > 0) {
-        addToLogs("[GC] Cleaned " + removedCount + " old positions");
-    }
+    GM_setValue(ptreLastGarbageCollection, currentUnixTS);
 }
 
 function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {

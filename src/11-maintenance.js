@@ -2,11 +2,32 @@
 // MAINTENANCE
 // ****************************************
 
-// Temp function to clean old version data
-function migrateDataAndCleanStorage() {
-    console.log("[EasyPTRE] [GC] Migrate Data and clean storage");
+function addToLogs(message) {
+    const currentUnixTS = getCurrentUnixTS();
+    console.log('[EasyPTRE] ' + message);
+    var logsJSON = GM_getValue(ptreLogsList, '');
+    var logsList = [];
+    if (logsJSON != '') {
+        logsList = JSON.parse(logsJSON);
+    }
+    var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
+    logsList.push(newLog);
+
+    logsJSON = JSON.stringify(logsList);
+    GM_setValue(ptreLogsList, logsJSON);
+}
+
+// Garbage collection function
+// Cleans logs
+// Check migrated timers
+// Delete old positions
+// In order to avoid storage being too large for nothing
+// Will make more requests to PTRE when going to newly empty systems, but it's fine
+function runGarbageCollection() {
+    console.log("[EasyPTRE] [GC] Running Garbage Collector...");
     const currentTime = getIGCurrentTS();
     const currentUnixTS = getCurrentUnixTS();
+    const days = ptreGalaxyStorageRetention;
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -36,31 +57,11 @@ function migrateDataAndCleanStorage() {
             addToLogs("[GC] Fixed bad Unix TS ptreLastAvailableVersionRefresh (L:" + lastAvailableVersionRefreshTemp + ' / C:' + currentUnixTS + ')');
         }
     }
-}
 
-function addToLogs(message) {
-    const currentUnixTS = getCurrentUnixTS();
-    console.log('[EasyPTRE] ' + message);
-    var logsJSON = GM_getValue(ptreLogsList, '');
-    var logsList = [];
-    if (logsJSON != '') {
-        logsList = JSON.parse(logsJSON);
-    }
-    var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
-    logsList.push(newLog);
-
-    logsJSON = JSON.stringify(logsList);
-    GM_setValue(ptreLogsList, logsJSON);
-}
-
-// Delete old positions
-// In order to avoid storage behind too fat for nothing
-// Will make more request to PTRE when goind to newly empty system, but its fine
-function garbageCollectGalaxyDataV2(days) {
-    var removedCount = 0;
+    // Clean old positions in galaxy storage
     if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
-        const currentTime = getIGCurrentTS();
         const limitTS = currentTime - days*24*60*60;
+        var removedCount = 0;
         for(var gala = 1; gala <= 15 ; gala++) {
             const galaxyData = GM_getValue(ptreGalaxyData+gala, '');
             if (galaxyData != '') {
@@ -81,10 +82,11 @@ function garbageCollectGalaxyDataV2(days) {
                 ptreGalaxyCache[gala] = galaxyData; // Keep in-memory cache in sync after GC
             }
         }
+        if (removedCount > 0) {
+            addToLogs("[GC] Cleaned " + removedCount + " old positions");
+        }
     }
-    if (removedCount > 0) {
-        addToLogs("[GC] Cleaned " + removedCount + " old positions");
-    }
+    GM_setValue(ptreLastGarbageCollection, currentUnixTS);
 }
 
 function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {

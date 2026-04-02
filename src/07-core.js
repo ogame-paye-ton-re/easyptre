@@ -190,10 +190,6 @@ async function globalPTRESync(mode = "auto") {
     updateHtmlById("ptreLastDataSyncMessageField", "Loading...");
     updateHtmlById("ptreLastTargetsSyncMessageField", "Loading...");
 
-    migrateDataAndCleanStorage();
-
-    garbageCollectGalaxyDataV2(ptreGalaxyStorageRetention);
-
     await updateDataFromEmpireMoonPage();
 
     syncTargets();

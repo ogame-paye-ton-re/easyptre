@@ -98,8 +98,6 @@ function displaySettings() {
     ptreCurrentView = displaySettings;
     setupMainBox('EasyPTRE Settings', 'Settings');
 
-    migrateDataAndCleanStorage();
-
         var ptreStoredTK = GM_getValue(ptreTeamKey, '');
 
         // Check if AGR is enabled
@@ -349,6 +347,9 @@ function displayOverview() {
             displayToolsCompatibility();
         });
     }
+
+    // Run garbage collection
+    runGarbageCollection();
 }
 
 function savePTRESettings() {

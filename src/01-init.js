@@ -85,6 +85,7 @@ if (modeEasyPTRE == "ingame") {
 const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not change!
 const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Unix TS
+const ptreLastGarbageCollection = "ptre-LastGarbageCollection";// Unix TS
 const ptreLogsList = "ptre-Logs";// Unix TS
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
@@ -166,13 +167,18 @@ if (modeEasyPTRE == "ingame") {
             setTimeout(globalPTRESync, 3000);
         }
 
-        // Check for new version only (no need to run it if only browsing pages)
+        // Check for new script version only (no need to run it if only browsing pages)
         setTimeout(updateLastAvailableVersion, 4000);
 
         // Prepare next Backend Check
         // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
         // It only check if update is needed, it does not do the update
-        runAutoCheckForPTREUpdate();
+        setTimeout(runAutoCheckForPTREUpdate, 5000);
+
+        // Run garbage collector
+        if (getCurrentUnixTS() > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
+            setTimeout(runGarbageCollection, 6000);
+        }
     }
 
     // SPECIFIC PAGES
