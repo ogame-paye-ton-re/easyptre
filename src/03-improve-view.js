@@ -302,16 +302,12 @@ function improvePageAny() {
         }
         if (document.getElementById('ago_box_title')) {
             // Add PTRE link to AGR pinned player
-            addPTRELinkToAGRPinnedTarget();
-            // Check if pinned player is updated
-            let observer = new MutationObserver(addPTRELinkToAGRPinnedTarget);
-            var node = document.getElementById('ago_box_title');
-            observer.observe(node, {
-                attributes: true,
-                childList: true, // observer les enfants directs
-                subtree: true, // et les descendants aussi
-                characterDataOldValue: true // transmettre les anciennes données au callback
-            });
+            var pseudoAGR = document.getElementById('ago_box_title').innerHTML;
+            updateLocalAGRList();
+            var playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
+            if (playerID != 0) {
+                document.getElementById('ago_box_title').innerHTML = pseudoAGR + ' [<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE</a>]';
+            }
         }
     }
 }
@@ -481,18 +477,6 @@ function improvePageBuddies() {
     GM_setValue(ptreBuddiesList, dataJSON);
     GM_setValue(ptreBuddiesListLastRefresh, currentTime);
     displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
-}
-
-// This function adds PTRE link to AGR pinned target
-function addPTRELinkToAGRPinnedTarget() {
-    if (document.getElementById('ago_box_title')) {
-        var pseudoAGR = document.getElementById('ago_box_title').innerHTML;
-        updateLocalAGRList();
-        var playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
-        if (playerID != 0) {
-            document.getElementById('ago_box_title').innerHTML = pseudoAGR + ' [<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE</a>]';
-        }
-    }
 }
 
 // This function adds PTRE send SR button to AGR Spy Table
