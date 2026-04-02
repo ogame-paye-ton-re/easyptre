@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 23:08:11 CEST
+// Build date: jeu. 02 avril 2026 23:15:16 CEST
 // ****************************************
 
 // ****************************************
@@ -2322,7 +2322,7 @@ function displayLogs() {
     logsList.sort((a, b) => b.ts - a.ts);
     logsList.forEach(function(elem) {
         if (elem.uni == country + "-" + universe) {
-            content+= '<tr><td class="td_cell_radius_1" align="center">' + getUnixTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content+= '<tr><td class="td_cell_radius_1" align="center"><span class="ptreSmall">' + getUnixTSLabel(elem.ts) + '</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSmall">' + elem.uni + '</span></td><td class="td_cell_radius_1"><span class="ptreSmall">' + elem.log + '</span></td></tr>';
         }
     });
     content+= '</table>';
@@ -2748,7 +2748,7 @@ function displayTamperMonkeyKeys() {
         content += '<tr><td class="td_cell_radius_1" colspan="3" align="center"><span class="ptreWarning">No logs.</span></td></tr>';
     } else {
         logsList.forEach(function(elem) {
-            content += '<tr><td class="td_cell_radius_1" align="center">' + getUnixTSLabel(elem.ts) + '</td><td class="td_cell_radius_1" align="center">' + elem.uni + '</td><td class="td_cell_radius_1">' + elem.log + '</td></tr>';
+            content += '<tr><td class="td_cell_radius_1" align="center"><span class="ptreSmall">' + getUnixTSLabel(elem.ts) + '</span></td><td class="td_cell_radius_1" align="center"><span class="ptreSmall">' + elem.uni + '</span></td><td class="td_cell_radius_1"><span class="ptreSmall">' + elem.log + '</span></td></tr>';
         });
     }
     content += '</table>';
@@ -3602,7 +3602,7 @@ async function globalPTRESync(mode = "auto") {
     GM_setValue(ptreLastGlobalSync, currentTime);
     updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
     var tempDuration = Date.now() - startMiliTS;
-    addToLogs("[SYNC] Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
+    addToLogs("[SYNC] Global Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 
 // ****************************************

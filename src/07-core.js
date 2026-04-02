@@ -198,6 +198,6 @@ async function globalPTRESync(mode = "auto") {
     GM_setValue(ptreLastGlobalSync, currentTime);
     updateHtmlById("ptreLastGlobalSyncField", getLastUpdateLabel(currentTime));
     var tempDuration = Date.now() - startMiliTS;
-    addToLogs("[SYNC] Global Clean & Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
+    addToLogs("[SYNC] Global Sync (Mode: " + mode + ". Duration: " + round(tempDuration) + " ms)");
 }
 
