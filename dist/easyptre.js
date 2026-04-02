@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 22:35:24 CEST
+// Build date: jeu. 02 avril 2026 22:50:41 CEST
 // ****************************************
 
 // ****************************************
@@ -417,7 +417,7 @@ GM_addStyle(`
     position: fixed;
     top: 30px;
     right: 10px;
-    z-index: 10000;
+    z-index: 11000;
     font-size: 10pt;
 }
 #ptreMainBox {
@@ -505,7 +505,7 @@ GM_addStyle(`
     position: fixed;
     bottom: 30px;
     right: 10px;
-    z-index: 11000;
+    z-index: 10000;
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
@@ -531,7 +531,7 @@ GM_addStyle(`
     border: solid black 2px;
     border-radius: 8px;
     background-color: #171d22;
-    z-index: 10001;
+    z-index: 10000;
     padding: 5px;
 }
 #optionPTRE {
@@ -541,7 +541,7 @@ GM_addStyle(`
     position: fixed;
     top: 10px;
     right: 10px;
-    z-index: 12000;
+    z-index: 10000;
     padding: 3px 0;
     cursor: pointer;
 }
