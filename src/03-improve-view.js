@@ -233,9 +233,62 @@ function improveGalaxyTable() {
     consoleDebug("[GALAXY] Galaxy improvement duration: " + duration.toFixed(1) + " ms");
 }
 
-// To run on all pages
+// Improve any pages except Empire page
 function improvePageAny() {
     console.log("[EasyPTRE] Improving Any Page");
+
+    // Setup Menu Button
+    var ptreMenuName = ptreToolName;
+    var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
+    var updateClass = '';
+    var ptreStoredTK = GM_getValue(ptreTeamKey, '');
+    var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
+    if (configAlertActive) {
+        ptreMenuName = "CLICK ME";
+        updateClass = " ptreError";
+    }
+    // When alert is active, clicking the icon opens EasyPTRE settings instead of the PTRE website
+    var iconLink = configAlertActive
+        ? '<a id="ptreMenuIcon" href="#" target="_self">'
+        : '<a id="ptreMenuIcon" href="https://ptre.chez.gg" target="blank_">';
+    var aff_option = '<span class="menu_icon">' + iconLink + '<img id="ptreMenuImg" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
+    aff_option += '<a id="ptreMenuText" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
+    if (configAlertActive) {
+        var badgeTitle = (ptreStoredTK == '')
+            ? 'EasyPTRE: No Team Key set. Click to configure.'
+            : 'EasyPTRE: Update available. Click to open settings.';
+        aff_option += '<span id="ptreMissingTKBadge" title="' + badgeTitle + '">!</span>';
+    }
+
+    var tab = document.createElement("li");
+    tab.innerHTML = aff_option;
+    tab.id = 'optionPTRE';
+    document.getElementById('menuTableTools').appendChild(tab);
+
+    document.getElementById('ptreMenuText').addEventListener("click", function (event) {
+        displayOverview();
+    }, true);
+
+    if (configAlertActive) {
+        document.getElementById('ptreMenuIcon').addEventListener("click", function (event) {
+            event.preventDefault();
+            displaySettings();
+        }, true);
+        document.getElementById('ptreMissingTKBadge').addEventListener("click", function (event) {
+            displaySettings();
+        }, true);
+    }
+
+    // Add fixed button in top right corner
+    var badge = document.createElement("div");
+    badge.id = 'ptreTopRightMenuButton';
+    badge.classList.add('button', 'btn_blue');
+    badge.innerHTML = '&#9881; EasyPTRE';
+    document.body.appendChild(badge);
+    document.getElementById('ptreTopRightMenuButton').addEventListener("click", function (event) {
+        displayOverview();
+    });
+
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         if (document.getElementById('ago_panel_Player')) {
             let observer2 = new MutationObserver(updateLocalAGRList);

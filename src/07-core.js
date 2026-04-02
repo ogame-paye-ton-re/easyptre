@@ -37,7 +37,7 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentUnixTS = getCurrentUnixTS();
+    const currentUnixTS = getCurrentUnixTS();
 
     if (force === true || currentUnixTS > lastCheckTime + ptreVersionCheckTimeout) {
         consoleDebug("Checking last version available");

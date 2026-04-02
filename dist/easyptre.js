@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 18:25:24 CEST
+// Build date: jeu. 02 avril 2026 19:34:03 CEST
 // ****************************************
 
 // ****************************************
@@ -188,120 +188,53 @@ if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
 // ****************************************
 
 if (modeEasyPTRE == "ingame") {
-    // Add EasyPTRE menu
-    if (!/page=standalone&component=empire/.test(location.href)) {
-        // Setup Menu Button
-        var ptreMenuName = ptreToolName;
-        var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
-        var updateClass = '';
-        var ptreStoredTK = GM_getValue(ptreTeamKey, '');
-        var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
-        if (configAlertActive) {
-            ptreMenuName = "CLICK ME";
-            updateClass = " ptreError";
-        }
-        // When alert is active, clicking the icon opens EasyPTRE settings instead of the PTRE website
-        var iconLink = configAlertActive
-            ? '<a id="ptreMenuIcon" href="#" target="_self">'
-            : '<a id="ptreMenuIcon" href="https://ptre.chez.gg" target="blank_">';
-        var aff_option = '<span class="menu_icon">' + iconLink + '<img id="ptreMenuImg" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
-        aff_option += '<a id="ptreMenuText" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
-        if (configAlertActive) {
-            var badgeTitle = (ptreStoredTK == '')
-                ? 'EasyPTRE: No Team Key set. Click to configure.'
-                : 'EasyPTRE: Update available. Click to open settings.';
-            aff_option += '<span id="ptreMissingTKBadge" title="' + badgeTitle + '">!</span>';
-        }
-
-        var tab = document.createElement("li");
-        tab.innerHTML = aff_option;
-        tab.id = 'optionPTRE';
-        document.getElementById('menuTableTools').appendChild(tab);
-
-        document.getElementById('ptreMenuText').addEventListener("click", function (event) {
-            displayOverview();
-        }, true);
-
-        if (configAlertActive) {
-            document.getElementById('ptreMenuIcon').addEventListener("click", function (event) {
-                event.preventDefault();
-                displaySettings();
-            }, true);
-            document.getElementById('ptreMissingTKBadge').addEventListener("click", function (event) {
-                displaySettings();
-            }, true);
-        }
-
-        // Add fixed button in top right corner
-        var badge = document.createElement("div");
-        badge.id = 'ptreTopRightMenuButton';
-        badge.classList.add('button', 'btn_blue');
-        badge.innerHTML = '&#9881; EasyPTRE';
-        document.body.appendChild(badge);
-        document.getElementById('ptreTopRightMenuButton').addEventListener("click", function (event) {
-            displayOverview();
-        });
-    }
-
-    // Run on all pages
+    // Run on EVERY pages (except Empire page)
     if (!/page=standalone&component=empire/.test(location.href)) {
         consoleDebug("Any page detected");
         setTimeout(improvePageAny, ptreImprovePageDelay);
-    }
 
-    // Toogle events on Overview page
-    if (/component=overview/.test(location.href)) {
-        if (GM_getValue(ptreToogleEventsOverview, 'false') == 'true') {
-            toggleEvents();
-        }
-    }
-
-    // Galaxy page: Set routines
-    if (/component=galaxy/.test(location.href)) {
-        consoleDebug("Galaxy page detected");
-        setTimeout(improvePageGalaxy, ptreImprovePageDelay);
-        setTimeout(checkForPTREUpdate, 200);
-    }
-
-    // Message page: Add PTRE send SR button
-    if (/component=messages/.test(location.href)) {
-        consoleDebug("Message page detected");
-        setTimeout(improvePageMessages, ptreImprovePageDelay);
-    }
-
-    // Save fleeters techs in order to send it to simulator from PTRE pages
-    // Huge QOL to not add them manually
-    if (/page=ingame&component=fleetdispatch/.test(location.href)) {
-        consoleDebug("Fleet page detected");
-        setTimeout(improvePageFleet, ptreImprovePageDelay);
-    }
-
-    // Capture Phalanx level
-    if (/page=ingame&component=facilities/.test(location.href)) {
-        consoleDebug("Facilities page detected");
-        setTimeout(improvePageFacilities, ptreImprovePageDelay);
-    }
-
-    // Buddies Page
-    if (/page=ingame&component=buddies/.test(location.href)) {
-        consoleDebug("Buddies page detected");
-        setTimeout(improvePageBuddies, ptreImprovePageDelay);
-    }
-
-    // Dont run background tasks on Empire page
-    if (!/page=standalone&component=empire/.test(location.href)) {
-        // Global Sync
+        // Global Sync (no need to run it if only browsing pages)
         if (getIGCurrentTS() > (Number(GM_getValue(ptreLastGlobalSync, 0)) + ptreGlobalPTRESyncTimeout)) {
             setTimeout(globalPTRESync, 3000);
         }
 
-        // Check for new version only (no need to run it if only browsing)
+        // Check for new version only (no need to run it if only browsing pages)
         setTimeout(updateLastAvailableVersion, 4000);
 
         // Prepare next Backend Check
         // This is not enabled by default (ptreCheckForUpdateCooldown <= 0)
         // It only check if update is needed, it does not do the update
         runAutoCheckForPTREUpdate();
+    }
+
+    // SPECIFIC PAGES
+    if (/component=overview/.test(location.href)) {
+        // Toogle events on Overview page
+        if (GM_getValue(ptreToogleEventsOverview, 'false') == 'true') {
+            toggleEvents();
+        }
+    } else if (/component=galaxy/.test(location.href)) {
+        // Galaxy page: Set routines
+        consoleDebug("Galaxy page detected");
+        setTimeout(improvePageGalaxy, ptreImprovePageDelay);
+        setTimeout(checkForPTREUpdate, 200);//TODO:
+    } else if (/component=messages/.test(location.href)) {
+        // Message page: Add PTRE send SR button
+        consoleDebug("Message page detected");
+        setTimeout(improvePageMessages, ptreImprovePageDelay);
+    } else if (/page=ingame&component=fleetdispatch/.test(location.href)) {
+        // Save fleeters techs in order to send it to simulator from PTRE pages
+        // Huge QOL to not add them manually
+        consoleDebug("Fleet page detected");
+        setTimeout(improvePageFleet, ptreImprovePageDelay);
+    } else if (/page=ingame&component=facilities/.test(location.href)) {
+        // Capture Phalanx level
+        consoleDebug("Facilities page detected");
+        setTimeout(improvePageFacilities, ptreImprovePageDelay);
+    } else if (/page=ingame&component=buddies/.test(location.href)) {
+        // Buddies Page
+        consoleDebug("Buddies page detected");
+        setTimeout(improvePageBuddies, ptreImprovePageDelay);
     }
 }
 
@@ -858,9 +791,62 @@ function improveGalaxyTable() {
     consoleDebug("[GALAXY] Galaxy improvement duration: " + duration.toFixed(1) + " ms");
 }
 
-// To run on all pages
+// Improve any pages except Empire page
 function improvePageAny() {
     console.log("[EasyPTRE] Improving Any Page");
+
+    // Setup Menu Button
+    var ptreMenuName = ptreToolName;
+    var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
+    var updateClass = '';
+    var ptreStoredTK = GM_getValue(ptreTeamKey, '');
+    var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
+    if (configAlertActive) {
+        ptreMenuName = "CLICK ME";
+        updateClass = " ptreError";
+    }
+    // When alert is active, clicking the icon opens EasyPTRE settings instead of the PTRE website
+    var iconLink = configAlertActive
+        ? '<a id="ptreMenuIcon" href="#" target="_self">'
+        : '<a id="ptreMenuIcon" href="https://ptre.chez.gg" target="blank_">';
+    var aff_option = '<span class="menu_icon">' + iconLink + '<img id="ptreMenuImg" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a></span>';
+    aff_option += '<a id="ptreMenuText" class="menubutton " href="#" accesskey="" target="_self"><span class="textlabel' + updateClass + '" id="ptreMenuName">' + ptreMenuName + '</span></a>';
+    if (configAlertActive) {
+        var badgeTitle = (ptreStoredTK == '')
+            ? 'EasyPTRE: No Team Key set. Click to configure.'
+            : 'EasyPTRE: Update available. Click to open settings.';
+        aff_option += '<span id="ptreMissingTKBadge" title="' + badgeTitle + '">!</span>';
+    }
+
+    var tab = document.createElement("li");
+    tab.innerHTML = aff_option;
+    tab.id = 'optionPTRE';
+    document.getElementById('menuTableTools').appendChild(tab);
+
+    document.getElementById('ptreMenuText').addEventListener("click", function (event) {
+        displayOverview();
+    }, true);
+
+    if (configAlertActive) {
+        document.getElementById('ptreMenuIcon').addEventListener("click", function (event) {
+            event.preventDefault();
+            displaySettings();
+        }, true);
+        document.getElementById('ptreMissingTKBadge').addEventListener("click", function (event) {
+            displaySettings();
+        }, true);
+    }
+
+    // Add fixed button in top right corner
+    var badge = document.createElement("div");
+    badge.id = 'ptreTopRightMenuButton';
+    badge.classList.add('button', 'btn_blue');
+    badge.innerHTML = '&#9881; EasyPTRE';
+    document.body.appendChild(badge);
+    document.getElementById('ptreTopRightMenuButton').addEventListener("click", function (event) {
+        displayOverview();
+    });
+
     if (isAGREnabled() && !isOGLorOGIEnabled()) {
         if (document.getElementById('ago_panel_Player')) {
             let observer2 = new MutationObserver(updateLocalAGRList);
@@ -3213,7 +3199,7 @@ function getGEEInfosFromGala() {
 // - Phalanx levels
 function syncDataWithPTRE(mode = "auto") {
     const currentTime = getIGCurrentTS();
-    console.log("[EasyPTRE] Syncing data "+currentTime);
+    console.log("[EasyPTRE] [DATA] Syncing data. IG TS: "+currentTime);
     const teamKey = GM_getValue(ptreTeamKey, "notk");
     var addParams = "";
 
@@ -3235,7 +3221,7 @@ function syncDataWithPTRE(mode = "auto") {
         success : function(reponse){
             var reponseDecode = JSON.parse(reponse);
             if (reponseDecode.code == 1) {
-                consoleDebug("Received data from TS "+reponseDecode.timestamp);
+                consoleDebug("[DATA] Received data from PTRE. TS "+reponseDecode.timestamp);
                 GM_setValue(ptreTeamName, reponseDecode.team_name);
                 // Update highlighted players received from PTRE
                 //var temp = JSON.parse(JSON.stringify(reponseDecode.player_highlight_array));
@@ -3354,7 +3340,7 @@ function syncTargets(mode) {
 // Get Empire page as JSON
 // Update Phalanx
 function updateDataFromEmpireMoonPage() {
-    consoleDebug("[EasyPTRE] Fetching Empire Moon Page");
+    consoleDebug("[EMPIRE] Fetching Empire Moon Page");
     const currentTime = getIGCurrentTS();
     return fetch('https://' + window.location.host + '/game/index.php?page=ajax&component=empire&ajax=1&planetType=1&asJson=1', {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -3461,7 +3447,7 @@ function updateLastAvailableVersion(force = false) {
     // Only check once a while
 
     var lastCheckTime = GM_getValue(ptreLastAvailableVersionRefresh, 0);
-    var currentUnixTS = getCurrentUnixTS();
+    const currentUnixTS = getCurrentUnixTS();
 
     if (force === true || currentUnixTS > lastCheckTime + ptreVersionCheckTimeout) {
         consoleDebug("Checking last version available");
@@ -3597,7 +3583,7 @@ function runAutoCheckForPTREUpdate() {
     }
 }
 
-// Sync all data once a day
+// Sync all data with PTRE
 async function globalPTRESync(mode = "auto") {
     const miliTS = Date.now();
     const currentTime = getIGCurrentTS();
@@ -3938,6 +3924,7 @@ function parsePlayerResearchs(json, mode) {
 function migrateDataAndCleanStorage() {
     console.log("[EasyPTRE] Migrate Data and clean storage");
     const currentTime = getIGCurrentTS();
+    const currentUnixTS = getCurrentUnixTS();
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -3951,12 +3938,20 @@ function migrateDataAndCleanStorage() {
     }
     // End: Clean logs
 
-    // Check TS
+    // Check ptreLastGlobalSync IG TS
     const lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
     if (lastGlobalSyncTemp != 0) {
         if (lastGlobalSyncTemp > currentTime) {
             GM_setValue(ptreLastGlobalSync, currentTime);
-            addToLogs("[GC] Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+            addToLogs("[GC] Fixed bad IG TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+        }
+    }
+    // Check ptreLastAvailableVersionRefresh (after migrating to UNIX TS)
+    const lastAvailableVersionRefreshTemp = GM_getValue(ptreLastAvailableVersionRefresh, 0);
+    if (lastAvailableVersionRefreshTemp != 0) {
+        if (lastAvailableVersionRefreshTemp > currentUnixTS) {
+            GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
+            addToLogs("[GC] Fixed bad Unix TS ptreLastAvailableVersionRefresh (L:" + lastAvailableVersionRefreshTemp + ' / C:' + currentUnixTS + ')');
         }
     }
 }

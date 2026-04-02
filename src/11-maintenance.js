@@ -6,6 +6,7 @@
 function migrateDataAndCleanStorage() {
     console.log("[EasyPTRE] Migrate Data and clean storage");
     const currentTime = getIGCurrentTS();
+    const currentUnixTS = getCurrentUnixTS();
 
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
@@ -19,12 +20,20 @@ function migrateDataAndCleanStorage() {
     }
     // End: Clean logs
 
-    // Check TS
+    // Check ptreLastGlobalSync IG TS
     const lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
     if (lastGlobalSyncTemp != 0) {
         if (lastGlobalSyncTemp > currentTime) {
             GM_setValue(ptreLastGlobalSync, currentTime);
-            addToLogs("[GC] Fixed bad TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+            addToLogs("[GC] Fixed bad IG TS ptreLastGlobalSync (L:" + lastGlobalSyncTemp + ' / C:' + currentTime + ')');
+        }
+    }
+    // Check ptreLastAvailableVersionRefresh (after migrating to UNIX TS)
+    const lastAvailableVersionRefreshTemp = GM_getValue(ptreLastAvailableVersionRefresh, 0);
+    if (lastAvailableVersionRefreshTemp != 0) {
+        if (lastAvailableVersionRefreshTemp > currentUnixTS) {
+            GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
+            addToLogs("[GC] Fixed bad Unix TS ptreLastAvailableVersionRefresh (L:" + lastAvailableVersionRefreshTemp + ' / C:' + currentUnixTS + ')');
         }
     }
 }

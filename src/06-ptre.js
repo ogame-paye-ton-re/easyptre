@@ -400,7 +400,7 @@ function getGEEInfosFromGala() {
 // - Phalanx levels
 function syncDataWithPTRE(mode = "auto") {
     const currentTime = getIGCurrentTS();
-    console.log("[EasyPTRE] Syncing data "+currentTime);
+    console.log("[EasyPTRE] [DATA] Syncing data. IG TS: "+currentTime);
     const teamKey = GM_getValue(ptreTeamKey, "notk");
     var addParams = "";
 
@@ -422,7 +422,7 @@ function syncDataWithPTRE(mode = "auto") {
         success : function(reponse){
             var reponseDecode = JSON.parse(reponse);
             if (reponseDecode.code == 1) {
-                consoleDebug("Received data from TS "+reponseDecode.timestamp);
+                consoleDebug("[DATA] Received data from PTRE. TS "+reponseDecode.timestamp);
                 GM_setValue(ptreTeamName, reponseDecode.team_name);
                 // Update highlighted players received from PTRE
                 //var temp = JSON.parse(JSON.stringify(reponseDecode.player_highlight_array));
@@ -541,7 +541,7 @@ function syncTargets(mode) {
 // Get Empire page as JSON
 // Update Phalanx
 function updateDataFromEmpireMoonPage() {
-    consoleDebug("[EasyPTRE] Fetching Empire Moon Page");
+    consoleDebug("[EMPIRE] Fetching Empire Moon Page");
     const currentTime = getIGCurrentTS();
     return fetch('https://' + window.location.host + '/game/index.php?page=ajax&component=empire&ajax=1&planetType=1&asJson=1', {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
