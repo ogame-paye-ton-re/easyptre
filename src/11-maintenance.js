@@ -11,7 +11,7 @@ function migrateDataAndCleanStorage() {
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
     if (logsJSON != '') {
-        var minTs = currentTime - ptreLogsRetentionDuration;
+        var minTs = currentUnixTS - ptreLogsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
         logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));

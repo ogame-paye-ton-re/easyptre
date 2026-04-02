@@ -235,7 +235,7 @@ GM_addStyle(`
     line-height: 1.3em;
 }
 #ptreGalaxyPopUp {
-    width-min: 250px;
+    min-width: 250px;
     position: absolute;
     border: solid black 2px;
     border-radius: 8px;

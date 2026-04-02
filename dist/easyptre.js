@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 02 avril 2026 21:03:44 CEST
+// Build date: jeu. 02 avril 2026 21:09:32 CEST
 // ****************************************
 
 // ****************************************
@@ -519,7 +519,7 @@ GM_addStyle(`
     line-height: 1.3em;
 }
 #ptreGalaxyPopUp {
-    width-min: 250px;
+    min-width: 250px;
     position: absolute;
     border: solid black 2px;
     border-radius: 8px;
@@ -3917,7 +3917,7 @@ function migrateDataAndCleanStorage() {
     // Clean logs
     var logsJSON = GM_getValue(ptreLogsList, '');
     if (logsJSON != '') {
-        var minTs = currentTime - ptreLogsRetentionDuration;
+        var minTs = currentUnixTS - ptreLogsRetentionDuration;
         var logsList = [];
         logsList = JSON.parse(logsJSON);
         logsList.splice(0, logsList.length, ...logsList.filter(item => item.ts >= minTs));
