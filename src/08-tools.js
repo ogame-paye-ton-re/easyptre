@@ -84,18 +84,18 @@ function getLastUpdateLabel(ts) {
     const currentTime = getIGCurrentTS();
 
     if (ts == 0) {
-        return '<span class="ptreError ptreSmall">never updated</span>';
+        return '<span class="ptreError">never updated</span>';
     } else if (currentTime >= ts) {
         var nb_min = (currentTime - ts) / 60;
         if (nb_min <= 1) {
-            temp = '<span class="ptreSuccess ptreSmall">updated now</span>';
+            temp = '<span class="ptreSuccess">updated now</span>';
         } else if (nb_min < 60) {
-            temp = '<span class="ptreSuccess ptreSmall">updated ' + round(nb_min, 0) + ' mins ago</span>';
+            temp = '<span class="ptreSuccess">updated ' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
             var nb_h = (currentTime - ts) / 3600;
-            temp = '<span class="ptreWarning ptreSmall">updated ' + round(nb_h, 0) + ' hours ago</span>';
+            temp = '<span class="ptreWarning">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
-            temp = '<span class="ptreError ptreSmall">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
+            temp = '<span class="ptreError">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
         return temp;
     } else {
@@ -110,18 +110,18 @@ function getUnixTSLabel(ts) {
     const currentUnixTS = getCurrentUnixTS();
 
     if (ts == 0) {
-        return '<span class="ptreError ptreSmall">???</span>';
+        return '<span class="ptreError">???</span>';
     } else if (currentUnixTS >= ts) {
         var nb_min = (currentUnixTS - ts) / 60;
         if (nb_min <= 1) {
-            temp = '<span class="ptreSuccess ptreSmall">now</span>';
+            temp = '<span class="ptreSuccess">now</span>';
         } else if (nb_min < 60) {
-            temp = '<span class="ptreSuccess ptreSmall">' + round(nb_min, 0) + ' mins ago</span>';
+            temp = '<span class="ptreSuccess">' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
             var nb_h = (currentUnixTS - ts) / 3600;
-            temp = '<span class="ptreWarning ptreSmall">' + round(nb_h, 0) + ' hours ago</span>';
+            temp = '<span class="ptreWarning">' + round(nb_h, 0) + ' hours ago</span>';
         } else {
-            temp = '<span class="ptreError ptreSmall">' + round(nb_min/(24*60), 1) + ' days ago</span>';
+            temp = '<span class="ptreError">' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
         return temp;
     } else {
@@ -154,5 +154,13 @@ function getIGCurrentMiliTS() {
 function getCurrentUnixTS() {
     const elapsed = Date.now() - ptrePageLoadClientMiliTS;
     return Math.floor(ptrePageLoadUnixTS + elapsed / 1000);
+}
+
+function convertUnixTSToIGTS(unixTS) {
+    return unixTS - ptreTimezoneDiffSec;
+}
+
+function convertIGTSToUnixTS(igTS) {
+    return igTS + ptreTimezoneDiffSec;
 }
 

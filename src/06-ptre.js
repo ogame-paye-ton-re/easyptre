@@ -46,10 +46,10 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
     // Go throught gala pos
     for(let pos = 1; pos <= 15 ; pos++) {
         // Compare new positions with previous one
-        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
+        //consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
         if (previousSystemFound === false || newSystemInfos[pos].playerId != previousSystem[pos].playerId || newSystemInfos[pos].planetId != previousSystem[pos].planetId || newSystemInfos[pos].moonId != previousSystem[pos].moonId) {
             if (newSystemInfos[pos].playerId != -1 || previousSystem[pos].playerId != -1) {
-                consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
+                consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed: Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
                 updatedPositions++;
                 // Build data to send to PTRE
                 // Use Mili-sec TS
@@ -417,7 +417,10 @@ function syncDataWithPTRE(mode = "auto") {
     // Push data to PTRE
     var dataJSON = GM_getValue(ptreDataToSync, '');
     $.ajax({
-        url : urlPTRESyncData + '&team_key=' + teamKey + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) + addParams,
+        url : urlPTRESyncData + '&team_key=' + teamKey +
+              '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) +
+              '&galaxy_api_update_timestamp=' + GM_getValue(ptreGalaxyAPIUpdateIGTS, 0) +
+              addParams,
         type : 'POST',
         data: dataJSON,
         cache: false,
@@ -447,6 +450,7 @@ function syncDataWithPTRE(mode = "auto") {
                 updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, reponseDecode.last_update_ts);
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
+                GM_setValue(ptreGalaxyAPIUpdateIGTS, convertUnixTSToIGTS(reponseDecode.galaxy_api_update_timestamp));
 
                 // Update info in menu
                 updateHtmlById("ptreLastDataSyncField", getLastUpdateLabel(currentTime));

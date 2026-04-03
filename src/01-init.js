@@ -20,9 +20,9 @@ const ptreDataSharingDelay = 200;
 const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const ptreLogsRetentionDuration = 15*24*60*60;
-const ptreGlobalPTRESyncTimeout = 12*60*60;
+const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
-const ptreGalaxyStorageRetention = 15; // nb of days we keep planets infos
+const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated
 const ptreBorderStyleDnpList = "3px solid red"; // For player part of the Do Not Probe list
@@ -57,6 +57,7 @@ var ptreEnableConsoleDebugValue = false;
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
 var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
 var ptrePageLoadUnixTS = 0;
+var ptreTimezoneDiffSec = 0;
 
 if (modeEasyPTRE == "ingame") {
     // Only get serverTime one time
@@ -64,7 +65,10 @@ if (modeEasyPTRE == "ingame") {
     ptrePageLoadServerMiliTS = serverTime.getTime();
     ptrePageLoadClientMiliTS = Date.now();
     ptrePageLoadUnixTS = Number(document.getElementsByName('ogame-timestamp')[0].content); // Unix Timestamp
-    console.log("[EasyPTRE] UNIX TS: " + ptrePageLoadUnixTS + " | Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
+    if (unsafeWindow.timeZoneDiffSeconds !== undefined) {
+        ptreTimezoneDiffSec = Number(unsafeWindow.timeZoneDiffSeconds);
+    }
+    console.log("[EasyPTRE] UNIX TS: " + ptrePageLoadUnixTS + " | Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ") | ptreTimezoneDiffSec: " + (ptreTimezoneDiffSec/3600) + " hours");
     //console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
@@ -107,6 +111,7 @@ const ptrePlayerID = ptrePerUniKeysPrefix + "PlayerID";
 const ptreDataToSync = ptrePerUniKeysPrefix + "DataToSync";
 const ptreEmpireMoonLastRefresh = ptrePerUniKeysPrefix + "EmpireMoonLastRefresh";
 const ptreGalaxyData = ptrePerUniKeysPrefix + "GalaxyDataG"; // Object
+const ptreGalaxyAPIUpdateIGTS = ptrePerUniKeysPrefix + "ptreGalaxyAPIUpdateIGTS"; // IG timestamp
 const ptreBuddiesList = ptrePerUniKeysPrefix + "BuddiesList";
 const ptreBuddiesListLastRefresh = ptrePerUniKeysPrefix + "BuddiesListLastRefresh";
 const ptreToogleEventsOverview = ptrePerUniKeysPrefix + "ToogleEventsOverview";

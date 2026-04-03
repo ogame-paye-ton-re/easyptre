@@ -302,9 +302,9 @@ function improvePageAny() {
         }
         if (document.getElementById('ago_box_title')) {
             // Add PTRE link to AGR pinned player
-            var pseudoAGR = document.getElementById('ago_box_title').innerHTML;
+            const pseudoAGR = document.getElementById('ago_box_title').innerHTML;
             updateLocalAGRList();
-            var playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
+            const playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
             if (playerID != 0) {
                 document.getElementById('ago_box_title').innerHTML = pseudoAGR + ' [<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE</a>]';
             }

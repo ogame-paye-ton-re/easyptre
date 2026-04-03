@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: ven. 03 avril 2026 10:16:54 CEST
+// Build date: ven. 03 avril 2026 17:42:14 CEST
 // ****************************************
 
 // ****************************************
@@ -52,9 +52,9 @@ const ptreDataSharingDelay = 200;
 const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const ptreLogsRetentionDuration = 15*24*60*60;
-const ptreGlobalPTRESyncTimeout = 12*60*60;
+const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
-const ptreGalaxyStorageRetention = 15; // nb of days we keep planets infos
+const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated
 const ptreBorderStyleDnpList = "3px solid red"; // For player part of the Do Not Probe list
@@ -89,6 +89,7 @@ var ptreEnableConsoleDebugValue = false;
 var ptrePageLoadClientMiliTS = 0; // Client timestamp (en ms)
 var ptrePageLoadServerMiliTS = 0; // Server clock (en ms et TZ dependant)
 var ptrePageLoadUnixTS = 0;
+var ptreTimezoneDiffSec = 0;
 
 if (modeEasyPTRE == "ingame") {
     // Only get serverTime one time
@@ -96,7 +97,10 @@ if (modeEasyPTRE == "ingame") {
     ptrePageLoadServerMiliTS = serverTime.getTime();
     ptrePageLoadClientMiliTS = Date.now();
     ptrePageLoadUnixTS = Number(document.getElementsByName('ogame-timestamp')[0].content); // Unix Timestamp
-    console.log("[EasyPTRE] UNIX TS: " + ptrePageLoadUnixTS + " | Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ")");
+    if (unsafeWindow.timeZoneDiffSeconds !== undefined) {
+        ptreTimezoneDiffSec = Number(unsafeWindow.timeZoneDiffSeconds);
+    }
+    console.log("[EasyPTRE] UNIX TS: " + ptrePageLoadUnixTS + " | Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ") | ptreTimezoneDiffSec: " + (ptreTimezoneDiffSec/3600) + " hours");
     //console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
     server = document.getElementsByName('ogame-universe')[0].content;
     var splitted = server.split('-');
@@ -139,6 +143,7 @@ const ptrePlayerID = ptrePerUniKeysPrefix + "PlayerID";
 const ptreDataToSync = ptrePerUniKeysPrefix + "DataToSync";
 const ptreEmpireMoonLastRefresh = ptrePerUniKeysPrefix + "EmpireMoonLastRefresh";
 const ptreGalaxyData = ptrePerUniKeysPrefix + "GalaxyDataG"; // Object
+const ptreGalaxyAPIUpdateIGTS = ptrePerUniKeysPrefix + "ptreGalaxyAPIUpdateIGTS"; // IG timestamp
 const ptreBuddiesList = ptrePerUniKeysPrefix + "BuddiesList";
 const ptreBuddiesListLastRefresh = ptrePerUniKeysPrefix + "BuddiesListLastRefresh";
 const ptreToogleEventsOverview = ptrePerUniKeysPrefix + "ToogleEventsOverview";
@@ -876,9 +881,9 @@ function improvePageAny() {
         }
         if (document.getElementById('ago_box_title')) {
             // Add PTRE link to AGR pinned player
-            var pseudoAGR = document.getElementById('ago_box_title').innerHTML;
+            const pseudoAGR = document.getElementById('ago_box_title').innerHTML;
             updateLocalAGRList();
-            var playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
+            const playerID = getAGRPlayerIDFromPseudo(pseudoAGR);
             if (playerID != 0) {
                 document.getElementById('ago_box_title').innerHTML = pseudoAGR + ' [<a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE</a>]';
             }
@@ -2351,7 +2356,8 @@ function displayGalaxyTracking() {
     if (isOGLorOGIEnabled()) {
         content += '<span class="ptreWarning">OGLight or OGInfinity is enabled: EasyPTRE is not managing galaxy pushs.<br>EasyPTRE still get Galaxy events to highlight updated positions.</span><br><br>';
     }
-    content+='Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + ' | Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
+    content+='Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + ' | Retention: ' + ptreGalaxyStorageRetention + ' days<br>';
+    content+='Last Public API Update: ' + getLastUpdateLabel(GM_getValue(ptreGalaxyAPIUpdateIGTS, 0)) + '<br><br>';
 
     const allGalaxyKeys = GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort();
 
@@ -2848,10 +2854,10 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
     // Go throught gala pos
     for(let pos = 1; pos <= 15 ; pos++) {
         // Compare new positions with previous one
-        consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
+        //consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
         if (previousSystemFound === false || newSystemInfos[pos].playerId != previousSystem[pos].playerId || newSystemInfos[pos].planetId != previousSystem[pos].planetId || newSystemInfos[pos].moonId != previousSystem[pos].moonId) {
             if (newSystemInfos[pos].playerId != -1 || previousSystem[pos].playerId != -1) {
-                consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed");
+                consoleDebug("[GALAXY] [" + galaxy + ":" + system + ":" + pos + "] has changed: Player "+previousSystem[pos].playerId+"=>"+newSystemInfos[pos].playerId+" | Planet: "+previousSystem[pos].planetId+"=>"+newSystemInfos[pos].planetId+" | Moon: "+previousSystem[pos].moonId+"=>"+newSystemInfos[pos].moonId+" ("+additionnalSSInfos[pos].playerName + " - "+additionnalSSInfos[pos].playerRank+")");
                 updatedPositions++;
                 // Build data to send to PTRE
                 // Use Mili-sec TS
@@ -3219,7 +3225,10 @@ function syncDataWithPTRE(mode = "auto") {
     // Push data to PTRE
     var dataJSON = GM_getValue(ptreDataToSync, '');
     $.ajax({
-        url : urlPTRESyncData + '&team_key=' + teamKey + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) + addParams,
+        url : urlPTRESyncData + '&team_key=' + teamKey +
+              '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) +
+              '&galaxy_api_update_timestamp=' + GM_getValue(ptreGalaxyAPIUpdateIGTS, 0) +
+              addParams,
         type : 'POST',
         data: dataJSON,
         cache: false,
@@ -3249,6 +3258,7 @@ function syncDataWithPTRE(mode = "auto") {
                 updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, reponseDecode.last_update_ts);
                 GM_setValue(ptreLastDataSync, currentTime);
                 GM_setValue(ptreLastUpdateCheck, currentTime);
+                GM_setValue(ptreGalaxyAPIUpdateIGTS, convertUnixTSToIGTS(reponseDecode.galaxy_api_update_timestamp));
 
                 // Update info in menu
                 updateHtmlById("ptreLastDataSyncField", getLastUpdateLabel(currentTime));
@@ -3540,7 +3550,10 @@ function checkForPTREUpdate() {
         if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
             consoleDebug("[LIVE] Checking for Updates...");
             $.ajax({
-                url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0),
+                url : urlcheckForPTREUpdate + '&team_key=' + TKey +
+                '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) +
+                '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) +
+                '&galaxy_api_update_timestamp=' + GM_getValue(ptreGalaxyAPIUpdateIGTS, 0),
                 type : 'POST',
                 cache: false,
                 success : function(reponse){
@@ -3703,18 +3716,18 @@ function getLastUpdateLabel(ts) {
     const currentTime = getIGCurrentTS();
 
     if (ts == 0) {
-        return '<span class="ptreError ptreSmall">never updated</span>';
+        return '<span class="ptreError">never updated</span>';
     } else if (currentTime >= ts) {
         var nb_min = (currentTime - ts) / 60;
         if (nb_min <= 1) {
-            temp = '<span class="ptreSuccess ptreSmall">updated now</span>';
+            temp = '<span class="ptreSuccess">updated now</span>';
         } else if (nb_min < 60) {
-            temp = '<span class="ptreSuccess ptreSmall">updated ' + round(nb_min, 0) + ' mins ago</span>';
+            temp = '<span class="ptreSuccess">updated ' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
             var nb_h = (currentTime - ts) / 3600;
-            temp = '<span class="ptreWarning ptreSmall">updated ' + round(nb_h, 0) + ' hours ago</span>';
+            temp = '<span class="ptreWarning">updated ' + round(nb_h, 0) + ' hours ago</span>';
         } else {
-            temp = '<span class="ptreError ptreSmall">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
+            temp = '<span class="ptreError">updated ' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
         return temp;
     } else {
@@ -3729,18 +3742,18 @@ function getUnixTSLabel(ts) {
     const currentUnixTS = getCurrentUnixTS();
 
     if (ts == 0) {
-        return '<span class="ptreError ptreSmall">???</span>';
+        return '<span class="ptreError">???</span>';
     } else if (currentUnixTS >= ts) {
         var nb_min = (currentUnixTS - ts) / 60;
         if (nb_min <= 1) {
-            temp = '<span class="ptreSuccess ptreSmall">now</span>';
+            temp = '<span class="ptreSuccess">now</span>';
         } else if (nb_min < 60) {
-            temp = '<span class="ptreSuccess ptreSmall">' + round(nb_min, 0) + ' mins ago</span>';
+            temp = '<span class="ptreSuccess">' + round(nb_min, 0) + ' mins ago</span>';
         } else if (nb_min < 24*60) {
             var nb_h = (currentUnixTS - ts) / 3600;
-            temp = '<span class="ptreWarning ptreSmall">' + round(nb_h, 0) + ' hours ago</span>';
+            temp = '<span class="ptreWarning">' + round(nb_h, 0) + ' hours ago</span>';
         } else {
-            temp = '<span class="ptreError ptreSmall">' + round(nb_min/(24*60), 1) + ' days ago</span>';
+            temp = '<span class="ptreError">' + round(nb_min/(24*60), 1) + ' days ago</span>';
         }
         return temp;
     } else {
@@ -3773,6 +3786,14 @@ function getIGCurrentMiliTS() {
 function getCurrentUnixTS() {
     const elapsed = Date.now() - ptrePageLoadClientMiliTS;
     return Math.floor(ptrePageLoadUnixTS + elapsed / 1000);
+}
+
+function convertUnixTSToIGTS(unixTS) {
+    return unixTS - ptreTimezoneDiffSec;
+}
+
+function convertIGTSToUnixTS(igTS) {
+    return igTS + ptreTimezoneDiffSec;
 }
 
 // ****************************************

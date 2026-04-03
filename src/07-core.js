@@ -124,7 +124,10 @@ function checkForPTREUpdate() {
         if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
             consoleDebug("[LIVE] Checking for Updates...");
             $.ajax({
-                url : urlcheckForPTREUpdate + '&team_key=' + TKey + '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) + '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0),
+                url : urlcheckForPTREUpdate + '&team_key=' + TKey +
+                '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) +
+                '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) +
+                '&galaxy_api_update_timestamp=' + GM_getValue(ptreGalaxyAPIUpdateIGTS, 0),
                 type : 'POST',
                 cache: false,
                 success : function(reponse){

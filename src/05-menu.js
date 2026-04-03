@@ -528,7 +528,8 @@ function displayGalaxyTracking() {
     if (isOGLorOGIEnabled()) {
         content += '<span class="ptreWarning">OGLight or OGInfinity is enabled: EasyPTRE is not managing galaxy pushs.<br>EasyPTRE still get Galaxy events to highlight updated positions.</span><br><br>';
     }
-    content+='Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + ' | Retention: ' + ptreGalaxyStorageRetention + ' days<br><br>';
+    content+='Storage Version: ' + GM_getValue(ptreGalaxyStorageVersion, 2) + ' | Retention: ' + ptreGalaxyStorageRetention + ' days<br>';
+    content+='Last Public API Update: ' + getLastUpdateLabel(GM_getValue(ptreGalaxyAPIUpdateIGTS, 0)) + '<br><br>';
 
     const allGalaxyKeys = GM_listValues().filter(key => key.includes(ptreGalaxyData)).sort();
 
