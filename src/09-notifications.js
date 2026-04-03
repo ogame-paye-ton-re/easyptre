@@ -14,7 +14,7 @@ function displayPTREPopUpMessage(message) {
     }
 
     // Recreate box
-    var divPTREMessage = '<div id="boxPTREMessage">PTRE:<span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
+    var divPTREMessage = '<div id="boxPTREMessage"><span class="ptreNotificationTitle">PTRE:</span><span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
     var boxPTREMessage = document.createElement("div");
     boxPTREMessage.innerHTML = divPTREMessage;
     boxPTREMessage.id = 'boxPTREMessage';

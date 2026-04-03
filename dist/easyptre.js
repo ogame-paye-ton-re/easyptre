@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: ven. 03 avril 2026 09:24:56 CEST
+// Build date: ven. 03 avril 2026 10:16:54 CEST
 // ****************************************
 
 // ****************************************
@@ -329,6 +329,10 @@ GM_addStyle(`
     color: #6f9fc8;
     margin: 10px;
 }
+.ptreNotificationTitle {
+    color: #6f9fc8;
+    font-weight: bold;
+}
 .td_cell {
     padding: 3px;
 }
@@ -513,6 +517,7 @@ GM_addStyle(`
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
+    border-radius: 8px;
 }
 #btnSaveOptPTRE {
     cursor:pointer;
@@ -3786,7 +3791,7 @@ function displayPTREPopUpMessage(message) {
     }
 
     // Recreate box
-    var divPTREMessage = '<div id="boxPTREMessage">PTRE:<span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
+    var divPTREMessage = '<div id="boxPTREMessage"><span class="ptreNotificationTitle">PTRE:</span><span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
     var boxPTREMessage = document.createElement("div");
     boxPTREMessage.innerHTML = divPTREMessage;
     boxPTREMessage.id = 'boxPTREMessage';

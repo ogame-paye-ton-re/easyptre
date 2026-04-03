@@ -34,6 +34,10 @@ GM_addStyle(`
     color: #6f9fc8;
     margin: 10px;
 }
+.ptreNotificationTitle {
+    color: #6f9fc8;
+    font-weight: bold;
+}
 .td_cell {
     padding: 3px;
 }
@@ -218,6 +222,7 @@ GM_addStyle(`
     padding:10px;
     border: solid black 2px;
     background-color: #171d22;
+    border-radius: 8px;
 }
 #btnSaveOptPTRE {
     cursor:pointer;
