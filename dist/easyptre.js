@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: ven. 03 avril 2026 00:18:39 CEST
+// Build date: ven. 03 avril 2026 09:24:56 CEST
 // ****************************************
 
 // ****************************************
@@ -115,12 +115,15 @@ if (modeEasyPTRE == "ingame") {
     GM_setValue(ptreID, document.getElementsByName('ptre-id')[0].content);
 }
 
-// GM keys
 const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not change!
+
+// GM keys (common to every universes)
 const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Unix TS
-const ptreLastGarbageCollection = "ptre-LastGarbageCollection";// Unix TS
 const ptreLogsList = "ptre-Logs";// Unix TS
+
+// GM keys (specific to each universes)
+const ptreLastGarbageCollection = ptrePerUniKeysPrefix + "LastGarbageCollection";// Unix TS
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
 const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
