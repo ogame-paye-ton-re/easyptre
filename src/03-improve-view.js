@@ -25,6 +25,7 @@ function improveGalaxyTable() {
     const start = performance.now();
     const currentMiliTime = getIGCurrentMiliTS();
     const currentTime = getIGCurrentTS();
+    const OGIEnabled = isOGIEnabled();
 
     consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
     cleanGalaxyMiniMessage();
@@ -136,6 +137,14 @@ function improveGalaxyTable() {
                     } else if (highlightedPlayersList[newSystemToStore[pos].playerId] && highlightedPlayersList[newSystemToStore[pos].playerId]["status"] == "hot") {
                         btn.style.border = ptreBorderStyleHotList;
                         //consoleDebug("===> "+playerName+" is part of HOT list");
+                    }
+                    // Custom placement for OGI
+                    if (OGIEnabled) {
+                        cellPlayerName.style.position = 'relative';
+                        btn.style.position = 'absolute';
+                        btn.style.right = '0';
+                        btn.style.top = '50%';
+                        btn.style.transform = 'translateY(-50%)';
                     }
                     // Display button
                     btn.innerHTML = '<a class="tooltip" title="PTRE actions"><img id="ptreActionPos-' + galaxy + ":" + system + ":" + pos + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="' + imgSize + 'px" width="' + imgSize + 'px"></a>';
