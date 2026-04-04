@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.15.0
+// @version      0.15.1
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: ven. 03 avril 2026 17:42:14 CEST
+// Build date: dim. 05 avril 2026 00:31:00 CEST
 // ****************************************
 
 // ****************************************
@@ -926,9 +926,6 @@ function improvePageGalaxy() {
     let tkComment = "";
     let toolComment = "Detected tool: ";
 
-    if (ptreStoredTK == '') {
-        tkComment = '<span class="ptreError">Missing Team Key</span> - ';
-    }
     // Update status once for the gala browsing session
     if (isAGREnabled()) {
         toolComment+= "AGR ";
@@ -948,8 +945,13 @@ function improvePageGalaxy() {
         ptreDisplayGalaPopup = false;
     }
 
-    // Prepare galaxy check and update
-    waitForGalaxyToBeLoaded();
+    if (ptreStoredTK == '') {
+        tkComment = '<span class="ptreError">Missing Team Key</span> - ';
+        consoleDebug("[GALAXY] No Team Key found: galaxy features disabled.");
+    } else {
+        // Prepare galaxy check and update
+        waitForGalaxyToBeLoaded();
+    }
 
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)

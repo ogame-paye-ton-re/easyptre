@@ -347,9 +347,6 @@ function improvePageGalaxy() {
     let tkComment = "";
     let toolComment = "Detected tool: ";
 
-    if (ptreStoredTK == '') {
-        tkComment = '<span class="ptreError">Missing Team Key</span> - ';
-    }
     // Update status once for the gala browsing session
     if (isAGREnabled()) {
         toolComment+= "AGR ";
@@ -369,8 +366,13 @@ function improvePageGalaxy() {
         ptreDisplayGalaPopup = false;
     }
 
-    // Prepare galaxy check and update
-    waitForGalaxyToBeLoaded();
+    if (ptreStoredTK == '') {
+        tkComment = '<span class="ptreError">Missing Team Key</span> - ';
+        consoleDebug("[GALAXY] No Team Key found: galaxy features disabled.");
+    } else {
+        // Prepare galaxy check and update
+        waitForGalaxyToBeLoaded();
+    }
 
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)
