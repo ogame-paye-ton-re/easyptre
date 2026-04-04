@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 05 avril 2026 00:31:00 CEST
+// Build date: dim. 05 avril 2026 00:58:45 CEST
 // ****************************************
 
 // ****************************************
@@ -971,8 +971,14 @@ function improvePageGalaxy() {
         } else {
             tempContent+= '<a class="tooltip ptreWarning" title="Sent by OGL/OGI">no</a>';
         }
-        tempContent+= '</span>';
-        tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
+        tempContent+= '</span></td></tr>';
+        tempContent+= '<tr>';
+        tempContent+= '<td align="center" colspan="3" style="vertical-align: middle;"><span class="ptreCategoryTitle">Pop-up Legend: </span><img style="border: 3px solid green; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Hot target - ';
+        tempContent+= '<img style="border: 3px solid orange; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Galaxy Event - ';
+        tempContent+= '<img style="border: 3px solid red; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Do Not Probe - ';
+        tempContent+= '<img style="vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Nothing</td>';
+        tempContent+= '</tr>';
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'Galaxy Popup: ' + galaxyPopupMode + ' - BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
         if (ptrePushActivities === true) {
@@ -2256,6 +2262,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.15.1 (apr 2026)</div>- [Polish] Add pop-up button legend<br>- [Fix] Disable galaxy pop-up button when no TK';
     content+= '<div class="ptreSubTitle">0.15.0 (apr 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up<br>- [Feature] Add TamperMonkey Keys management menu<br>- [Fix] Fix galaxy popup conflict with OGLight';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.14.3 (mar 2026)</div>- [Fix] Add openuserjs.org to connect list';

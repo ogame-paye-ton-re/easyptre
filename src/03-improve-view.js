@@ -392,8 +392,14 @@ function improvePageGalaxy() {
         } else {
             tempContent+= '<a class="tooltip ptreWarning" title="Sent by OGL/OGI">no</a>';
         }
-        tempContent+= '</span>';
-        tempContent+= '</td></tr><tr><td valign="top" colspan="3"><hr></td></tr>';
+        tempContent+= '</span></td></tr>';
+        tempContent+= '<tr>';
+        tempContent+= '<td align="center" colspan="3" style="vertical-align: middle;"><span class="ptreCategoryTitle">Pop-up Legend: </span><img style="border: 3px solid green; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Hot target - ';
+        tempContent+= '<img style="border: 3px solid orange; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Galaxy Event - ';
+        tempContent+= '<img style="border: 3px solid red; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Do Not Probe - ';
+        tempContent+= '<img style="vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Nothing</td>';
+        tempContent+= '</tr>';
+        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
         tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'Galaxy Popup: ' + galaxyPopupMode + ' - BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
         if (ptrePushActivities === true) {
