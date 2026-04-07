@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 05 avril 2026 12:27:51 CEST
+// Build date: mar. 07 avril 2026 22:18:22 CEST
 // ****************************************
 
 // ****************************************
@@ -130,6 +130,8 @@ const ptreLogsList = "ptre-Logs";// Unix TS
 const ptreLastGarbageCollection = ptrePerUniKeysPrefix + "LastGarbageCollection";// Unix TS
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
+const ptreCRPublicSharingEnabled = ptrePerUniKeysPrefix + "CRPublicSharingEnabled"; // Default to "false"
+const ptreCRSharingSyncedSR = ptrePerUniKeysPrefix + "CRSharingSyncedSR";
 const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
 const ptrePTREPlayerListJSON = ptrePerUniKeysPrefix + "PTREPlayerListJSON";
 const ptreAGRPlayerListJSON = ptrePerUniKeysPrefix + "AGRPlayerListJSON";
@@ -187,6 +189,7 @@ var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + 
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
+var urlPTREImportCR = 'https://ptre.chez.gg/scripts/api_import_cr.php' + ptreEasyPTREUrlParams;
 
 // Load debug value once
 if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
@@ -663,21 +666,20 @@ function improvePageAny() {
 // Add PTRE buttons to messages page
 function improvePageMessages() {
     console.log("[EasyPTRE] Improving Messages Page");
-    if (!isOGLorOGIEnabled()) {
-        if (GM_getValue(ptreTeamKey) != '') {
-            // Update Message Page (spy report part)
+    if (GM_getValue(ptreTeamKey) != '') {
+        if (!isOGLorOGIEnabled()) {
+            // Update Message Page (spy report tab). To be reworked
             setTimeout(addPTREStuffsToMessagesPage, 1000);
-            // Update AGR Spy Table
-            if (isAGREnabled() && (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true')) {
-                let spyTableObserver = new MutationObserver(improveAGRSpyTable);
-                var nodeSpyTable = document.getElementById('messagecontainercomponent');
-                spyTableObserver.observe(nodeSpyTable, {
-                    attributes: true,
-                    childList: true, // observer les enfants directs
-                    subtree: true, // et les descendants aussi
-                });
-            }
         }
+
+        // Detect mutation on message page
+        let messageTableObserver = new MutationObserver(messageTabsMutation);
+        var nodeMessageTable = document.getElementById('messagecontainercomponent');
+        messageTableObserver.observe(nodeMessageTable, {
+            attributes: true,
+            childList: true, // observer les enfants directs
+            subtree: true, // et les descendants aussi
+        });
     }
 }
 
@@ -892,6 +894,75 @@ function improveAGRSpyTable(mutationList, observer) {
         } else {
             displayPTREPopUpMessage(ptreMissingTKMessage);
         }
+    }
+
+}
+
+function improvePageCombatReports() {
+    // Add PTRE button to combat reports (CR)
+    var crReadyCount = 0;
+    var TKeyCR = GM_getValue(ptreTeamKey, '');
+    if (TKeyCR != '') {
+        document.querySelectorAll('button.msgApiKeyBtn').forEach(function(btn) {
+            if (btn.classList.contains('ptre_ready')) {
+                console.log("CR already improved");
+            } else {
+                var tooltipTitle = btn.getAttribute('data-tooltip-title');
+                if (!tooltipTitle) return;
+                var tempDiv = document.createElement('div');
+                tempDiv.innerHTML = tooltipTitle;
+                var inputEl = tempDiv.querySelector('input');
+                if (!inputEl || !inputEl.value.includes('cr-')) return;
+                var apiKeyCR = inputEl.value;
+                var footerActions = btn.closest('message-footer-actions');
+                if (!footerActions) return;
+                var syncedCRList = GM_getValue(ptreCRSharingSyncedSR, []);
+                var alreadySynced = syncedCRList.some(function(entry) { return entry[0] === apiKeyCR; });
+                var spanBtnPTRE = document.createElement('span');
+                if (alreadySynced) {
+                    spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Already sent to PTRE"><img id="sendCR-' + apiKeyCR + '" style="cursor:default;" class="mouseSwitch" src="' + imgPTREOK + '" height="26" width="26"></a>';
+                    footerActions.appendChild(spanBtnPTRE);
+                } else {
+                    spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Send to PTRE"><img id="sendCR-' + apiKeyCR + '" apikey="' + apiKeyCR + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a>';
+                    footerActions.appendChild(spanBtnPTRE);
+                    document.getElementById('sendCR-' + apiKeyCR).addEventListener('click', function() {
+                        var clickedKey = this.getAttribute('apikey');
+                        if (!clickedKey) return; // Already sent
+                        pushCRToPTRE([clickedKey], function(importedArray) {
+                            importedArray.forEach(function(crId) {
+                                var img = document.getElementById('sendCR-' + crId);
+                                if (img) {
+                                    img.src = imgPTREOK;
+                                    img.style.cursor = 'default';
+                                    img.removeAttribute('apikey');
+                                    img.parentNode.title = 'Already sent to PTRE';
+                                }
+                                var newSyncedList = GM_getValue(ptreCRSharingSyncedSR, []);
+                                newSyncedList.push([crId, getIGCurrentTS()]);
+                                GM_setValue(ptreCRSharingSyncedSR, newSyncedList);
+                            });
+                        });
+                    });
+                    crReadyCount++;
+                }
+                btn.classList.add('ptre_ready');
+            }
+        });
+        if (crReadyCount > 0) {
+            displayPTREPopUpMessage("You have " + crReadyCount + " combat report(s) ready to be sent to PTRE!");
+        }
+    }
+
+}
+
+function messageTabsMutation(mutationList, observer) {
+    consoleDebug("[EasyPTRE] [Message Page Update] Mutation observed: " + mutationList.length + " mutations");
+
+    if (isAGREnabled() && (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true')) {
+        improveAGRSpyTable(mutationList, observer);
+    }
+    if (GM_getValue(ptreEnableBetaMode, 'false') == 'true') {
+        improvePageCombatReports();
     }
 }
 
@@ -1712,7 +1783,7 @@ function displaySettings() {
     }
 
     //const betaMessage = '<br><span class="ptreSmall ptreError">Enables Beta features that might be unpolished.</span>';
-    const betaMessage = '<br><span class="ptreSmall ptreSuccess">No Beta feature, at the moment. Previous one: Galaxy Pop-up (jan 2026).</span>';
+    const betaMessage = '<br><span class="ptreSmall ptreWarning">Current Beta feature: combat report benefits sharing.</span>';
     const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">Recommended: ON.</span>';
     const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">Recommended: OFF.</span>';
     const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner Mode if you want to enable it.</span>';
@@ -1725,6 +1796,7 @@ function displaySettings() {
     var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
     var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
     var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
+    var crPublicSharingOn = (GM_getValue(ptreCRPublicSharingEnabled, 'false') == 'true' ? 'checked' : '');
 
     var tdId = 0;
     var divPTRE = '<table border="1" width="100%">';
@@ -1791,6 +1863,12 @@ function displaySettings() {
     divPTRE += toogleEventsOn;
     divPTRE += ' />';
     divPTRE += '</td></tr>';
+    tdId++;
+    // Combat Sharing to Public
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Public Combat Reports Sharing:<hr><span class="ptreSmall">Share combat reports publicly on PTRE. <a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=combats_reports" target="_blank">You can also choose what Reports to share here.</a><br><span class="ptreWarning">BETA feature: enable Beta mode to use it.</span></span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTRECRPublicSharingEnabled" type="checkbox" ';
+    divPTRE += crPublicSharingOn;
+    divPTRE += ' /></td></tr>';
     tdId++;
     // Beta Mode
     divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:'+betaMessage;
@@ -1984,6 +2062,8 @@ function savePTRESettings() {
     GM_setValue(ptreEnableMinerMode, minerMode + '');
 
 
+    // Update Combat Sharing
+    GM_setValue(ptreCRPublicSharingEnabled, document.getElementById('PTRECRPublicSharingEnabled').checked + '');
     // Update Beta Mode
     GM_setValue(ptreEnableBetaMode, document.getElementById('PTREToogleBetaMode').checked + '');
 
@@ -3193,6 +3273,43 @@ function updateDataFromEmpireMoonPage() {
     });
 }
 
+function pushCRToPTRE(crArray, onSuccess) {
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    if (teamKey == '') {
+        displayPTREPopUpMessage(ptreMissingTKMessage);
+        return;
+    }
+
+    sharing_status = "team";
+    if (GM_getValue(ptreCRPublicSharingEnabled, 'false') == 'true') {
+        sharing_status = "public";
+    }
+
+    consoleDebug('[CR] Pushing ' + crArray.length + ' CR to PTRE');
+    displayPTREPopUpMessage('Pushing ' + crArray.length + ' CR to PTRE');
+
+    fetch(urlPTREImportCR + '&team_key=' + teamKey + '&sharing_status=' + sharing_status, {
+        method: 'POST',
+        body: JSON.stringify(crArray)
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(reponseDecode) {
+        consoleDebug('[CR] [FROM PTRE] ' + reponseDecode.message);
+        displayPTREPopUpMessage(reponseDecode.message);
+        if (reponseDecode.code == 1) {
+            if (reponseDecode.imported_array && typeof onSuccess === 'function') {
+                onSuccess(reponseDecode.imported_array);
+            }
+        } else {
+            addToLogs('[CR] ' + reponseDecode.message);
+        }
+    })
+    .catch(function(error) {
+        console.error("[EasyPTRE] Can't push CR data", error);
+        addToLogs('[CR] Failed to push CR: ' + error);
+    });
+}
+
 // ****************************************
 // CORE FUNCTIONS
 // ****************************************
@@ -4062,6 +4179,17 @@ function runGarbageCollection() {
             addToLogs("[GC] Cleaned " + removedCount + " old positions");
         }
     }
+    // Clean old CR synced list (entries older than 3 days)
+    var syncedCRList = GM_getValue(ptreCRSharingSyncedSR, []);
+    if (syncedCRList.length > 0) {
+        var limitTSCR = currentTime - 3*24*60*60;
+        var newSyncedCRList = syncedCRList.filter(function(entry) { return entry[1] >= limitTSCR; });
+        if (newSyncedCRList.length < syncedCRList.length) {
+            addToLogs('[GC] Cleaned ' + (syncedCRList.length - newSyncedCRList.length) + ' old CR synced entries');
+            GM_setValue(ptreCRSharingSyncedSR, newSyncedCRList);
+        }
+    }
+
     GM_setValue(ptreLastGarbageCollection, currentUnixTS);
 }
 

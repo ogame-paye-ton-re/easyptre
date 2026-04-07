@@ -607,3 +607,40 @@ function updateDataFromEmpireMoonPage() {
     });
 }
 
+function pushCRToPTRE(crArray, onSuccess) {
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    if (teamKey == '') {
+        displayPTREPopUpMessage(ptreMissingTKMessage);
+        return;
+    }
+
+    sharing_status = "team";
+    if (GM_getValue(ptreCRPublicSharingEnabled, 'false') == 'true') {
+        sharing_status = "public";
+    }
+
+    consoleDebug('[CR] Pushing ' + crArray.length + ' CR to PTRE');
+    displayPTREPopUpMessage('Pushing ' + crArray.length + ' CR to PTRE');
+
+    fetch(urlPTREImportCR + '&team_key=' + teamKey + '&sharing_status=' + sharing_status, {
+        method: 'POST',
+        body: JSON.stringify(crArray)
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(reponseDecode) {
+        consoleDebug('[CR] [FROM PTRE] ' + reponseDecode.message);
+        displayPTREPopUpMessage(reponseDecode.message);
+        if (reponseDecode.code == 1) {
+            if (reponseDecode.imported_array && typeof onSuccess === 'function') {
+                onSuccess(reponseDecode.imported_array);
+            }
+        } else {
+            addToLogs('[CR] ' + reponseDecode.message);
+        }
+    })
+    .catch(function(error) {
+        console.error("[EasyPTRE] Can't push CR data", error);
+        addToLogs('[CR] Failed to push CR: ' + error);
+    });
+}
+

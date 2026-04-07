@@ -84,21 +84,20 @@ function improvePageAny() {
 // Add PTRE buttons to messages page
 function improvePageMessages() {
     console.log("[EasyPTRE] Improving Messages Page");
-    if (!isOGLorOGIEnabled()) {
-        if (GM_getValue(ptreTeamKey) != '') {
-            // Update Message Page (spy report part)
+    if (GM_getValue(ptreTeamKey) != '') {
+        if (!isOGLorOGIEnabled()) {
+            // Update Message Page (spy report tab). To be reworked
             setTimeout(addPTREStuffsToMessagesPage, 1000);
-            // Update AGR Spy Table
-            if (isAGREnabled() && (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true')) {
-                let spyTableObserver = new MutationObserver(improveAGRSpyTable);
-                var nodeSpyTable = document.getElementById('messagecontainercomponent');
-                spyTableObserver.observe(nodeSpyTable, {
-                    attributes: true,
-                    childList: true, // observer les enfants directs
-                    subtree: true, // et les descendants aussi
-                });
-            }
         }
+
+        // Detect mutation on message page
+        let messageTableObserver = new MutationObserver(messageTabsMutation);
+        var nodeMessageTable = document.getElementById('messagecontainercomponent');
+        messageTableObserver.observe(nodeMessageTable, {
+            attributes: true,
+            childList: true, // observer les enfants directs
+            subtree: true, // et les descendants aussi
+        });
     }
 }
 
@@ -313,6 +312,75 @@ function improveAGRSpyTable(mutationList, observer) {
         } else {
             displayPTREPopUpMessage(ptreMissingTKMessage);
         }
+    }
+
+}
+
+function improvePageCombatReports() {
+    // Add PTRE button to combat reports (CR)
+    var crReadyCount = 0;
+    var TKeyCR = GM_getValue(ptreTeamKey, '');
+    if (TKeyCR != '') {
+        document.querySelectorAll('button.msgApiKeyBtn').forEach(function(btn) {
+            if (btn.classList.contains('ptre_ready')) {
+                console.log("CR already improved");
+            } else {
+                var tooltipTitle = btn.getAttribute('data-tooltip-title');
+                if (!tooltipTitle) return;
+                var tempDiv = document.createElement('div');
+                tempDiv.innerHTML = tooltipTitle;
+                var inputEl = tempDiv.querySelector('input');
+                if (!inputEl || !inputEl.value.includes('cr-')) return;
+                var apiKeyCR = inputEl.value;
+                var footerActions = btn.closest('message-footer-actions');
+                if (!footerActions) return;
+                var syncedCRList = GM_getValue(ptreCRSharingSyncedSR, []);
+                var alreadySynced = syncedCRList.some(function(entry) { return entry[0] === apiKeyCR; });
+                var spanBtnPTRE = document.createElement('span');
+                if (alreadySynced) {
+                    spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Already sent to PTRE"><img id="sendCR-' + apiKeyCR + '" style="cursor:default;" class="mouseSwitch" src="' + imgPTREOK + '" height="26" width="26"></a>';
+                    footerActions.appendChild(spanBtnPTRE);
+                } else {
+                    spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Send to PTRE"><img id="sendCR-' + apiKeyCR + '" apikey="' + apiKeyCR + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a>';
+                    footerActions.appendChild(spanBtnPTRE);
+                    document.getElementById('sendCR-' + apiKeyCR).addEventListener('click', function() {
+                        var clickedKey = this.getAttribute('apikey');
+                        if (!clickedKey) return; // Already sent
+                        pushCRToPTRE([clickedKey], function(importedArray) {
+                            importedArray.forEach(function(crId) {
+                                var img = document.getElementById('sendCR-' + crId);
+                                if (img) {
+                                    img.src = imgPTREOK;
+                                    img.style.cursor = 'default';
+                                    img.removeAttribute('apikey');
+                                    img.parentNode.title = 'Already sent to PTRE';
+                                }
+                                var newSyncedList = GM_getValue(ptreCRSharingSyncedSR, []);
+                                newSyncedList.push([crId, getIGCurrentTS()]);
+                                GM_setValue(ptreCRSharingSyncedSR, newSyncedList);
+                            });
+                        });
+                    });
+                    crReadyCount++;
+                }
+                btn.classList.add('ptre_ready');
+            }
+        });
+        if (crReadyCount > 0) {
+            displayPTREPopUpMessage("You have " + crReadyCount + " combat report(s) ready to be sent to PTRE!");
+        }
+    }
+
+}
+
+function messageTabsMutation(mutationList, observer) {
+    consoleDebug("[EasyPTRE] [Message Page Update] Mutation observed: " + mutationList.length + " mutations");
+
+    if (isAGREnabled() && (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true')) {
+        improveAGRSpyTable(mutationList, observer);
+    }
+    if (GM_getValue(ptreEnableBetaMode, 'false') == 'true') {
+        improvePageCombatReports();
     }
 }
 
