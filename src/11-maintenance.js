@@ -98,6 +98,17 @@ function runGarbageCollection() {
             addToLogs("[GC] Cleaned " + removedCount + " old positions");
         }
     }
+    // Clean old CR synced list (entries older than 3 days)
+    var syncedCRList = GM_getValue(ptreCRSharingSyncedSR, []);
+    if (syncedCRList.length > 0) {
+        var limitTSCR = currentTime - 3*24*60*60;
+        var newSyncedCRList = syncedCRList.filter(function(entry) { return entry[1] >= limitTSCR; });
+        if (newSyncedCRList.length < syncedCRList.length) {
+            addToLogs('[GC] Cleaned ' + (syncedCRList.length - newSyncedCRList.length) + ' old CR synced entries');
+            GM_setValue(ptreCRSharingSyncedSR, newSyncedCRList);
+        }
+    }
+
     GM_setValue(ptreLastGarbageCollection, currentUnixTS);
 }
 

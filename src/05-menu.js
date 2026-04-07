@@ -107,7 +107,7 @@ function displaySettings() {
     }
 
     //const betaMessage = '<br><span class="ptreSmall ptreError">Enables Beta features that might be unpolished.</span>';
-    const betaMessage = '<br><span class="ptreSmall ptreSuccess">No Beta feature, at the moment. Previous one: Galaxy Pop-up (jan 2026).</span>';
+    const betaMessage = '<br><span class="ptreSmall ptreWarning">Current Beta feature: combat report benefits sharing.</span>';
     const recommendedLabelOn = '<br><span class="ptreSmall ptreWarning">Recommended: ON.</span>';
     const recommendedLabelOff = '<br><span class="ptreSmall ptreWarning">Recommended: OFF.</span>';
     const minerModeOnLabel = '<br><span class="ptreSmall ptreWarning">Disable Miner Mode if you want to enable it.</span>';
@@ -120,6 +120,7 @@ function displaySettings() {
     var BetaModeOn = (GM_getValue(ptreEnableBetaMode, 'false') == 'true' ? 'checked' : '');
     var MinerModeOn = (GM_getValue(ptreEnableMinerMode, 'false') == 'true' ? 'checked' : '');
     var debugMode = (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true' ? 'checked' : '');
+    var crPublicSharingOn = (GM_getValue(ptreCRPublicSharingEnabled, 'false') == 'true' ? 'checked' : '');
 
     var tdId = 0;
     var divPTRE = '<table border="1" width="100%">';
@@ -186,6 +187,12 @@ function displaySettings() {
     divPTRE += toogleEventsOn;
     divPTRE += ' />';
     divPTRE += '</td></tr>';
+    tdId++;
+    // Combat Sharing to Public
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Public Combat Reports Sharing:<br><span class="ptreSmall">Share combat reports publicly on PTRE. <a href="https://ptre.chez.gg/?country='+country+'&univers='+universe+'&page=combats_reports" target="_blank">You can also choose what Reports to share here.</a><br><span class="ptreWarning">BETA feature: enable Beta mode to use it.</span></span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTRECRPublicSharingEnabled" type="checkbox" ';
+    divPTRE += crPublicSharingOn;
+    divPTRE += ' /></td></tr>';
     tdId++;
     // Beta Mode
     divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:'+betaMessage;
@@ -379,6 +386,8 @@ function savePTRESettings() {
     GM_setValue(ptreEnableMinerMode, minerMode + '');
 
 
+    // Update Combat Sharing
+    GM_setValue(ptreCRPublicSharingEnabled, document.getElementById('PTRECRPublicSharingEnabled').checked + '');
     // Update Beta Mode
     GM_setValue(ptreEnableBetaMode, document.getElementById('PTREToogleBetaMode').checked + '');
 

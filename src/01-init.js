@@ -98,6 +98,8 @@ const ptreLogsList = "ptre-Logs";// Unix TS
 const ptreLastGarbageCollection = ptrePerUniKeysPrefix + "LastGarbageCollection";// Unix TS
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
+const ptreCRPublicSharingEnabled = ptrePerUniKeysPrefix + "CRPublicSharingEnabled"; // Default to "false"
+const ptreCRSharingSyncedSR = ptrePerUniKeysPrefix + "CRSharingSyncedSR";
 const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
 const ptrePTREPlayerListJSON = ptrePerUniKeysPrefix + "PTREPlayerListJSON";
 const ptreAGRPlayerListJSON = ptrePerUniKeysPrefix + "AGRPlayerListJSON";
@@ -155,6 +157,7 @@ var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + 
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
+var urlPTREImportCR = 'https://ptre.chez.gg/scripts/api_import_cr.php' + ptreEasyPTREUrlParams;
 
 // Load debug value once
 if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
