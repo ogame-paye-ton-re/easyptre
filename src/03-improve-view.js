@@ -179,8 +179,11 @@ function improvePageGalaxy() {
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
         tempDiv.id = 'ptreGalaxyToolBar';
-        if (document.getElementsByClassName("galaxyTable")) {
-            document.getElementsByClassName("galaxyTable")[0].appendChild(tempDiv);
+        const galaxyTables = document.getElementsByClassName("galaxyTable");
+        if (galaxyTables.length > 0) {
+            galaxyTables[0].appendChild(tempDiv);
+        } else {
+            consoleDebug("[GALAXY] .galaxyTable not found (vacation mode? V13 change?). Toolbar not attached.");
         }
         if (document.getElementById('ptreGalaxyPhalanxButton')) {
             document.getElementById('ptreGalaxyPhalanxButton').addEventListener("click", function (event) {

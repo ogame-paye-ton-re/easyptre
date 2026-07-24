@@ -20,6 +20,10 @@ function waitForGalaxyToBeLoaded() {
     consoleDebug("[GALAXY] Waiting for Galaxy content");
     ptreGalaxyInitMiliTS = Date.now();
     const galaxyLoading = document.getElementById('galaxyLoading');
+    if (!galaxyLoading) {
+        consoleDebug("[GALAXY] #galaxyLoading not found (vacation mode? V13 change?). Skipping galaxy improvement.");
+        return;
+    }
     if (window.getComputedStyle(galaxyLoading).display === 'none') {
         consoleDebug("[GALAXY] Galaxy is already ready!");
         improveGalaxyTable();
@@ -44,6 +48,10 @@ function waitForGalaxyToBeLoaded() {
 // Wait for loading image
 function waitForNextGalaxyChangeTrigger() {
     const galaxyLoading = document.getElementById('galaxyLoading');
+    if (!galaxyLoading) {
+        consoleDebug("[GALAXY] #galaxyLoading not found (vacation mode? V13 change?). Not watching for galaxy changes.");
+        return;
+    }
     const observer = new MutationObserver((mutations, obs) => {
         if (window.getComputedStyle(galaxyLoading).display !== 'none') {
             consoleDebug("[GALAXY] Galaxy change triggered");
