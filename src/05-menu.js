@@ -751,16 +751,20 @@ function displaySharedData() {
     content += '<div class="ptreCategoryTitle">Synced data</div><table><tr><td width="200px" valign="top" align="center"><div class="ptreSubTitle">Phalanx</div><table width="90%"><tr class="tr_cell_radius"><td class="td_cell_radius_0" align="center">Coords</td><td class="td_cell_radius_0" align="center">Level</td></tr>';
     if (dataJSON != '') {
         dataList = JSON.parse(dataJSON);
-        dataList.forEach(function(elem) {
-            if (elem.type == "phalanx") {
-                let val = elem.val;
-                if (val == -1) {
-                    missingPhalanx++;
-                    val = '<span class="ptreWarning">???</span>';
-                }
-                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + val + '</td></tr>';
-                phalanxCount++;
+        var phalanxList = dataList.filter(function(elem) { return elem.type == "phalanx"; });
+        phalanxList.sort(function(a, b) {
+            var pa = a.coords.split(':').map(Number);
+            var pb = b.coords.split(':').map(Number);
+            return (pa[0] - pb[0]) || (pa[1] - pb[1]) || (pa[2] - pb[2]);
+        });
+        phalanxList.forEach(function(elem) {
+            let val = elem.val;
+            if (val == -1) {
+                missingPhalanx++;
+                val = '<span class="ptreWarning">???</span>';
             }
+            content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" align="center">' + elem.coords + 'L</td><td class="td_cell_radius_1" align="center">' + val + '</td></tr>';
+            phalanxCount++;
         });
     }
     content += '<tr class="tr_cell_radius"><td class="td_cell_radius_1" colspan="3" align="center">Total: ' + phalanxCount + ' phalanx<br><span class="ptreSmall">Empty: ' + missingPhalanx + '</span></td></tr></table><br><a href="https://ptre.chez.gg/?page=phalanx_debug" target="_blank">Phalanx Debug</a><br><br><div id="refreshEmpireMoonDataButton" class="button btn_blue">&#8635; UPDATE</div><br><span id="ptreEmpireMoonLastRefreshField">'+getLastUpdateLabel(GM_getValue(ptreEmpireMoonLastRefresh, 0))+'</span>';
