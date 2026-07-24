@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 05 avril 2026 12:27:51 CEST
+// Build date: ven. 24 juil. 2026 23:03:22 CEST
 // ****************************************
 
 // ****************************************
@@ -758,8 +758,11 @@ function improvePageGalaxy() {
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
         tempDiv.id = 'ptreGalaxyToolBar';
-        if (document.getElementsByClassName("galaxyTable")) {
-            document.getElementsByClassName("galaxyTable")[0].appendChild(tempDiv);
+        const galaxyTables = document.getElementsByClassName("galaxyTable");
+        if (galaxyTables.length > 0) {
+            galaxyTables[0].appendChild(tempDiv);
+        } else {
+            consoleDebug("[GALAXY] .galaxyTable not found (vacation mode? V13 change?). Toolbar not attached.");
         }
         if (document.getElementById('ptreGalaxyPhalanxButton')) {
             document.getElementById('ptreGalaxyPhalanxButton').addEventListener("click", function (event) {
@@ -3122,37 +3125,30 @@ function syncTargets(mode) {
     });
 }
 
-// Get Empire page as JSON
+// Get Account Info as JSON (V13 replacement for the legacy Empire Moon Page fetch)
 // Update Phalanx
 function updateDataFromEmpireMoonPage() {
-    consoleDebug("[EMPIRE] Fetching Empire Moon Page");
+    consoleDebug("[EMPIRE] Fetching Account Info (moons)");
     const currentTime = getIGCurrentTS();
-    return fetch('https://' + window.location.host + '/game/index.php?page=ajax&component=empire&ajax=1&planetType=1&asJson=1', {
+    return fetch('https://' + window.location.host + '/game/index.php?page=componentOnly&component=externaldataexport&action=accountInfo&asJson=1', {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(function(response) { return response.json(); })
-    .then(function(result) {
-        var data = JSON.parse(result.mergedArray);
-        var planets = data.planets;
-        if (!planets || planets.length === 0) {
-            addToLogs('[EMPIRE] No planets found in Empire');
-            displayMessageInSettings('No phalanx data found in Empire Moon page');
-            updateHtmlById("ptreEmpireMoonLastRefreshField", 'No phalanx data found in Empire Moon page');
+    .then(function(data) {
+        var moons = data.moons;
+        if (!moons || Object.keys(moons).length === 0) {
+            addToLogs('[EMPIRE] No moons found in Account Info');
+            displayMessageInSettings('No phalanx data found in Account Info');
+            updateHtmlById("ptreEmpireMoonLastRefreshField", 'No phalanx data found in Account Info');
             return;
         }
 
         var newPhalanxList = [];
-        planets.forEach(function(planet) {
-            var moonID = String(planet.id);
-            // on récupère "[1:2:3]"
-            var coordRaw = planet.coordinates;
-            var match = coordRaw.match(/\[(\d+):(\d+):(\d+)\]/);
-            if (!match) {
-                consoleDebug('[EMPIRE] Cant parse coords for moon ' + moonID + ': ' + coordRaw);
-                return;
-            }
-            var coords = match[1] + ':' + match[2] + ':' + match[3];
-            var phalanxLevel = parseInt(planet['42'], 10);
+        Object.keys(moons).forEach(function(moonID) {
+            var moon = moons[moonID];
+            var coords = moon.galaxy + ':' + moon.system + ':' + moon.position;
+            var buildings = moon.buildings || {};
+            var phalanxLevel = parseInt(buildings['42'], 10);
             if (isNaN(phalanxLevel)) {
                 consoleDebug('[EMPIRE] No phalanx (42) for moon ' + moonID);
                 return;
@@ -3181,15 +3177,15 @@ function updateDataFromEmpireMoonPage() {
             addToLogs('[EMPIRE] Updated ' + newPhalanxList.length + ' phalanx (min: ' + levelMin + ' | max: ' + levelMax + ')');
             displayMessageInSettings('Phalanx updated: ' + newPhalanxList.length + ' moons (min: ' + levelMin + ' | max: ' + levelMax + ')');
         } else {
-            addToLogs('[EMPIRE] No phalanx found in JSON response');
-            displayMessageInSettings('No phalanx data found in Empire Moon page');
-            updateHtmlById("ptreEmpireMoonLastRefreshField", 'No phalanx data found in Empire Moon page');
+            addToLogs('[EMPIRE] No phalanx found in Account Info response');
+            displayMessageInSettings('No phalanx data found in Account Info');
+            updateHtmlById("ptreEmpireMoonLastRefreshField", 'No phalanx data found in Account Info');
         }
     })
     .catch(function(error) {
-        console.error("[EasyPTRE] Can't fetch empire data ", error);
-        displayMessageInSettings('Failed to fetch Empire Moon page');
-        updateHtmlById("ptreEmpireMoonLastRefreshField", 'Failed to fetch Empire Moon page');
+        console.error("[EasyPTRE] Can't fetch account info ", error);
+        displayMessageInSettings('Failed to fetch Account Info');
+        updateHtmlById("ptreEmpireMoonLastRefreshField", 'Failed to fetch Account Info');
     });
 }
 
@@ -3215,6 +3211,10 @@ function waitForGalaxyToBeLoaded() {
     consoleDebug("[GALAXY] Waiting for Galaxy content");
     ptreGalaxyInitMiliTS = Date.now();
     const galaxyLoading = document.getElementById('galaxyLoading');
+    if (!galaxyLoading) {
+        consoleDebug("[GALAXY] #galaxyLoading not found (vacation mode? V13 change?). Skipping galaxy improvement.");
+        return;
+    }
     if (window.getComputedStyle(galaxyLoading).display === 'none') {
         consoleDebug("[GALAXY] Galaxy is already ready!");
         improveGalaxyTable();
@@ -3239,6 +3239,10 @@ function waitForGalaxyToBeLoaded() {
 // Wait for loading image
 function waitForNextGalaxyChangeTrigger() {
     const galaxyLoading = document.getElementById('galaxyLoading');
+    if (!galaxyLoading) {
+        consoleDebug("[GALAXY] #galaxyLoading not found (vacation mode? V13 change?). Not watching for galaxy changes.");
+        return;
+    }
     const observer = new MutationObserver((mutations, obs) => {
         if (window.getComputedStyle(galaxyLoading).display !== 'none') {
             consoleDebug("[GALAXY] Galaxy change triggered");
