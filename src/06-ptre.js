@@ -539,6 +539,10 @@ function syncTargets(mode) {
 // Get Account Info as JSON (V13 replacement for the legacy Empire Moon Page fetch)
 // Update Phalanx
 function updateDataFromEmpireMoonPage() {
+    if (isOGameV12) {
+        //TODO: V12 compatibility
+        return updateDataFromEmpireMoonPageV12();
+    }
     consoleDebug("[EMPIRE] Fetching Account Info (moons)");
     const currentTime = getIGCurrentTS();
     return fetch('https://' + window.location.host + '/game/index.php?page=componentOnly&component=externaldataexport&action=accountInfo&asJson=1', {
