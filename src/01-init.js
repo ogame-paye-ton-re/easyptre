@@ -35,6 +35,8 @@ const ptreID = "ptre-id";
 const ptreMissingTKMessage = "NO PTRE TEAM KEY: Add a Team Key via EasyPTRE settings";
 
 // Variables
+var ogameVersion = "";
+var isOGameV12 = false;
 var server = -1;
 var country = "";
 var universe = -1;
@@ -65,9 +67,12 @@ if (modeEasyPTRE == "ingame") {
     ptrePageLoadServerMiliTS = serverTime.getTime();
     ptrePageLoadClientMiliTS = Date.now();
     ptrePageLoadUnixTS = Number(document.getElementsByName('ogame-timestamp')[0].content); // Unix Timestamp
+    ogameVersion = document.getElementsByName('ogame-version')[0].content;
+    isOGameV12 = /^12\./.test(ogameVersion);
     if (unsafeWindow.timeZoneDiffSeconds !== undefined) {
         ptreTimezoneDiffSec = Number(unsafeWindow.timeZoneDiffSeconds);
     }
+    console.log("[EasyPTRE] OGame version: " + ogameVersion);
     console.log("[EasyPTRE] UNIX TS: " + ptrePageLoadUnixTS + " | Server time: " + new Date(ptrePageLoadServerMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadServerMiliTS/1000 + ") | ptreTimezoneDiffSec: " + (ptreTimezoneDiffSec/3600) + " hours");
     //console.log("[EasyPTRE] Client time: " + new Date(ptrePageLoadClientMiliTS).toLocaleString() + " (timestamp: " + ptrePageLoadClientMiliTS/1000 + ")");
     server = document.getElementsByName('ogame-universe')[0].content;
