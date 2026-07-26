@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 26 juil. 2026 15:24:12 CEST
+// Build date: dim. 26 juil. 2026 21:44:25 CEST
 // ****************************************
 
 // ****************************************
@@ -47,7 +47,7 @@ const ptreMessageDisplayTime = 5*1000;
 const ptreMenuImageDisplayTime = 3*1000;
 const ptrePushDelayMiliSec = 500;
 const ptreVersionCheckTimeout = 6*60*60;
-const ptreTechnosCheckTimeout = 0//15*60;
+const ptreTechnosCheckTimeout = 3*60;
 const ptreDataSharingDelay = 200;
 const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
@@ -298,10 +298,51 @@ if (modeEasyPTRE == "ptre") {
             var prefill = parsePlayerResearchs(json, "prefill");
             hrefValue = hrefValue.replace("replaceme", prefill);
             linkElement.setAttribute("href", hrefValue);
-            document.getElementById("simulator_comment").innerHTML = "This link contains your LF techs";
+            document.getElementById("simulator_comment").innerHTML = "Your researches has been detected by EasyPTRE and will be sent to the simulator";
             console.log("[EasyPTRE] [SR] Updating simulator link");
         } else {
             console.log("[EasyPTRE] [SR] No lifeforms data saved");
+        }
+    }
+
+    // Simulate landing page - inject local techs into prefill + show tech preview
+    if (/ptre\.chez\.gg\/scripts\/simulate\.php/.test(location.href)) {
+        var landingMeta = document.querySelector('meta[name="ptre-simulate-landing"]');
+        if (landingMeta) {
+            console.log("[EasyPTRE] [SIM] Simulate landing page detected: "+country+"-"+universe);
+            const srKey = document.querySelector('meta[name="ptre-sr-key"]').content;
+            const simUrlBase = document.querySelector('meta[name="ptre-simulator-url-base"]').content;
+            const techsJSON = GM_getValue(ptreTechnosJSON, '');
+            const techsDiv = document.getElementById('ptre-detected-techs');
+            const updateDiv = document.getElementById('ptre-last-update');
+            const continueBtn = document.getElementById('ptre-continue-btn');
+
+            if (techsJSON != '') {
+                try {
+                    const prefill = parsePlayerResearchs(techsJSON, 'prefill');
+                    if (continueBtn) {
+                        continueBtn.href = simUrlBase + '/en?SR_KEY=' + srKey + '#prefill=' + prefill;
+                    }
+                    if (updateDiv) {
+                        updateDiv.innerHTML = 'Last EasyPTRE update: ' + getUnixTSLabel(GM_getValue(ptreLastTechnosRefreshUnix, 0));
+                    }
+                    if (techsDiv) {
+                        techsDiv.innerHTML = parsePlayerResearchs(techsJSON, 'tab');
+                    }
+                    console.log("[EasyPTRE] [SIM] Prefill built from local techs ("+country+"-"+universe+")");
+                } catch (e) {
+                    console.error("[EasyPTRE] [SIM] Failed to build prefill", e);
+                }
+            } else {
+                if (techsDiv) {
+                    var fleetUrl = 'https://s'+universe+'-'+country+'.ogame.gameforge.com/game/index.php?page=ingame&component=fleetdispatch';
+                    techsDiv.innerHTML = '<div class="ptre-warning">'
+                        + '&#9888; EasyPTRE is installed, but no lifeform data cached for <b>'+country+'-'+universe+'</b>.<br>'
+                        + 'Visit your <a href="'+fleetUrl+'" target="_blank" style="color: var(--clr-primary);">ingame Fleet page</a> for that universe to pre-fill the simulator with your researches.'
+                        + '</div>';
+                }
+                console.log("[EasyPTRE] [SIM] No local techs cached for "+country+"-"+universe);
+            }
         }
     }
 }
