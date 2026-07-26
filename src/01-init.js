@@ -15,7 +15,7 @@ const ptreMessageDisplayTime = 5*1000;
 const ptreMenuImageDisplayTime = 3*1000;
 const ptrePushDelayMiliSec = 500;
 const ptreVersionCheckTimeout = 6*60*60;
-const ptreTechnosCheckTimeout = 15*60;
+const ptreTechnosCheckTimeout = 0//15*60;
 const ptreDataSharingDelay = 200;
 const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
@@ -112,6 +112,7 @@ const ptreAddBuddiesToFriendsAndPhalanx = ptrePerUniKeysPrefix + "AddBuddiesToFr
 const ptreMaxCounterSpyTsSeen = ptrePerUniKeysPrefix + "MaxCounterSpyTsSeen";
 const ptreTechnosJSON = ptrePerUniKeysPrefix + "Technos";
 const ptreLastTechnosRefresh = ptrePerUniKeysPrefix + "LastTechnosRefresh";
+const ptreLastTechnosRefreshUnix = ptrePerUniKeysPrefix + "LastTechnosRefreshUnix"; // Unix TS companion (usable on PTRE website context)
 const ptrePlayerID = ptrePerUniKeysPrefix + "PlayerID";
 const ptreDataToSync = ptrePerUniKeysPrefix + "DataToSync";
 const ptreEmpireMoonLastRefresh = ptrePerUniKeysPrefix + "EmpireMoonLastRefresh";
@@ -245,7 +246,9 @@ if (modeEasyPTRE == "ptre") {
             const json = GM_getValue(ptreTechnosJSON, '');
             if (json != '') {
                 tab = parsePlayerResearchs(json, "tab");
-                document.getElementById("tech_from_easyptre").innerHTML = tab;
+                const lastRefreshUnix = GM_getValue(ptreLastTechnosRefreshUnix, 0);
+                const lastRefreshLabel = '<div>Last EasyPTRE update: ' + getUnixTSLabel(lastRefreshUnix) + '</div>';
+                document.getElementById("tech_from_easyptre").innerHTML = lastRefreshLabel + tab;
                 console.log("[EasyPTRE] [LF] Updating lifeforms page");
             } else {
                 console.log("[EasyPTRE] [LF] No lifeforms data saved");

@@ -11,7 +11,33 @@ function parsePlayerResearchs(json, mode) {
     let out = {};
 
     if (mode == "tab") {
-        var str = '<table width="60%" border="1"><tr><td style="padding: 5px" align="center">Ships</td>';
+        // Character class label (mirrors PHP get_class_label)
+        var charClassHTML = 'No class';
+        if (characterClassId === 1) charClassHTML = '<img src="/img/ogame/collector.png" width="15px"> <span class="collector">Collector</span>';
+        else if (characterClassId === 2) charClassHTML = '<img src="/img/ogame/general.png" width="15px"> <span class="general">General</span>';
+        else if (characterClassId === 3) charClassHTML = '<img src="/img/ogame/discoverer.png" width="15px"> <span class="discoverer">Discoverer</span>';
+
+        // Alliance class label (1 Warriors / 2 Traders / 3 Researchers)
+        var allianceClassHTML = 'No alliance class';
+        if (allianceClassId === 1) allianceClassHTML = '<img src="/img/ogame/warriors.png" width="15px"> <span class="warriors">Warriors</span>';
+        else if (allianceClassId === 2) allianceClassHTML = '<img src="/img/ogame/traders.png" width="15px"> <span class="traders">Traders</span>';
+        else if (allianceClassId === 3) allianceClassHTML = '<img src="/img/ogame/class-researchers.png" width="15px"> <span class="researchers">Researchers</span>';
+
+        var str = '<h4>Class</h4>' + charClassHTML + ' &nbsp;|&nbsp; Alliance: ' + allianceClassHTML;
+
+        // Basic researches (icon + level)
+        str += '<h4>Researches</h4><div>';
+        for (const rkey in obj.researches) {
+            str += '<span style="display:inline-block; text-align:center; margin:3px 6px;">';
+            str += '<img src="/img/ogame/mini/research_' + rkey + '.png"><br>';
+            str += '<span class="ptreBold">' + obj.researches[rkey] + '</span>';
+            str += '</span>';
+        }
+        str += '</div>';
+
+        // Ship bonuses (from lifeform researches)
+        str += '<h4>Ship bonuses</h4>';
+        str += '<table width="60%" border="1"><tr><td style="padding: 5px" align="center">Ships</td>';
         str+='<td style="padding: 5px" align="center"><img src="/img/ogame/speed.png" width="30px"><br>Speed</td>';
         str+='<td style="padding: 5px" align="center"><img src="/img/ogame/armor.png" width="30px"><br>Armor</td>';
         str+='<td style="padding: 5px" align="center"><img src="/img/ogame/shield.png" width="30px"><br>Shield</td>';
@@ -41,17 +67,17 @@ function parsePlayerResearchs(json, mode) {
                 type = 'def';
             }
             str+= '<tr><td align="center"><img src="/img/ogame/mini/'+type+'_'+key+'.png"></td>';
-            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].speed*100, 2)+' %<span>'; }
+            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].speed*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].armor*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].armor*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].shield*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].shield*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].weapon*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].weapon*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].cargo*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].cargo*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].fuel*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].fuel*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td></tr>';
         } else {
             out["0"]["lifeformBonuses"]["BaseStatsBooster"][key] = {

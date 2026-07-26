@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 25 juil. 2026 06:57:03 CEST
+// Build date: dim. 26 juil. 2026 15:24:12 CEST
 // ****************************************
 
 // ****************************************
@@ -47,7 +47,7 @@ const ptreMessageDisplayTime = 5*1000;
 const ptreMenuImageDisplayTime = 3*1000;
 const ptrePushDelayMiliSec = 500;
 const ptreVersionCheckTimeout = 6*60*60;
-const ptreTechnosCheckTimeout = 15*60;
+const ptreTechnosCheckTimeout = 0//15*60;
 const ptreDataSharingDelay = 200;
 const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
@@ -144,6 +144,7 @@ const ptreAddBuddiesToFriendsAndPhalanx = ptrePerUniKeysPrefix + "AddBuddiesToFr
 const ptreMaxCounterSpyTsSeen = ptrePerUniKeysPrefix + "MaxCounterSpyTsSeen";
 const ptreTechnosJSON = ptrePerUniKeysPrefix + "Technos";
 const ptreLastTechnosRefresh = ptrePerUniKeysPrefix + "LastTechnosRefresh";
+const ptreLastTechnosRefreshUnix = ptrePerUniKeysPrefix + "LastTechnosRefreshUnix"; // Unix TS companion (usable on PTRE website context)
 const ptrePlayerID = ptrePerUniKeysPrefix + "PlayerID";
 const ptreDataToSync = ptrePerUniKeysPrefix + "DataToSync";
 const ptreEmpireMoonLastRefresh = ptrePerUniKeysPrefix + "EmpireMoonLastRefresh";
@@ -277,7 +278,9 @@ if (modeEasyPTRE == "ptre") {
             const json = GM_getValue(ptreTechnosJSON, '');
             if (json != '') {
                 tab = parsePlayerResearchs(json, "tab");
-                document.getElementById("tech_from_easyptre").innerHTML = tab;
+                const lastRefreshUnix = GM_getValue(ptreLastTechnosRefreshUnix, 0);
+                const lastRefreshLabel = '<div>Last EasyPTRE update: ' + getUnixTSLabel(lastRefreshUnix) + '</div>';
+                document.getElementById("tech_from_easyptre").innerHTML = lastRefreshLabel + tab;
                 console.log("[EasyPTRE] [LF] Updating lifeforms page");
             } else {
                 console.log("[EasyPTRE] [LF] No lifeforms data saved");
@@ -787,28 +790,46 @@ function improvePageGalaxy() {
 function improvePageFleet() {
     console.log("[EasyPTRE] Improving Fleet Page");
     var currentTime = getIGCurrentTS();
-    if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + ptreTechnosCheckTimeout) {
-        var spanElement = document.querySelector('.show_fleet_apikey');
-        if (spanElement) {
-            var tooltipContent = spanElement.getAttribute('data-tooltip-title');
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = tooltipContent;
-            var inputElements = tempDiv.querySelectorAll('input');
-            var secondInputElement = inputElements[1];
-            var techJSON = secondInputElement ? secondInputElement.value : null;
-            if (techJSON != null) {
-                //techList = JSON.parse(techJSON);
-                GM_setValue(ptreTechnosJSON, techJSON);
-                var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
-                displayPTREPopUpMessage(tempMessage);
-                // Update last check TS
-                GM_setValue(ptreLastTechnosRefresh, currentTime);
-                updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
-            } else {
-                console.log("[EasyPTRE] [FLEET] Cant find Techs!");
-            }
-        }
+    var lastRefresh = Number(GM_getValue(ptreLastTechnosRefresh, 0));
+    var nextAllowed = lastRefresh + ptreTechnosCheckTimeout;
+    if (currentTime <= nextAllowed) {
+        consoleDebug("[FLEET] Skipping techs refresh: cooldown active (last IG TS: " + lastRefresh + ", next allowed: " + nextAllowed + ", now: " + currentTime + ", " + (nextAllowed - currentTime) + " sec remaining)");
+        return;
     }
+    var spanElement = document.querySelector('.show_fleet_apikey');
+    if (!spanElement) {
+        //console.log("[EasyPTRE] [FLEET] Cant find .show_fleet_apikey element. Fleet page structure may have changed.");
+        return;
+    }
+    consoleDebug("[FLEET] Found .show_fleet_apikey element");
+    var tooltipContent = spanElement.getAttribute('data-tooltip-title');
+    if (!tooltipContent) {
+        //console.log("[EasyPTRE] [FLEET] .show_fleet_apikey has no data-tooltip-title attribute (empty or missing).");
+        return;
+    }
+    //consoleDebug("[FLEET] data-tooltip-title length: " + tooltipContent.length);
+    var tempDiv = document.createElement('div');
+    tempDiv.innerHTML = tooltipContent;
+    var inputElements = tempDiv.querySelectorAll('input');
+    consoleDebug("[FLEET] Found " + inputElements.length + " input(s) in tooltip");
+    if (inputElements.length < 2) {
+        console.log("[EasyPTRE] [FLEET] Expected >=2 inputs in tooltip, found " + inputElements.length + ". Tooltip HTML sample: " + tooltipContent.slice(0, 300));
+        return;
+    }
+    var secondInputElement = inputElements[1];
+    var techJSON = secondInputElement.value;
+    if (!techJSON) {
+        console.log("[EasyPTRE] [FLEET] Second input in tooltip has empty value.");
+        return;
+    }
+    consoleDebug("[FLEET] Techs JSON length: " + techJSON.length + " (sample: " + techJSON.slice(0, 120) + ")");
+    GM_setValue(ptreTechnosJSON, techJSON);
+    var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
+    displayPTREPopUpMessage(tempMessage);
+    // Update last check TS (IG for cooldown, Unix companion for cross-context display on PTRE website)
+    GM_setValue(ptreLastTechnosRefresh, currentTime);
+    GM_setValue(ptreLastTechnosRefreshUnix, getCurrentUnixTS());
+    updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
 }
 
 // Update Phalanx data
@@ -3908,7 +3929,33 @@ function parsePlayerResearchs(json, mode) {
     let out = {};
 
     if (mode == "tab") {
-        var str = '<table width="60%" border="1"><tr><td style="padding: 5px" align="center">Ships</td>';
+        // Character class label (mirrors PHP get_class_label)
+        var charClassHTML = 'No class';
+        if (characterClassId === 1) charClassHTML = '<img src="/img/ogame/collector.png" width="15px"> <span class="collector">Collector</span>';
+        else if (characterClassId === 2) charClassHTML = '<img src="/img/ogame/general.png" width="15px"> <span class="general">General</span>';
+        else if (characterClassId === 3) charClassHTML = '<img src="/img/ogame/discoverer.png" width="15px"> <span class="discoverer">Discoverer</span>';
+
+        // Alliance class label (1 Warriors / 2 Traders / 3 Researchers)
+        var allianceClassHTML = 'No alliance class';
+        if (allianceClassId === 1) allianceClassHTML = '<img src="/img/ogame/warriors.png" width="15px"> <span class="warriors">Warriors</span>';
+        else if (allianceClassId === 2) allianceClassHTML = '<img src="/img/ogame/traders.png" width="15px"> <span class="traders">Traders</span>';
+        else if (allianceClassId === 3) allianceClassHTML = '<img src="/img/ogame/class-researchers.png" width="15px"> <span class="researchers">Researchers</span>';
+
+        var str = '<h4>Class</h4>' + charClassHTML + ' &nbsp;|&nbsp; Alliance: ' + allianceClassHTML;
+
+        // Basic researches (icon + level)
+        str += '<h4>Researches</h4><div>';
+        for (const rkey in obj.researches) {
+            str += '<span style="display:inline-block; text-align:center; margin:3px 6px;">';
+            str += '<img src="/img/ogame/mini/research_' + rkey + '.png"><br>';
+            str += '<span class="ptreBold">' + obj.researches[rkey] + '</span>';
+            str += '</span>';
+        }
+        str += '</div>';
+
+        // Ship bonuses (from lifeform researches)
+        str += '<h4>Ship bonuses</h4>';
+        str += '<table width="60%" border="1"><tr><td style="padding: 5px" align="center">Ships</td>';
         str+='<td style="padding: 5px" align="center"><img src="/img/ogame/speed.png" width="30px"><br>Speed</td>';
         str+='<td style="padding: 5px" align="center"><img src="/img/ogame/armor.png" width="30px"><br>Armor</td>';
         str+='<td style="padding: 5px" align="center"><img src="/img/ogame/shield.png" width="30px"><br>Shield</td>';
@@ -3938,17 +3985,17 @@ function parsePlayerResearchs(json, mode) {
                 type = 'def';
             }
             str+= '<tr><td align="center"><img src="/img/ogame/mini/'+type+'_'+key+'.png"></td>';
-            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].speed*100, 2)+' %<span>'; }
+            var temp = '-'; if (obj.ships[key].speed > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].speed*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].armor*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].armor > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].armor*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].shield*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].shield > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].shield*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].weapon*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].weapon > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].weapon*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].cargo*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].cargo > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].cargo*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td>';
-            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].fuel*100, 2)+' %<span>'; }
+            temp = '-'; if (obj.ships[key].fuel > 0) { temp = '<span class="ptreSuccess">'+round(obj.ships[key].fuel*100, 2)+' %</span>'; }
             str+= '<td align="center">'+temp+'</td></tr>';
         } else {
             out["0"]["lifeformBonuses"]["BaseStatsBooster"][key] = {

@@ -203,28 +203,46 @@ function improvePageGalaxy() {
 function improvePageFleet() {
     console.log("[EasyPTRE] Improving Fleet Page");
     var currentTime = getIGCurrentTS();
-    if (currentTime > GM_getValue(ptreLastTechnosRefresh, 0) + ptreTechnosCheckTimeout) {
-        var spanElement = document.querySelector('.show_fleet_apikey');
-        if (spanElement) {
-            var tooltipContent = spanElement.getAttribute('data-tooltip-title');
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = tooltipContent;
-            var inputElements = tempDiv.querySelectorAll('input');
-            var secondInputElement = inputElements[1];
-            var techJSON = secondInputElement ? secondInputElement.value : null;
-            if (techJSON != null) {
-                //techList = JSON.parse(techJSON);
-                GM_setValue(ptreTechnosJSON, techJSON);
-                var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
-                displayPTREPopUpMessage(tempMessage);
-                // Update last check TS
-                GM_setValue(ptreLastTechnosRefresh, currentTime);
-                updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
-            } else {
-                console.log("[EasyPTRE] [FLEET] Cant find Techs!");
-            }
-        }
+    var lastRefresh = Number(GM_getValue(ptreLastTechnosRefresh, 0));
+    var nextAllowed = lastRefresh + ptreTechnosCheckTimeout;
+    if (currentTime <= nextAllowed) {
+        consoleDebug("[FLEET] Skipping techs refresh: cooldown active (last IG TS: " + lastRefresh + ", next allowed: " + nextAllowed + ", now: " + currentTime + ", " + (nextAllowed - currentTime) + " sec remaining)");
+        return;
     }
+    var spanElement = document.querySelector('.show_fleet_apikey');
+    if (!spanElement) {
+        //console.log("[EasyPTRE] [FLEET] Cant find .show_fleet_apikey element. Fleet page structure may have changed.");
+        return;
+    }
+    consoleDebug("[FLEET] Found .show_fleet_apikey element");
+    var tooltipContent = spanElement.getAttribute('data-tooltip-title');
+    if (!tooltipContent) {
+        //console.log("[EasyPTRE] [FLEET] .show_fleet_apikey has no data-tooltip-title attribute (empty or missing).");
+        return;
+    }
+    //consoleDebug("[FLEET] data-tooltip-title length: " + tooltipContent.length);
+    var tempDiv = document.createElement('div');
+    tempDiv.innerHTML = tooltipContent;
+    var inputElements = tempDiv.querySelectorAll('input');
+    consoleDebug("[FLEET] Found " + inputElements.length + " input(s) in tooltip");
+    if (inputElements.length < 2) {
+        console.log("[EasyPTRE] [FLEET] Expected >=2 inputs in tooltip, found " + inputElements.length + ". Tooltip HTML sample: " + tooltipContent.slice(0, 300));
+        return;
+    }
+    var secondInputElement = inputElements[1];
+    var techJSON = secondInputElement.value;
+    if (!techJSON) {
+        console.log("[EasyPTRE] [FLEET] Second input in tooltip has empty value.");
+        return;
+    }
+    consoleDebug("[FLEET] Techs JSON length: " + techJSON.length + " (sample: " + techJSON.slice(0, 120) + ")");
+    GM_setValue(ptreTechnosJSON, techJSON);
+    var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
+    displayPTREPopUpMessage(tempMessage);
+    // Update last check TS (IG for cooldown, Unix companion for cross-context display on PTRE website)
+    GM_setValue(ptreLastTechnosRefresh, currentTime);
+    GM_setValue(ptreLastTechnosRefreshUnix, getCurrentUnixTS());
+    updateHtmlById("ptreLastTechnosRefreshField", getLastUpdateLabel(currentTime));
 }
 
 // Update Phalanx data
