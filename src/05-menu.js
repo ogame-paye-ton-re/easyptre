@@ -426,6 +426,8 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.16.0 (jul 2026)</div>- [Fix] OGame V13 compatibility (should still work on V12)<br>- [Fix] Lifeform researches are now auto-injected into the simulator when you open a PTRE spy report link (from Discord / Website)<br>- [Polish] Phalanx list sorted by coordinates';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.15.1 (apr 2026)</div>- [Polish] Add pop-up button legend<br>- [Fix] Disable galaxy pop-up button when no TK';
     content+= '<div class="ptreSubTitle">0.15.0 (apr 2026)</div>- [Polish] Refacto menus and design<br>- [Feature] Add Ingame notes menu<br>- [Feature] Improve Phalanx update (all at once)<br>- [Feature] Move galaxy pop-up feature from Beta to release<br>- [Feature] Add a setting to disable galaxy pop-up<br>- [Feature] Add TamperMonkey Keys management menu<br>- [Fix] Fix galaxy popup conflict with OGLight';
     content+= '<div><hr></div>';
