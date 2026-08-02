@@ -316,16 +316,23 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
 // This function fetchs closest friend phalanx
 function getPhalanxInfosFromGala() {
     const currentTime = getIGCurrentTS();
-    var warning = '';
-    var systemElem = $("input#system_input")[0];
-    var galaxyElem = $("input#galaxy_input")[0];
-    var galaxy = galaxyElem.value;
-    var system = systemElem.value;
-    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
+    const splitted = currentPlanetCoords.split(':');
+    var galaxy = splitted[0];
+    var system = splitted[1];
+    //var position = splitted[2];
+    if (/component=galaxy/.test(location.href)) {
+        var systemElem = $("input#system_input")[0];
+        var galaxyElem = $("input#galaxy_input")[0];
+        galaxy = galaxyElem.value;
+        system = systemElem.value;
+    }
+   var warning = '';
+    setupMainBox('Friends & Phalanx', 'FriendsPhalanx');
+    document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');
 
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
+        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
         return -1;
     }
 
@@ -355,25 +362,33 @@ function getPhalanxInfosFromGala() {
             if (reponseDecode.code != 1) {
                 addToLogs('[F&PHA] ' + reponseDecode.message_debug);
             }
-            displayGalaxyMessageContent(warning+message);
+            document.getElementById('ptreMainContent').innerHTML = warning+message;
         }
     });
 }
 
 // This function fetchs Galaxy Event Explorer infos
 function getGEEInfosFromGala() {
-    var systemElem = $("input#system_input")[0];
-    var galaxyElem = $("input#galaxy_input")[0];
-    var galaxy = galaxyElem.value;
-    var system = systemElem.value;
-    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
+    const splitted = currentPlanetCoords.split(':');
+    var galaxy = splitted[0];
+    var system = splitted[1];
+    var position = splitted[2];
+    /*if (/component=galaxy/.test(location.href)) {
+        var systemElem = $("input#system_input")[0];
+        var galaxyElem = $("input#galaxy_input")[0];
+        galaxy = galaxyElem.value;
+        system = systemElem.value;
+        position = 8;
+    }*/
+    setupMainBox('Galaxy Events Explorer', 'GalaxyEvents');
+    document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + ":" + position + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
+        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
         return -1;
     }
     $.ajax({
-        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
+        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system + '&position=' + position,
         type : 'POST',
         data: null,
         cache: false,
@@ -383,7 +398,7 @@ function getGEEInfosFromGala() {
             if (reponseDecode.code != 1) {
                 addToLogs('[GEE] ' + reponseDecode.message_debug);
             }
-            displayGalaxyMessageContent(message);
+            document.getElementById('ptreMainContent').innerHTML = message;
         }
     });
 }
