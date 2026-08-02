@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.16.0
+// @version      0.17.0
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: mar. 28 juil. 2026 20:35:05 CEST
+// Build date: dim. 02 août 2026 19:14:44 CEST
 // ****************************************
 
 // ****************************************
@@ -189,7 +189,7 @@ var urlPTREGetRanks = 'https://ptre.chez.gg/scripts/api_get_ranks.php' + ptreCom
 // EasyPTRE specific endpoints
 var urlPTRESyncData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEasyPTREUrlParams;
 var urlPTREGetPhalanxInfos = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php' + ptreEasyPTREUrlParams;
-var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos.php' + ptreEasyPTREUrlParams;
+var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos_v2.php' + ptreEasyPTREUrlParams;
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
@@ -1701,21 +1701,24 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreMainBody">';
         html += '<div id="ptreMainContent"></div>';
         html += '<div id="ptreMainNav">';
-        html += '<div id="ptreNavOverview" class="button btn_blue ptreNavBtn">Overview</div>';
+        html += '<div id="ptreNavOverview" class="button btn_blue ptreNavBtn">&#127760; Overview</div>';
         html += '<div id="ptreNavSettings" class="button btn_blue ptreNavBtn">&#9881; Settings</div>';
+        html += '<div><hr></div>';
+        html += '<div id="ptreNavGalaxyEvents" class="button btn_blue ptreNavBtn">&#128225; Galaxy Events</div>';
+        html += '<div id="ptreNavFriendsPhalanx" class="button btn_blue ptreNavBtn">&#128101; Friends & Phalanx</div>';
         html += '<div id="ptreNavData" class="button btn_blue ptreNavBtn">&#9733; Shared Data</div>';
         html += '<div id="ptreNavPTRETargets" class="button btn_blue ptreNavBtn">&#9992; PTRE Targets</div>';
         if (agrEnabled) {
             html += '<div id="ptreNavAGRTargets" class="button btn_blue ptreNavBtn">&#9992; AGR Targets</div>';
         }
-        html += '<div id="ptreNavGalaxy" class="button btn_blue ptreNavBtn">&#128506; Galaxy</div>';
         html += '<div id="ptreNavSharedNotes" class="button btn_blue ptreNavBtn">&#128221; Shared Notes</div>';
         html += '<div><hr></div>';
         html += '<div id="ptreNavHelp" class="button btn_blue ptreNavBtn">&#10067; Help</div>';
-        html += '<div id="ptreNavLogs" class="button btn_blue ptreNavBtn">&#128221; Logs</div>';
-        html += '<div id="ptreNavToolsCompatibility" class="button btn_blue ptreNavBtn">&#9881; Tools Compat</div>';
+        html += '<div id="ptreNavLogs" class="button btn_blue ptreNavBtn">&#128220; Logs</div>';
+        html += '<div id="ptreNavToolsCompatibility" class="button btn_blue ptreNavBtn">&#129513; Tools Compat</div>';
         html += '<div id="ptreNavChangelog" class="button btn_blue ptreNavBtn">&#128221; Changelog</div>';
         html += '<div><hr></div>';
+        html += '<div id="ptreNavGalaxy" class="button btn_blue ptreNavBtn">&#128506; Galaxy</div>';
         html += '<div id="ptreNavUpdates" class="button btn_blue ptreNavBtn">&#128640; Updates</div>';
         html += '<div id="ptreNavTMKeys" class="button btn_blue ptreNavBtn">&#128273; TM Keys</div>';
         html += '</div></div>';
@@ -1741,12 +1744,14 @@ function setupMainBox(title, navKey) {
             }
         });
         document.getElementById('ptreNavSettings').addEventListener('click', function() { displaySettings(); });
+        document.getElementById('ptreNavGalaxyEvents').addEventListener('click', function() { getGEEInfosFromGala(); });
         document.getElementById('ptreNavOverview').addEventListener('click', function() { displayOverview(); });
         document.getElementById('ptreNavData').addEventListener('click', function() { displaySharedData(); });
         document.getElementById('ptreNavGalaxy').addEventListener('click', function() { displayGalaxyTracking(); });
         if (agrEnabled) {
             document.getElementById('ptreNavAGRTargets').addEventListener('click', function() { displayAGRTargetsList(); });
         }
+        document.getElementById('ptreNavFriendsPhalanx').addEventListener('click', function() { getPhalanxInfosFromGala(); });
         document.getElementById('ptreNavPTRETargets').addEventListener('click', function() { displayPTRETargetsList(); });
         document.getElementById('ptreNavChangelog').addEventListener('click', function() { displayChangelog(); });
         document.getElementById('ptreNavHelp').addEventListener('click', function() { displayHelp(); });
@@ -2101,6 +2106,8 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+        content+= '<div class="ptreSubTitle">0.17.0 (aug 2026)</div>- [Feature] Full rework of the Galaxy Events Explorer (GEE)<br>- [Polish] Integrate Friends & Phalanx to main menu<br>- [Polish] Rework menu icons';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.16.0 (jul 2026)</div>- [Fix] OGame V13 compatibility (should still work on V12)<br>- [Fix] Lifeform researches are now auto-injected into the simulator when you open a PTRE spy report link (from Discord / Website)<br>- [Polish] Phalanx list sorted by coordinates';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.15.1 (apr 2026)</div>- [Polish] Add pop-up button legend<br>- [Fix] Disable galaxy pop-up button when no TK';
@@ -2978,16 +2985,23 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
 // This function fetchs closest friend phalanx
 function getPhalanxInfosFromGala() {
     const currentTime = getIGCurrentTS();
-    var warning = '';
-    var systemElem = $("input#system_input")[0];
-    var galaxyElem = $("input#galaxy_input")[0];
-    var galaxy = galaxyElem.value;
-    var system = systemElem.value;
-    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
+    const splitted = currentPlanetCoords.split(':');
+    var galaxy = splitted[0];
+    var system = splitted[1];
+    //var position = splitted[2];
+    if (/component=galaxy/.test(location.href)) {
+        var systemElem = $("input#system_input")[0];
+        var galaxyElem = $("input#galaxy_input")[0];
+        galaxy = galaxyElem.value;
+        system = systemElem.value;
+    }
+   var warning = '';
+    setupMainBox('Friends & Phalanx', 'FriendsPhalanx');
+    document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');
 
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
+        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
         return -1;
     }
 
@@ -3017,25 +3031,33 @@ function getPhalanxInfosFromGala() {
             if (reponseDecode.code != 1) {
                 addToLogs('[F&PHA] ' + reponseDecode.message_debug);
             }
-            displayGalaxyMessageContent(warning+message);
+            document.getElementById('ptreMainContent').innerHTML = warning+message;
         }
     });
 }
 
 // This function fetchs Galaxy Event Explorer infos
 function getGEEInfosFromGala() {
-    var systemElem = $("input#system_input")[0];
-    var galaxyElem = $("input#galaxy_input")[0];
-    var galaxy = galaxyElem.value;
-    var system = systemElem.value;
-    displayGalaxyMessageContent("Loading info for " + galaxy + ":" + system + " ...");
+    const splitted = currentPlanetCoords.split(':');
+    var galaxy = splitted[0];
+    var system = splitted[1];
+    var position = splitted[2];
+    /*if (/component=galaxy/.test(location.href)) {
+        var systemElem = $("input#system_input")[0];
+        var galaxyElem = $("input#galaxy_input")[0];
+        galaxy = galaxyElem.value;
+        system = systemElem.value;
+        position = 8;
+    }*/
+    setupMainBox('Galaxy Events Explorer', 'GalaxyEvents');
+    document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + ":" + position + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
-        displayGalaxyMessageContent('<span class="ptreError">' + ptreMissingTKMessage + '</span>');
+        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
         return -1;
     }
     $.ajax({
-        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system,
+        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system + '&position=' + position,
         type : 'POST',
         data: null,
         cache: false,
@@ -3045,7 +3067,7 @@ function getGEEInfosFromGala() {
             if (reponseDecode.code != 1) {
                 addToLogs('[GEE] ' + reponseDecode.message_debug);
             }
-            displayGalaxyMessageContent(message);
+            document.getElementById('ptreMainContent').innerHTML = message;
         }
     });
 }
@@ -3948,15 +3970,6 @@ function displayGalaxyMiniMessage(message) {
 
 function cleanGalaxyMiniMessage() {
     updateHtmlById("fleetstatusrow", '');
-}
-
-// Display message content on galaxy page
-function displayGalaxyMessageContent(message) {
-    if (document.getElementById("ptreGalaxyMessageBoxContent")) {
-        document.getElementById("ptreGalaxyMessageBoxContent").innerHTML = message;
-    } else {
-        console.log("[EasyPTRE] Error. Cant display: " + message);
-    }
 }
 
 // ****************************************

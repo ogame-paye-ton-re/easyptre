@@ -48,12 +48,3 @@ function cleanGalaxyMiniMessage() {
     updateHtmlById("fleetstatusrow", '');
 }
 
-// Display message content on galaxy page
-function displayGalaxyMessageContent(message) {
-    if (document.getElementById("ptreGalaxyMessageBoxContent")) {
-        document.getElementById("ptreGalaxyMessageBoxContent").innerHTML = message;
-    } else {
-        console.log("[EasyPTRE] Error. Cant display: " + message);
-    }
-}
-
