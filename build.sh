@@ -32,6 +32,7 @@ cat \
     09-notifications.js \
     10-web.js \
     11-maintenance.js \
+    12-interop.js \
     99-v12-compatibility.js \
 >> $OUTPUT
-echo "Build successful: $OUTPUT"
+echo "Build successful...: $OUTPUT"

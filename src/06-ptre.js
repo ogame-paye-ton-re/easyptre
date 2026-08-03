@@ -154,6 +154,31 @@ function processPlayerActivities(galaxy, system, activityTab) {
     consoleDebug('[GALAXY] [' + galaxy + ':' + system + '] Pushing Activities to PTRE');
 }
 
+/**
+ * Fetch player infos from PTRE backend
+ * @param {number} playerId // Player ID
+ * @param {string} pseudo // Player pseudo
+ * @param {boolean} withActivities // Whether to include activities or not (default: false)
+ * @returns {Promise} // Returns a jQuery promise that resolves with the player info JSON or rejects with an error message
+ */
+function fetchPlayerInfos(playerId, pseudo, withActivities = false) {
+  const TKey = GM_getValue(ptreTeamKey, '');
+  if (TKey === '') {
+    // If Team Key is missing, reject the promise with an error message
+    return $.Deferred().reject("Missing Team Key").promise();
+  }
+
+  let url = urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerId + '&pseudo=' + (pseudo || '');
+  if (!withActivities) {
+    url += '&noacti=yes';
+  }
+
+  return $.ajax({
+    dataType: "json",
+    url: url
+  });
+}
+
 // This function calls PTRE backend to get player informations
 // And sends results to Info Box
 function getPlayerInfos(playerID, pseudo) {
@@ -161,28 +186,25 @@ function getPlayerInfos(playerID, pseudo) {
     if (TKey != '') {
         setupMainBox("Player " + pseudo, null);
         var content = '';
-        $.ajax({
-            dataType: "json",
-            url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
-            success: function(reponse) {
-                if (reponse.code == 1) {
-                    var tdId = 0;
-                    content += '<table border="1" width="100%">';
-                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" colspan="3" align="center">Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
-                    tdId++;
-                    reponse.fleet_json.forEach(function(item) {
-                        const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
-                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '">' + shipName + '</td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
-                        tdId++;
-                    });
-                    content += '</table>';
-                } else {
-                    content += '<span class="ptreError">' + reponse.message + '</span>';
-                    addToLogs('[PLAYER INFOS] ' + reponse.message);
-                }
-                document.getElementById('ptreMainContent').innerHTML = content;
+        fetchPlayerInfos(playerID, pseudo, false)
+          .done((reponse) => {
+            if (reponse.code == 1) {
+              var tdId = 0;
+              content += '<table border="1" width="100%">';
+              content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId % 2) + '" colspan="3" align="center">Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
+              tdId++;
+              reponse.fleet_json.forEach(function (item) {
+                const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId % 2) + '">' + shipName + '</td><td class="td_cell_radius_' + (tdId % 2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId % 2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
+                tdId++;
+              });
+              content += '</table>';
+            } else {
+              content += '<span class="ptreError">' + reponse.message + '</span>';
+              addToLogs('[PLAYER INFOS] ' + reponse.message);
             }
-        });
+            document.getElementById('ptreMainContent').innerHTML = content;
+          });
     } else {
         displayPTREPopUpMessage(ptreMissingTKMessage);
         document.getElementById('ptreMainContent').innerHTML = ptreMissingTKMessage;

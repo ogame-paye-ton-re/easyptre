@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 02 août 2026 19:14:44 CEST
+// Build date: lun.  3 août 2026 21:15:37
 // ****************************************
 
 // ****************************************
@@ -226,7 +226,10 @@ if (modeEasyPTRE == "ingame") {
         // Run garbage collector
         if (getCurrentUnixTS() > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
             setTimeout(runGarbageCollection, 6000);
-        }
+      }
+
+      // Run interop with PTRE pages
+      initInterop();
     }
 
     // SPECIFIC PAGES
@@ -2823,6 +2826,31 @@ function processPlayerActivities(galaxy, system, activityTab) {
     consoleDebug('[GALAXY] [' + galaxy + ':' + system + '] Pushing Activities to PTRE');
 }
 
+/**
+ * Fetch player infos from PTRE backend
+ * @param {number} playerId // Player ID
+ * @param {string} pseudo // Player pseudo
+ * @param {boolean} withActivities // Whether to include activities or not (default: false)
+ * @returns {Promise} // Returns a jQuery promise that resolves with the player info JSON or rejects with an error message
+ */
+function fetchPlayerInfos(playerId, pseudo, withActivities = false) {
+  const TKey = GM_getValue(ptreTeamKey, '');
+  if (TKey === '') {
+    // If Team Key is missing, reject the promise with an error message
+    return $.Deferred().reject("Missing Team Key").promise();
+  }
+
+  let url = urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerId + '&pseudo=' + (pseudo || '');
+  if (!withActivities) {
+    url += '&noacti=yes';
+  }
+
+  return $.ajax({
+    dataType: "json",
+    url: url
+  });
+}
+
 // This function calls PTRE backend to get player informations
 // And sends results to Info Box
 function getPlayerInfos(playerID, pseudo) {
@@ -2830,28 +2858,25 @@ function getPlayerInfos(playerID, pseudo) {
     if (TKey != '') {
         setupMainBox("Player " + pseudo, null);
         var content = '';
-        $.ajax({
-            dataType: "json",
-            url: urlPTREGetPlayerInfos + '&team_key=' + TKey + '&player_id=' + playerID + '&pseudo=' + pseudo + '&noacti=yes',
-            success: function(reponse) {
-                if (reponse.code == 1) {
-                    var tdId = 0;
-                    content += '<table border="1" width="100%">';
-                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" colspan="3" align="center">Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
-                    tdId++;
-                    reponse.fleet_json.forEach(function(item) {
-                        const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
-                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '">' + shipName + '</td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
-                        tdId++;
-                    });
-                    content += '</table>';
-                } else {
-                    content += '<span class="ptreError">' + reponse.message + '</span>';
-                    addToLogs('[PLAYER INFOS] ' + reponse.message);
-                }
-                document.getElementById('ptreMainContent').innerHTML = content;
+        fetchPlayerInfos(playerID, pseudo, false)
+          .done((reponse) => {
+            if (reponse.code == 1) {
+              var tdId = 0;
+              content += '<table border="1" width="100%">';
+              content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId % 2) + '" colspan="3" align="center">Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
+              tdId++;
+              reponse.fleet_json.forEach(function (item) {
+                const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
+                content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId % 2) + '">' + shipName + '</td><td class="td_cell_radius_' + (tdId % 2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId % 2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
+                tdId++;
+              });
+              content += '</table>';
+            } else {
+              content += '<span class="ptreError">' + reponse.message + '</span>';
+              addToLogs('[PLAYER INFOS] ' + reponse.message);
             }
-        });
+            document.getElementById('ptreMainContent').innerHTML = content;
+          });
     } else {
         displayPTREPopUpMessage(ptreMissingTKMessage);
         document.getElementById('ptreMainContent').innerHTML = ptreMissingTKMessage;
@@ -4223,7 +4248,65 @@ function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
     });
 }
 
-// ****************************************
+
+function initInterop() {
+  consoleDebug('[INIT INTEROP] Initializing EasyPTRE interop...');
+  window.addEventListener('message', async (event) => {
+    const message = event.data;
+    // Check if the message is valid and of the expected type
+    if (!message || message.type !== 'EASYPTRE_REQUEST') return;
+
+    consoleDebug('[INTEROP EVENT LISTENER] Received message:', event.data)
+
+    const { requestId, action, payload } = message;
+    if (!requestId) {
+      consoleDebug('[INTEROP EVENT LISTENER] No requestId found in message, ignoring.');
+      return;
+    }
+
+    try {
+      let result;
+      switch (action) {
+        case 'EASYPTRE_FETCH_PLAYER_INFOS':
+          result = await handleFetchPlayerInfos(payload);
+          break;
+        default:
+          throw new Error(`Action inconnue: ${action}`);
+      }
+
+      consoleDebug('[INTEROP EVENT LISTENER] Sending response for requestId:', requestId, result);
+
+      window.postMessage({
+        type: 'EASYPTRE_RESPONSE',
+        requestId,
+        success: true,
+        data: result
+      }, '*');
+
+    } catch (error) {
+      window.postMessage({
+        type: 'EASYPTRE_RESPONSE',
+        requestId,
+        success: false,
+        message: error.message || "Erreur inconnue"
+      }, '*');
+    }
+  });
+  consoleDebug('[INIT INTEROP] EasyPTRE interop initialized.');
+}
+
+async function handleFetchPlayerInfos({ playerId, pseudo, withActivities }) {
+  if (!playerId) throw new Error("Missing Player ID");
+  try {
+    return await fetchPlayerInfos(playerId, pseudo, withActivities);
+  } catch (error) {
+    console.log('[EasyPTRE] [INTEROP] Error fetching player infos:', error);
+    let errorMsg = "Request failed";
+    if (typeof error === 'string') errorMsg = error;
+    else if (error && error.statusText) errorMsg = error.statusText;
+    throw new Error(errorMsg);
+  }
+}// ****************************************
 // V12 COMPATIBILITY
 // ****************************************
 //
