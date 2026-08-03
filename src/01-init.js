@@ -194,7 +194,10 @@ if (modeEasyPTRE == "ingame") {
         // Run garbage collector
         if (getCurrentUnixTS() > (Number(GM_getValue(ptreLastGarbageCollection, 0)) + ptreGarbageCollectionTimeout)) {
             setTimeout(runGarbageCollection, 6000);
-        }
+      }
+
+      // Run interop with PTRE pages
+      initInterop();
     }
 
     // SPECIFIC PAGES
