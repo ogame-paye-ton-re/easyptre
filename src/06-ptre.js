@@ -405,6 +405,31 @@ function getGEEInfosFromGala() {
     });
 }
 
+// This function fetchs last multi-player Fight Events for the current universe (proxied via PTRE to XPD)
+function getFightEventsFromXPD() {
+    ptreCurrentView = getFightEventsFromXPD;
+    setupMainBox('Fight Events', 'FightEvents');
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    if (teamKey == '') {
+        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
+        return -1;
+    }
+    $.ajax({
+        url : urlPTREGetXpdEvents + '&team_key=' + teamKey,
+        type : 'POST',
+        data: null,
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = JSON.parse(reponse);
+            var message = atob(reponseDecode.message);
+            if (reponseDecode.code != 1) {
+                addToLogs('[EVENTS] ' + reponseDecode.message_debug);
+            }
+            document.getElementById('ptreMainContent').innerHTML = message;
+        }
+    });
+}
+
 // This function sends commun data to Team
 // Like:
 // - Phalanx levels

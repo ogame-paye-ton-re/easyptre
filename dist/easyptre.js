@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.17.1
+// @version      0.18.0
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 06 août 2026 08:19:23 CEST
+// Build date: jeu. 06 août 2026 08:23:27 CEST
 // ****************************************
 
 // ****************************************
@@ -190,6 +190,7 @@ var urlPTREGetRanks = 'https://ptre.chez.gg/scripts/api_get_ranks.php' + ptreCom
 var urlPTRESyncData = 'https://ptre.chez.gg/scripts/api_sync_data.php' + ptreEasyPTREUrlParams;
 var urlPTREGetPhalanxInfos = 'https://ptre.chez.gg/scripts/api_get_phalanx_infos.php' + ptreEasyPTREUrlParams;
 var urlPTREGetGEEInfos = 'https://ptre.chez.gg/scripts/api_get_gee_infos_v2.php' + ptreEasyPTREUrlParams;
+var urlPTREGetXpdEvents = 'https://ptre.chez.gg/scripts/api_get_xpd_events.php' + ptreEasyPTREUrlParams;
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
@@ -1705,6 +1706,7 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreNavSettings" class="button btn_blue ptreNavBtn">&#9881; Settings</div>';
         html += '<div><hr></div>';
         html += '<div id="ptreNavGalaxyEvents" class="button btn_blue ptreNavBtn">&#128225; Galaxy Events</div>';
+        html += '<div id="ptreNavFightEvents" class="button btn_blue ptreNavBtn">&#9876; Fight Events</div>';
         html += '<div id="ptreNavFriendsPhalanx" class="button btn_blue ptreNavBtn">&#128101; Friends & Phalanx</div>';
         html += '<div id="ptreNavData" class="button btn_blue ptreNavBtn">&#9733; Shared Data</div>';
         html += '<div id="ptreNavPTRETargets" class="button btn_blue ptreNavBtn">&#9992; PTRE Targets</div>';
@@ -1745,6 +1747,7 @@ function setupMainBox(title, navKey) {
         });
         document.getElementById('ptreNavSettings').addEventListener('click', function() { displaySettings(); });
         document.getElementById('ptreNavGalaxyEvents').addEventListener('click', function() { getGEEInfosFromGala(); });
+        document.getElementById('ptreNavFightEvents').addEventListener('click', function() { getFightEventsFromXPD(); });
         document.getElementById('ptreNavOverview').addEventListener('click', function() { displayOverview(); });
         document.getElementById('ptreNavData').addEventListener('click', function() { displaySharedData(); });
         document.getElementById('ptreNavGalaxy').addEventListener('click', function() { displayGalaxyTracking(); });
@@ -3069,6 +3072,31 @@ function getGEEInfosFromGala() {
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[GEE] ' + reponseDecode.message_debug);
+            }
+            document.getElementById('ptreMainContent').innerHTML = message;
+        }
+    });
+}
+
+// This function fetchs last multi-player Fight Events for the current universe (proxied via PTRE to XPD)
+function getFightEventsFromXPD() {
+    ptreCurrentView = getFightEventsFromXPD;
+    setupMainBox('Fight Events', 'FightEvents');
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    if (teamKey == '') {
+        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
+        return -1;
+    }
+    $.ajax({
+        url : urlPTREGetXpdEvents + '&team_key=' + teamKey,
+        type : 'POST',
+        data: null,
+        cache: false,
+        success : function(reponse){
+            var reponseDecode = JSON.parse(reponse);
+            var message = atob(reponseDecode.message);
+            if (reponseDecode.code != 1) {
+                addToLogs('[EVENTS] ' + reponseDecode.message_debug);
             }
             document.getElementById('ptreMainContent').innerHTML = message;
         }
