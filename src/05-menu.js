@@ -30,6 +30,7 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreNavSettings" class="button btn_blue ptreNavBtn">&#9881; Settings</div>';
         html += '<div><hr></div>';
         html += '<div id="ptreNavGalaxyEvents" class="button btn_blue ptreNavBtn">&#128225; Galaxy Events</div>';
+        html += '<div id="ptreNavFightEvents" class="button btn_blue ptreNavBtn">&#9876; Fight Events</div>';
         html += '<div id="ptreNavFriendsPhalanx" class="button btn_blue ptreNavBtn">&#128101; Friends & Phalanx</div>';
         html += '<div id="ptreNavData" class="button btn_blue ptreNavBtn">&#9733; Shared Data</div>';
         html += '<div id="ptreNavPTRETargets" class="button btn_blue ptreNavBtn">&#9992; PTRE Targets</div>';
@@ -70,6 +71,7 @@ function setupMainBox(title, navKey) {
         });
         document.getElementById('ptreNavSettings').addEventListener('click', function() { displaySettings(); });
         document.getElementById('ptreNavGalaxyEvents').addEventListener('click', function() { getGEEInfosFromGala(); });
+        document.getElementById('ptreNavFightEvents').addEventListener('click', function() { getFightEventsFromXPD(); });
         document.getElementById('ptreNavOverview').addEventListener('click', function() { displayOverview(); });
         document.getElementById('ptreNavData').addEventListener('click', function() { displaySharedData(); });
         document.getElementById('ptreNavGalaxy').addEventListener('click', function() { displayGalaxyTracking(); });
