@@ -431,7 +431,8 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-        content+= '<div class="ptreSubTitle">0.17.0 (aug 2026)</div>- [Feature] Full rework of the Galaxy Events Explorer (GEE)<br>- [Polish] Integrate Friends & Phalanx to main menu<br>- [Polish] Rework menu icons';
+    content+= '<div class="ptreSubTitle">0.17.1 (aug 2026)</div>- [Fix] Missing menu reload for GEE and F&P';
+    content+= '<div class="ptreSubTitle">0.17.0 (aug 2026)</div>- [Feature] Full rework of the Galaxy Events Explorer (GEE)<br>- [Polish] Integrate Friends & Phalanx to main menu<br>- [Polish] Rework menu icons';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.16.0 (jul 2026)</div>- [Fix] OGame V13 compatibility (should still work on V12)<br>- [Fix] Lifeform researches are now auto-injected into the simulator when you open a PTRE spy report link (from Discord / Website)<br>- [Polish] Phalanx list sorted by coordinates';
     content+= '<div><hr></div>';

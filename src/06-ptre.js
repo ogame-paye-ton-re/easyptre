@@ -326,7 +326,8 @@ function getPhalanxInfosFromGala() {
         galaxy = galaxyElem.value;
         system = systemElem.value;
     }
-   var warning = '';
+    var warning = '';
+    ptreCurrentView = getPhalanxInfosFromGala;
     setupMainBox('Friends & Phalanx', 'FriendsPhalanx');
     document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');
@@ -380,6 +381,7 @@ function getGEEInfosFromGala() {
         system = systemElem.value;
         position = 8;
     }*/
+    ptreCurrentView = getGEEInfosFromGala;
     setupMainBox('Galaxy Events Explorer', 'GalaxyEvents');
     document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + ":" + position + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');

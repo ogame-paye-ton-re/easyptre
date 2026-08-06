@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.17.0
+// @version      0.17.1
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 02 août 2026 19:14:44 CEST
+// Build date: jeu. 06 août 2026 08:19:23 CEST
 // ****************************************
 
 // ****************************************
@@ -2106,7 +2106,8 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
-        content+= '<div class="ptreSubTitle">0.17.0 (aug 2026)</div>- [Feature] Full rework of the Galaxy Events Explorer (GEE)<br>- [Polish] Integrate Friends & Phalanx to main menu<br>- [Polish] Rework menu icons';
+    content+= '<div class="ptreSubTitle">0.17.1 (aug 2026)</div>- [Fix] Missing menu reload for GEE and F&P';
+    content+= '<div class="ptreSubTitle">0.17.0 (aug 2026)</div>- [Feature] Full rework of the Galaxy Events Explorer (GEE)<br>- [Polish] Integrate Friends & Phalanx to main menu<br>- [Polish] Rework menu icons';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.16.0 (jul 2026)</div>- [Fix] OGame V13 compatibility (should still work on V12)<br>- [Fix] Lifeform researches are now auto-injected into the simulator when you open a PTRE spy report link (from Discord / Website)<br>- [Polish] Phalanx list sorted by coordinates';
     content+= '<div><hr></div>';
@@ -2995,7 +2996,8 @@ function getPhalanxInfosFromGala() {
         galaxy = galaxyElem.value;
         system = systemElem.value;
     }
-   var warning = '';
+    var warning = '';
+    ptreCurrentView = getPhalanxInfosFromGala;
     setupMainBox('Friends & Phalanx', 'FriendsPhalanx');
     document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');
@@ -3049,6 +3051,7 @@ function getGEEInfosFromGala() {
         system = systemElem.value;
         position = 8;
     }*/
+    ptreCurrentView = getGEEInfosFromGala;
     setupMainBox('Galaxy Events Explorer', 'GalaxyEvents');
     document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + ":" + position + " ...";
     const teamKey = GM_getValue(ptreTeamKey, '');
