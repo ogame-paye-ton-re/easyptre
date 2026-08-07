@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 06 août 2026 08:23:27 CEST
+// Build date: ven. 07 août 2026 09:13:49 CEST
 // ****************************************
 
 // ****************************************
@@ -777,7 +777,7 @@ function improvePageGalaxy() {
         //TODO:   a udatder quand la fct AGR passe
         var tempContent = '<table width="100%"><tr>';
         tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
-        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">&#128225; FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">&#128225; GALAXY EVENTS</div></td>';
+        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">&#128101; FRIENDS&PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">&#128225; GALAXY EVENTS</div> <div id="ptreGalaxyFightEventsButton" type="button" class="button btn_blue">&#9876; FIGHT EVENTS</div></td>';
         tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
@@ -822,6 +822,11 @@ function improvePageGalaxy() {
         if (document.getElementById('ptreGalaxyGEEButton')) {
             document.getElementById('ptreGalaxyGEEButton').addEventListener("click", function (event) {
                 getGEEInfosFromGala();
+            });
+        }
+        if (document.getElementById('ptreGalaxyFightEventsButton')) {
+            document.getElementById('ptreGalaxyFightEventsButton').addEventListener("click", function (event) {
+                getFightEventsFromXPD();
             });
         }
     }
@@ -2109,6 +2114,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.18.0 (aug 2026)</div>- [Feature] Integrate Fight Events module from <a href="https://www.expedetector.eu" target="_blank">Expedetector.eu</a>';
     content+= '<div class="ptreSubTitle">0.17.1 (aug 2026)</div>- [Fix] Missing menu reload for GEE and F&P';
     content+= '<div class="ptreSubTitle">0.17.0 (aug 2026)</div>- [Feature] Full rework of the Galaxy Events Explorer (GEE)<br>- [Polish] Integrate Friends & Phalanx to main menu<br>- [Polish] Rework menu icons';
     content+= '<div><hr></div>';
