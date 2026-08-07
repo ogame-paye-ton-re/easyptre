@@ -148,7 +148,7 @@ function improvePageGalaxy() {
         //TODO:   a udatder quand la fct AGR passe
         var tempContent = '<table width="100%"><tr>';
         tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
-        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">&#128225; FRIENDS & PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">&#128225; GALAXY EVENTS</div></td>';
+        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">&#128101; FRIENDS&PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">&#128225; GALAXY EVENTS</div> <div id="ptreGalaxyFightEventsButton" type="button" class="button btn_blue">&#9876; FIGHT EVENTS</div></td>';
         tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
         if (ptrePushActivities === true) {
             tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
@@ -193,6 +193,11 @@ function improvePageGalaxy() {
         if (document.getElementById('ptreGalaxyGEEButton')) {
             document.getElementById('ptreGalaxyGEEButton').addEventListener("click", function (event) {
                 getGEEInfosFromGala();
+            });
+        }
+        if (document.getElementById('ptreGalaxyFightEventsButton')) {
+            document.getElementById('ptreGalaxyFightEventsButton').addEventListener("click", function (event) {
+                getFightEventsFromXPD();
             });
         }
     }
