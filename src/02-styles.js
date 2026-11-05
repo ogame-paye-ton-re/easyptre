@@ -12,6 +12,9 @@ GM_addStyle(`
 .ptreWarning {
     color: #D29D00;
 }
+.ptreVacation {
+    color: aqua;
+}
 .ptreBold {
     font-weight: bold;
 }
@@ -249,18 +252,40 @@ GM_addStyle(`
     padding: 5px;
 }
 #ptreOrionPopUp {
+    position: fixed;
+    top: 30px;
+    right: 10px;
     min-width: 350px;
-    position: absolute;
+    max-width: 600px;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
     border: solid black 2px;
     border-radius: 8px;
     background-color: #171d22;
-    z-index: 10000;
+    z-index: 11000;
     padding: 5px;
 }
 .ptreOrionButton {
-    cursor: pointer;
     vertical-align: middle;
     margin-left: 4px;
+}
+.ptreIconAnim {
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+.ptreIconAnim:hover {
+    transform: scale(1.25);
+    filter: brightness(1.3);
+}
+.ptreIconAnim:active {
+    transform: scale(0.9);
+}
+.ptreIconActive {
+    animation: ptreIconPulse 1s ease-in-out infinite;
+}
+@keyframes ptreIconPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 #6f9fc8); }
+    50% { transform: scale(1.3); filter: drop-shadow(0 0 4px #6f9fc8); }
 }
 #optionPTRE {
     position: relative;

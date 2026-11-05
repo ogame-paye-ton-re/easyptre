@@ -310,15 +310,30 @@ function improvePageOrion() {
                 return;
             }
             const btn = document.createElement('img');
-            btn.className = 'ptreOrionButton';
+            btn.className = 'ptreOrionButton ptreIconAnim';
             btn.title = 'EasyPTRE: anomaly infos';
             btn.src = imgPTREOK;
             btn.width = 16;
             btn.height = 16;
+            // Hover shows a preview, click pins the popup until closed
+            btn.addEventListener('mouseenter', function () {
+                if (!ptreOrionPopUpState || !ptreOrionPopUpState.pinned) {
+                    openPTREOrionPopUp(coords, orionInfos[coords], btn, false);
+                }
+            });
+            btn.addEventListener('mouseleave', function () {
+                if (ptreOrionPopUpState && ptreOrionPopUpState.anchor === btn && !ptreOrionPopUpState.pinned) {
+                    ptreOrionPopUpState.cleanup();
+                }
+            });
             btn.addEventListener('click', function (event) {
                 event.preventDefault();
                 event.stopPropagation();
-                openPTREOrionPopUp(coords, orionInfos[coords], btn);
+                if (ptreOrionPopUpState && ptreOrionPopUpState.anchor === btn) {
+                    ptreOrionPopUpState.pinned = true;
+                } else {
+                    openPTREOrionPopUp(coords, orionInfos[coords], btn, true);
+                }
             });
             link.after(btn);
         });
@@ -368,45 +383,30 @@ function improvePageOrion() {
     observer.observe(observerRoot, {childList: true, subtree: true});
 }
 
-// Called when user clicks on the PTRE button next to an Orion anomaly
-function openPTREOrionPopUp(coords, html, anchor) {
-    consoleDebug("[ORION] Click on anomaly " + coords);
+// Currently displayed Orion popup: {anchor, pinned, cleanup}
+let ptreOrionPopUpState = null;
+
+// Displays the Orion popup (top right corner), the anchor button is animated to show which anomaly it is about
+function openPTREOrionPopUp(coords, html, anchor, pinned) {
+    consoleDebug("[ORION] " + (pinned ? "Click" : "Hover") + " on anomaly " + coords);
     closePTREMenu();
-    if (window.ptreOrionCleanup) {
-        window.ptreOrionCleanup();
+    if (ptreOrionPopUpState) {
+        ptreOrionPopUpState.cleanup();
     }
 
     const panel = document.createElement('div');
     panel.id = 'ptreOrionPopUp';
     panel.innerHTML = '<table width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Orion Box</div></td><td align="right"><div id="btnCloseOrionPopUp" type="button" class="button btn_blue">CLOSE</div></td></tr></table>'
-        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div><br>' + html;
-    const rect = anchor.getBoundingClientRect();
-    panel.style.top = (window.scrollY + rect.bottom + 5) + 'px';
-    panel.style.left = (window.scrollX + rect.left) + 'px';
+        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div>' + html
+        + '<hr><div class="ptreSmall">Hover an anomaly PTRE icon to preview its infos. Click it to pin this pop-up (or replace the pinned one).</div>';
     document.body.appendChild(panel);
-
-    // Keep panel inside the viewport (flip above the anchor if no room below)
-    const margin = 5;
-    const viewportWidth = document.documentElement.clientWidth;
-    const viewportHeight = document.documentElement.clientHeight;
-    const panelRect = panel.getBoundingClientRect();
-    let left = rect.left;
-    if (left + panelRect.width > viewportWidth - margin) {
-        left = viewportWidth - margin - panelRect.width;
-    }
-    left = Math.max(margin, left);
-    let top = rect.bottom + margin;
-    if (top + panelRect.height > viewportHeight - margin) {
-        const topAbove = rect.top - margin - panelRect.height;
-        top = (topAbove >= margin) ? topAbove : Math.max(margin, viewportHeight - margin - panelRect.height);
-    }
-    panel.style.left = (window.scrollX + left) + 'px';
-    panel.style.top = (window.scrollY + top) + 'px';
+    anchor.classList.add('ptreIconActive');
 
     const cleanupOrionBox = () => {
         panel.remove();
+        anchor.classList.remove('ptreIconActive');
         document.removeEventListener('click', clickHandler);
-        window.ptreOrionCleanup = null;
+        ptreOrionPopUpState = null;
     };
     const clickHandler = (event) => {
         if (!panel.contains(event.target) && event.target !== anchor) {
@@ -414,8 +414,8 @@ function openPTREOrionPopUp(coords, html, anchor) {
         }
     };
     document.addEventListener('click', clickHandler);
-    window.ptreOrionCleanup = cleanupOrionBox;
     document.getElementById('btnCloseOrionPopUp').addEventListener('click', cleanupOrionBox);
+    ptreOrionPopUpState = {anchor: anchor, pinned: pinned, cleanup: cleanupOrionBox};
 }
 
 // This function adds PTRE send SR button to AGR Spy Table

@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 05 nov. 2026 19:16:02 CET
+// Build date: jeu. 05 nov. 2026 22:10:20 CET
 // ****************************************
 
 // ****************************************
@@ -162,6 +162,10 @@ const ptreLastGlobalSync = ptrePerUniKeysPrefix + "LastGlobalSync";
 const ptreEnableGalaxyPopup = ptrePerUniKeysPrefix + "EnableGalaxyPopup";
 const ptreEnableMinerMode = ptrePerUniKeysPrefix + "EnableMinerMode";
 const ptreEnableBetaMode = ptrePerUniKeysPrefix + "EnableBetaMode";
+const ptreOrionMilitaryTop = ptrePerUniKeysPrefix + "OrionMilitaryTop";
+const ptreOrionSystemRange = ptrePerUniKeysPrefix + "OrionSystemRange";
+const ptreOrionMilitaryTopDefault = 30;
+const ptreOrionSystemRangeDefault = 10;
 const ptreGalaxyStorageVersion = ptrePerUniKeysPrefix + "GalaxyStorageVersion";
 const ptreGalaxyEventsPos = ptrePerUniKeysPrefix + "GalaxyEventsPos"; // Array
 const ptreHighlightedPlayers = ptrePerUniKeysPrefix + "HighlightedPlayers"; // Object
@@ -366,6 +370,9 @@ GM_addStyle(`
 }
 .ptreWarning {
     color: #D29D00;
+}
+.ptreVacation {
+    color: aqua;
 }
 .ptreBold {
     font-weight: bold;
@@ -604,18 +611,40 @@ GM_addStyle(`
     padding: 5px;
 }
 #ptreOrionPopUp {
+    position: fixed;
+    top: 30px;
+    right: 10px;
     min-width: 350px;
-    position: absolute;
+    max-width: 600px;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
     border: solid black 2px;
     border-radius: 8px;
     background-color: #171d22;
-    z-index: 10000;
+    z-index: 11000;
     padding: 5px;
 }
 .ptreOrionButton {
-    cursor: pointer;
     vertical-align: middle;
     margin-left: 4px;
+}
+.ptreIconAnim {
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+.ptreIconAnim:hover {
+    transform: scale(1.25);
+    filter: brightness(1.3);
+}
+.ptreIconAnim:active {
+    transform: scale(0.9);
+}
+.ptreIconActive {
+    animation: ptreIconPulse 1s ease-in-out infinite;
+}
+@keyframes ptreIconPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 #6f9fc8); }
+    50% { transform: scale(1.3); filter: drop-shadow(0 0 4px #6f9fc8); }
 }
 #optionPTRE {
     position: relative;
@@ -958,15 +987,30 @@ function improvePageOrion() {
                 return;
             }
             const btn = document.createElement('img');
-            btn.className = 'ptreOrionButton';
+            btn.className = 'ptreOrionButton ptreIconAnim';
             btn.title = 'EasyPTRE: anomaly infos';
             btn.src = imgPTREOK;
             btn.width = 16;
             btn.height = 16;
+            // Hover shows a preview, click pins the popup until closed
+            btn.addEventListener('mouseenter', function () {
+                if (!ptreOrionPopUpState || !ptreOrionPopUpState.pinned) {
+                    openPTREOrionPopUp(coords, orionInfos[coords], btn, false);
+                }
+            });
+            btn.addEventListener('mouseleave', function () {
+                if (ptreOrionPopUpState && ptreOrionPopUpState.anchor === btn && !ptreOrionPopUpState.pinned) {
+                    ptreOrionPopUpState.cleanup();
+                }
+            });
             btn.addEventListener('click', function (event) {
                 event.preventDefault();
                 event.stopPropagation();
-                openPTREOrionPopUp(coords, orionInfos[coords], btn);
+                if (ptreOrionPopUpState && ptreOrionPopUpState.anchor === btn) {
+                    ptreOrionPopUpState.pinned = true;
+                } else {
+                    openPTREOrionPopUp(coords, orionInfos[coords], btn, true);
+                }
             });
             link.after(btn);
         });
@@ -1016,45 +1060,30 @@ function improvePageOrion() {
     observer.observe(observerRoot, {childList: true, subtree: true});
 }
 
-// Called when user clicks on the PTRE button next to an Orion anomaly
-function openPTREOrionPopUp(coords, html, anchor) {
-    consoleDebug("[ORION] Click on anomaly " + coords);
+// Currently displayed Orion popup: {anchor, pinned, cleanup}
+let ptreOrionPopUpState = null;
+
+// Displays the Orion popup (top right corner), the anchor button is animated to show which anomaly it is about
+function openPTREOrionPopUp(coords, html, anchor, pinned) {
+    consoleDebug("[ORION] " + (pinned ? "Click" : "Hover") + " on anomaly " + coords);
     closePTREMenu();
-    if (window.ptreOrionCleanup) {
-        window.ptreOrionCleanup();
+    if (ptreOrionPopUpState) {
+        ptreOrionPopUpState.cleanup();
     }
 
     const panel = document.createElement('div');
     panel.id = 'ptreOrionPopUp';
     panel.innerHTML = '<table width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Orion Box</div></td><td align="right"><div id="btnCloseOrionPopUp" type="button" class="button btn_blue">CLOSE</div></td></tr></table>'
-        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div><br>' + html;
-    const rect = anchor.getBoundingClientRect();
-    panel.style.top = (window.scrollY + rect.bottom + 5) + 'px';
-    panel.style.left = (window.scrollX + rect.left) + 'px';
+        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div>' + html
+        + '<hr><div class="ptreSmall">Hover an anomaly PTRE icon to preview its infos. Click it to pin this pop-up (or replace the pinned one).</div>';
     document.body.appendChild(panel);
-
-    // Keep panel inside the viewport (flip above the anchor if no room below)
-    const margin = 5;
-    const viewportWidth = document.documentElement.clientWidth;
-    const viewportHeight = document.documentElement.clientHeight;
-    const panelRect = panel.getBoundingClientRect();
-    let left = rect.left;
-    if (left + panelRect.width > viewportWidth - margin) {
-        left = viewportWidth - margin - panelRect.width;
-    }
-    left = Math.max(margin, left);
-    let top = rect.bottom + margin;
-    if (top + panelRect.height > viewportHeight - margin) {
-        const topAbove = rect.top - margin - panelRect.height;
-        top = (topAbove >= margin) ? topAbove : Math.max(margin, viewportHeight - margin - panelRect.height);
-    }
-    panel.style.left = (window.scrollX + left) + 'px';
-    panel.style.top = (window.scrollY + top) + 'px';
+    anchor.classList.add('ptreIconActive');
 
     const cleanupOrionBox = () => {
         panel.remove();
+        anchor.classList.remove('ptreIconActive');
         document.removeEventListener('click', clickHandler);
-        window.ptreOrionCleanup = null;
+        ptreOrionPopUpState = null;
     };
     const clickHandler = (event) => {
         if (!panel.contains(event.target) && event.target !== anchor) {
@@ -1062,8 +1091,8 @@ function openPTREOrionPopUp(coords, html, anchor) {
         }
     };
     document.addEventListener('click', clickHandler);
-    window.ptreOrionCleanup = cleanupOrionBox;
     document.getElementById('btnCloseOrionPopUp').addEventListener('click', cleanupOrionBox);
+    ptreOrionPopUpState = {anchor: anchor, pinned: pinned, cleanup: cleanupOrionBox};
 }
 
 // This function adds PTRE send SR button to AGR Spy Table
@@ -2030,6 +2059,13 @@ function displaySettings() {
     divPTRE += ' />';
     divPTRE += '</td></tr>';
     tdId++;
+    // Orion anomalies: military top X within Y systems
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Orion anomalies - Military top:<br><span class="ptreSmall">Show players of the universe military top X (1-200).</span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREOrionMilitaryTop" type="number" min="1" max="200" style="width:60px;" value="' + GM_getValue(ptreOrionMilitaryTop, ptreOrionMilitaryTopDefault) + '" /></td></tr>';
+    tdId++;
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Orion anomalies - Systems range:<br><span class="ptreSmall">... located within Y systems around the anomaly (0-50).</span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREOrionSystemRange" type="number" min="0" max="50" style="width:60px;" value="' + GM_getValue(ptreOrionSystemRange, ptreOrionSystemRangeDefault) + '" /></td></tr>';
+    tdId++;
     // Beta Mode
     divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:'+betaMessage;
     divPTRE += '</td>';
@@ -2205,6 +2241,11 @@ function savePTRESettings() {
     GM_setValue(ptreAddBuddiesToFriendsAndPhalanx, document.getElementById('PTREAddBuddiesToFriendsAndPhalanx').checked + '');
     // Update Toggle Events on Overview page
     GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
+    // Orion settings (invalid input falls back to default)
+    const orionTop = parseInt(document.getElementById('PTREOrionMilitaryTop').value);
+    GM_setValue(ptreOrionMilitaryTop, isNaN(orionTop) ? ptreOrionMilitaryTopDefault : Math.max(1, Math.min(200, orionTop)));
+    const orionRange = parseInt(document.getElementById('PTREOrionSystemRange').value);
+    GM_setValue(ptreOrionSystemRange, isNaN(orionRange) ? ptreOrionSystemRangeDefault : Math.max(0, Math.min(50, orionRange)));
 
     // Manage imcompatible settings
     // This setting overwrites some other settings
@@ -2269,6 +2310,8 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.19.0 (nov 2026)</div>- [Feature] Orion: PTRE button on scanner anomalies, showing players of the system and the military top X within Y systems (settings)';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.18.1 (nov 2026)</div>- [Fix] Lifeform researches not saved anymore from fleet page (OGame changed the fleet API tooltip format)';
     content+= '<div class="ptreSubTitle">0.18.0 (aug 2026)</div>- [Feature] Integrate Fight Events module from <a href="https://www.expedetector.eu" target="_blank">Expedetector.eu</a>';
     content+= '<div><hr></div>';
@@ -3271,11 +3314,18 @@ function getFightEventsFromXPD() {
 function getOrionInfos(coordsList, onDone) {
     const teamKey = GM_getValue(ptreTeamKey, '');
     var url = urlPTREGetOrionInfos;
-    if (teamKey != '') {
+    //TODO: Orion beta test hook - en-808 has no public data on PTRE/XPD yet, borrow fr-253 data. Remove once en-808 is imported.
+    const orionTestHook = (country == 'en' && Number(universe) == 808);
+    if (orionTestHook) {
+        // No player id / ptre id / Team Key: avoid writing en-808 identity under fr-253 on PTRE side
+        url = 'https://ptre.chez.gg/scripts/api_get_orion_infos.php?tool=' + ptreToolName + '&country=fr&univers=253&version=' + GM_info.script.version;
+        consoleDebug('[ORION] [TEST HOOK] en-808 remapped to fr-253');
+    } else if (teamKey != '') {
         url+= '&team_key=' + encodeURIComponent(teamKey);
     }
+    url+= '&top=' + GM_getValue(ptreOrionMilitaryTop, ptreOrionMilitaryTopDefault) + '&range=' + GM_getValue(ptreOrionSystemRange, ptreOrionSystemRangeDefault);
     const coordsLabel = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).join(', ');
-    consoleDebug('[ORION] [TO PTRE] Sending ' + coordsList.length + ' coords (Team Key: ' + (teamKey != '' ? 'yes' : 'no') + '): ' + coordsLabel);
+    consoleDebug('[ORION] [TO PTRE] Sending ' + coordsList.length + ' coords (Team Key: ' + (teamKey != '' && !orionTestHook ? 'yes' : 'no') + '): ' + coordsLabel);
     const requestStart = performance.now();
     GM_xmlhttpRequest({
         method: 'POST',

@@ -435,11 +435,18 @@ function getFightEventsFromXPD() {
 function getOrionInfos(coordsList, onDone) {
     const teamKey = GM_getValue(ptreTeamKey, '');
     var url = urlPTREGetOrionInfos;
-    if (teamKey != '') {
+    //TODO: Orion beta test hook - en-808 has no public data on PTRE/XPD yet, borrow fr-253 data. Remove once en-808 is imported.
+    const orionTestHook = (country == 'en' && Number(universe) == 808);
+    if (orionTestHook) {
+        // No player id / ptre id / Team Key: avoid writing en-808 identity under fr-253 on PTRE side
+        url = 'https://ptre.chez.gg/scripts/api_get_orion_infos.php?tool=' + ptreToolName + '&country=fr&univers=253&version=' + GM_info.script.version;
+        consoleDebug('[ORION] [TEST HOOK] en-808 remapped to fr-253');
+    } else if (teamKey != '') {
         url+= '&team_key=' + encodeURIComponent(teamKey);
     }
+    url+= '&top=' + GM_getValue(ptreOrionMilitaryTop, ptreOrionMilitaryTopDefault) + '&range=' + GM_getValue(ptreOrionSystemRange, ptreOrionSystemRangeDefault);
     const coordsLabel = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).join(', ');
-    consoleDebug('[ORION] [TO PTRE] Sending ' + coordsList.length + ' coords (Team Key: ' + (teamKey != '' ? 'yes' : 'no') + '): ' + coordsLabel);
+    consoleDebug('[ORION] [TO PTRE] Sending ' + coordsList.length + ' coords (Team Key: ' + (teamKey != '' && !orionTestHook ? 'yes' : 'no') + '): ' + coordsLabel);
     const requestStart = performance.now();
     GM_xmlhttpRequest({
         method: 'POST',
