@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.18.0
+// @version      0.18.1
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: ven. 07 août 2026 09:13:49 CEST
+// Build date: jeu. 05 nov. 2026 16:27:49 CET
 // ****************************************
 
 // ****************************************
@@ -857,16 +857,26 @@ function improvePageFleet() {
     //consoleDebug("[FLEET] data-tooltip-title length: " + tooltipContent.length);
     var tempDiv = document.createElement('div');
     tempDiv.innerHTML = tooltipContent;
-    var inputElements = tempDiv.querySelectorAll('input');
-    consoleDebug("[FLEET] Found " + inputElements.length + " input(s) in tooltip");
-    if (inputElements.length < 2) {
-        console.log("[EasyPTRE] [FLEET] Expected >=2 inputs in tooltip, found " + inputElements.length + ". Tooltip HTML sample: " + tooltipContent.slice(0, 300));
+    // New format: single input #FLEETAPI_JSON. Old format: 2 inputs, JSON in the second one.
+    var jsonInput = tempDiv.querySelector('#FLEETAPI_JSON');
+    if (!jsonInput) {
+        var inputElements = tempDiv.querySelectorAll('input');
+        consoleDebug("[FLEET] No #FLEETAPI_JSON input, falling back to last of " + inputElements.length + " input(s)");
+        jsonInput = inputElements[inputElements.length - 1];
+    }
+    if (!jsonInput || !jsonInput.value) {
+        console.log("[EasyPTRE] [FLEET] Cant find techs JSON input in tooltip. Tooltip HTML sample: " + tooltipContent.slice(0, 300));
         return;
     }
-    var secondInputElement = inputElements[1];
-    var techJSON = secondInputElement.value;
-    if (!techJSON) {
-        console.log("[EasyPTRE] [FLEET] Second input in tooltip has empty value.");
+    var techJSON = jsonInput.value;
+    try {
+        var parsedTechs = JSON.parse(techJSON);
+        if (!parsedTechs.researches || !parsedTechs.ships) {
+            console.log("[EasyPTRE] [FLEET] Techs JSON missing expected keys (researches/ships).");
+            return;
+        }
+    } catch (e) {
+        console.log("[EasyPTRE] [FLEET] Invalid techs JSON: " + e);
         return;
     }
     consoleDebug("[FLEET] Techs JSON length: " + techJSON.length + " (sample: " + techJSON.slice(0, 120) + ")");
@@ -2114,7 +2124,9 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.18.1 (nov 2026)</div>- [Fix] Lifeform researches not saved anymore from fleet page (OGame changed the fleet API tooltip format)';
     content+= '<div class="ptreSubTitle">0.18.0 (aug 2026)</div>- [Feature] Integrate Fight Events module from <a href="https://www.expedetector.eu" target="_blank">Expedetector.eu</a>';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.17.1 (aug 2026)</div>- [Fix] Missing menu reload for GEE and F&P';
     content+= '<div class="ptreSubTitle">0.17.0 (aug 2026)</div>- [Feature] Full rework of the Galaxy Events Explorer (GEE)<br>- [Polish] Integrate Friends & Phalanx to main menu<br>- [Polish] Rework menu icons';
     content+= '<div><hr></div>';
