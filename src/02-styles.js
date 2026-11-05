@@ -248,6 +248,20 @@ GM_addStyle(`
     z-index: 10000;
     padding: 5px;
 }
+#ptreOrionPopUp {
+    min-width: 350px;
+    position: absolute;
+    border: solid black 2px;
+    border-radius: 8px;
+    background-color: #171d22;
+    z-index: 10000;
+    padding: 5px;
+}
+.ptreOrionButton {
+    cursor: pointer;
+    vertical-align: middle;
+    margin-left: 4px;
+}
 #optionPTRE {
     position: relative;
 }

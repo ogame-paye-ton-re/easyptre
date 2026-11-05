@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.18.1
+// @version      0.19.0
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: jeu. 05 nov. 2026 16:27:49 CET
+// Build date: jeu. 05 nov. 2026 19:16:02 CET
 // ****************************************
 
 // ****************************************
@@ -194,6 +194,7 @@ var urlPTREGetXpdEvents = 'https://ptre.chez.gg/scripts/api_get_xpd_events.php' 
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
+var urlPTREGetOrionInfos = 'https://ptre.chez.gg/scripts/api_get_orion_infos.php' + ptreEasyPTREUrlParams;
 
 // Load debug value once
 if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
@@ -258,6 +259,10 @@ if (modeEasyPTRE == "ingame") {
         // Buddies Page
         consoleDebug("[INIT] Buddies page detected");
         setTimeout(improvePageBuddies, ptreImprovePageDelay);
+    } else if (/page=ingame&component=orion/.test(location.href)) {
+        // Orion page: add context infos on anomalies (scanner tab)
+        consoleDebug("[INIT] Orion page detected");
+        setTimeout(improvePageOrion, ptreImprovePageDelay);
     }
 }
 
@@ -598,6 +603,20 @@ GM_addStyle(`
     z-index: 10000;
     padding: 5px;
 }
+#ptreOrionPopUp {
+    min-width: 350px;
+    position: absolute;
+    border: solid black 2px;
+    border-radius: 8px;
+    background-color: #171d22;
+    z-index: 10000;
+    padding: 5px;
+}
+.ptreOrionButton {
+    cursor: pointer;
+    vertical-align: middle;
+    margin-left: 4px;
+}
 #optionPTRE {
     position: relative;
 }
@@ -919,6 +938,132 @@ function improvePageBuddies() {
     GM_setValue(ptreBuddiesList, dataJSON);
     GM_setValue(ptreBuddiesListLastRefresh, currentTime);
     displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
+}
+
+// Orion page: add a PTRE button next to each anomaly coords (scanner results)
+function improvePageOrion() {
+    console.log("[EasyPTRE] [ORION] Improving Orion Page");
+    const orionInfos = {};
+    const pendingCoords = new Set();
+    let debounceTimer = null;
+
+    const addOrionButtons = () => {
+        document.querySelectorAll('.scannerResultRow[data-ptre-orion]').forEach(row => {
+            const coords = row.dataset.ptreOrion;
+            if (!orionInfos[coords] || row.querySelector('.ptreOrionButton')) {
+                return;
+            }
+            const link = row.querySelector('a[href*="component=galaxy"]');
+            if (!link) {
+                return;
+            }
+            const btn = document.createElement('img');
+            btn.className = 'ptreOrionButton';
+            btn.title = 'EasyPTRE: anomaly infos';
+            btn.src = imgPTREOK;
+            btn.width = 16;
+            btn.height = 16;
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openPTREOrionPopUp(coords, orionInfos[coords], btn);
+            });
+            link.after(btn);
+        });
+    };
+
+    const processRows = () => {
+        const coordsToFetch = [];
+        document.querySelectorAll('.scannerResultRow:not([data-ptre-orion])').forEach(row => {
+            const link = row.querySelector('a[href*="component=galaxy"]');
+            if (!link) {
+                return;
+            }
+            const params = new URL(link.href, location.origin).searchParams;
+            const galaxy = parseInt(params.get('galaxy'));
+            const system = parseInt(params.get('system'));
+            const position = parseInt(params.get('position'));
+            if (!galaxy || !system || !position) {
+                return;
+            }
+            const coords = galaxy + ':' + system + ':' + position;
+            row.dataset.ptreOrion = coords;
+            if (!orionInfos[coords] && !pendingCoords.has(coords)) {
+                pendingCoords.add(coords);
+                coordsToFetch.push({galaxy: galaxy, system: system, position: position});
+            }
+        });
+        addOrionButtons();
+        if (coordsToFetch.length > 0) {
+            consoleDebug("[ORION] Fetching infos for " + coordsToFetch.length + " anomalies");
+            getOrionInfos(coordsToFetch, function (anomalies) {
+                coordsToFetch.forEach(c => pendingCoords.delete(c.galaxy + ':' + c.system + ':' + c.position));
+                Object.assign(orionInfos, anomalies);
+                addOrionButtons();
+            });
+        }
+    };
+
+    processRows();
+
+    // Scan button refreshes results without page reload
+    const scannerPanel = document.getElementById('scannerPanelGroup');
+    const observerRoot = (scannerPanel && scannerPanel.parentElement) || document.getElementById('middle') || document.body;
+    const observer = new MutationObserver(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(processRows, 300);
+    });
+    observer.observe(observerRoot, {childList: true, subtree: true});
+}
+
+// Called when user clicks on the PTRE button next to an Orion anomaly
+function openPTREOrionPopUp(coords, html, anchor) {
+    consoleDebug("[ORION] Click on anomaly " + coords);
+    closePTREMenu();
+    if (window.ptreOrionCleanup) {
+        window.ptreOrionCleanup();
+    }
+
+    const panel = document.createElement('div');
+    panel.id = 'ptreOrionPopUp';
+    panel.innerHTML = '<table width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Orion Box</div></td><td align="right"><div id="btnCloseOrionPopUp" type="button" class="button btn_blue">CLOSE</div></td></tr></table>'
+        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div><br>' + html;
+    const rect = anchor.getBoundingClientRect();
+    panel.style.top = (window.scrollY + rect.bottom + 5) + 'px';
+    panel.style.left = (window.scrollX + rect.left) + 'px';
+    document.body.appendChild(panel);
+
+    // Keep panel inside the viewport (flip above the anchor if no room below)
+    const margin = 5;
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+    const panelRect = panel.getBoundingClientRect();
+    let left = rect.left;
+    if (left + panelRect.width > viewportWidth - margin) {
+        left = viewportWidth - margin - panelRect.width;
+    }
+    left = Math.max(margin, left);
+    let top = rect.bottom + margin;
+    if (top + panelRect.height > viewportHeight - margin) {
+        const topAbove = rect.top - margin - panelRect.height;
+        top = (topAbove >= margin) ? topAbove : Math.max(margin, viewportHeight - margin - panelRect.height);
+    }
+    panel.style.left = (window.scrollX + left) + 'px';
+    panel.style.top = (window.scrollY + top) + 'px';
+
+    const cleanupOrionBox = () => {
+        panel.remove();
+        document.removeEventListener('click', clickHandler);
+        window.ptreOrionCleanup = null;
+    };
+    const clickHandler = (event) => {
+        if (!panel.contains(event.target) && event.target !== anchor) {
+            cleanupOrionBox();
+        }
+    };
+    document.addEventListener('click', clickHandler);
+    window.ptreOrionCleanup = cleanupOrionBox;
+    document.getElementById('btnCloseOrionPopUp').addEventListener('click', cleanupOrionBox);
 }
 
 // This function adds PTRE send SR button to AGR Spy Table
@@ -3117,6 +3262,57 @@ function getFightEventsFromXPD() {
                 addToLogs('[EVENTS] ' + reponseDecode.message_debug);
             }
             document.getElementById('ptreMainContent').innerHTML = message;
+        }
+    });
+}
+
+// This function fetchs Orion anomalies context infos (Team Key is optional)
+// onDone always receives an object {"g:s:p": html} (empty on failure)
+function getOrionInfos(coordsList, onDone) {
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    var url = urlPTREGetOrionInfos;
+    if (teamKey != '') {
+        url+= '&team_key=' + encodeURIComponent(teamKey);
+    }
+    const coordsLabel = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).join(', ');
+    consoleDebug('[ORION] [TO PTRE] Sending ' + coordsList.length + ' coords (Team Key: ' + (teamKey != '' ? 'yes' : 'no') + '): ' + coordsLabel);
+    const requestStart = performance.now();
+    GM_xmlhttpRequest({
+        method: 'POST',
+        url: url,
+        headers: {'Content-Type': 'application/json'},
+        data: JSON.stringify(coordsList),
+        onload: function(response) {
+            consoleDebug('[ORION] [FROM PTRE] HTTP ' + response.status + ' in ' + Math.round(performance.now() - requestStart) + ' ms (' + response.responseText.length + ' bytes)');
+            var reponseDecode;
+            try {
+                reponseDecode = JSON.parse(response.responseText);
+            } catch (e) {
+                consoleDebug('[ORION] [FROM PTRE] Invalid JSON: ' + response.responseText.slice(0, 300));
+                addToLogs('[ORION] Invalid response from PTRE (HTTP ' + response.status + ')');
+                onDone({});
+                return;
+            }
+            if (reponseDecode.code != 1) {
+                consoleDebug('[ORION] [FROM PTRE] Code ' + reponseDecode.code + ': ' + reponseDecode.message + ' | ' + reponseDecode.message_debug);
+                addToLogs('[ORION] ' + reponseDecode.message_debug);
+                onDone({});
+                return;
+            }
+            consoleDebug('[ORION] [FROM PTRE] Code ' + reponseDecode.code + ': ' + reponseDecode.message);
+            const anomalies = {};
+            for (const [coords, html64] of Object.entries(reponseDecode.anomalies || {})) {
+                // Base64 decode as UTF-8 (player names may contain non-ASCII chars)
+                anomalies[coords] = new TextDecoder().decode(Uint8Array.from(atob(html64), c => c.charCodeAt(0)));
+            }
+            const missing = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).filter(c => !anomalies[c]);
+            consoleDebug('[ORION] [FROM PTRE] Received infos for ' + Object.keys(anomalies).length + '/' + coordsList.length + ' coords: ' + Object.keys(anomalies).join(', ') + (missing.length > 0 ? ' | Missing: ' + missing.join(', ') : ''));
+            onDone(anomalies);
+        },
+        onerror: function(response) {
+            consoleDebug('[ORION] [FROM PTRE] Request failed after ' + Math.round(performance.now() - requestStart) + ' ms (status: ' + response.status + ')');
+            addToLogs('[ORION] Unable to reach PTRE');
+            onDone({});
         }
     });
 }

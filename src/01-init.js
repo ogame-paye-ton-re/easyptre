@@ -162,6 +162,7 @@ var urlPTREGetXpdEvents = 'https://ptre.chez.gg/scripts/api_get_xpd_events.php' 
 var urlcheckForPTREUpdate = 'https://ptre.chez.gg/scripts/api_check_updates.php' + ptreEasyPTREUrlParams;
 var urlPTREIngameAction = 'https://ptre.chez.gg/scripts/api_ingame_action.php' + ptreEasyPTREUrlParams;
 var urlPTREIngamePopUp = 'https://ptre.chez.gg/scripts/api_ingame_popup.php' + ptreEasyPTREUrlParams;
+var urlPTREGetOrionInfos = 'https://ptre.chez.gg/scripts/api_get_orion_infos.php' + ptreEasyPTREUrlParams;
 
 // Load debug value once
 if (GM_getValue(ptreEnableConsoleDebug, 'false') == 'true') {
@@ -226,6 +227,10 @@ if (modeEasyPTRE == "ingame") {
         // Buddies Page
         consoleDebug("[INIT] Buddies page detected");
         setTimeout(improvePageBuddies, ptreImprovePageDelay);
+    } else if (/page=ingame&component=orion/.test(location.href)) {
+        // Orion page: add context infos on anomalies (scanner tab)
+        consoleDebug("[INIT] Orion page detected");
+        setTimeout(improvePageOrion, ptreImprovePageDelay);
     }
 }
 

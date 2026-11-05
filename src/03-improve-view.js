@@ -292,6 +292,132 @@ function improvePageBuddies() {
     displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
 }
 
+// Orion page: add a PTRE button next to each anomaly coords (scanner results)
+function improvePageOrion() {
+    console.log("[EasyPTRE] [ORION] Improving Orion Page");
+    const orionInfos = {};
+    const pendingCoords = new Set();
+    let debounceTimer = null;
+
+    const addOrionButtons = () => {
+        document.querySelectorAll('.scannerResultRow[data-ptre-orion]').forEach(row => {
+            const coords = row.dataset.ptreOrion;
+            if (!orionInfos[coords] || row.querySelector('.ptreOrionButton')) {
+                return;
+            }
+            const link = row.querySelector('a[href*="component=galaxy"]');
+            if (!link) {
+                return;
+            }
+            const btn = document.createElement('img');
+            btn.className = 'ptreOrionButton';
+            btn.title = 'EasyPTRE: anomaly infos';
+            btn.src = imgPTREOK;
+            btn.width = 16;
+            btn.height = 16;
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openPTREOrionPopUp(coords, orionInfos[coords], btn);
+            });
+            link.after(btn);
+        });
+    };
+
+    const processRows = () => {
+        const coordsToFetch = [];
+        document.querySelectorAll('.scannerResultRow:not([data-ptre-orion])').forEach(row => {
+            const link = row.querySelector('a[href*="component=galaxy"]');
+            if (!link) {
+                return;
+            }
+            const params = new URL(link.href, location.origin).searchParams;
+            const galaxy = parseInt(params.get('galaxy'));
+            const system = parseInt(params.get('system'));
+            const position = parseInt(params.get('position'));
+            if (!galaxy || !system || !position) {
+                return;
+            }
+            const coords = galaxy + ':' + system + ':' + position;
+            row.dataset.ptreOrion = coords;
+            if (!orionInfos[coords] && !pendingCoords.has(coords)) {
+                pendingCoords.add(coords);
+                coordsToFetch.push({galaxy: galaxy, system: system, position: position});
+            }
+        });
+        addOrionButtons();
+        if (coordsToFetch.length > 0) {
+            consoleDebug("[ORION] Fetching infos for " + coordsToFetch.length + " anomalies");
+            getOrionInfos(coordsToFetch, function (anomalies) {
+                coordsToFetch.forEach(c => pendingCoords.delete(c.galaxy + ':' + c.system + ':' + c.position));
+                Object.assign(orionInfos, anomalies);
+                addOrionButtons();
+            });
+        }
+    };
+
+    processRows();
+
+    // Scan button refreshes results without page reload
+    const scannerPanel = document.getElementById('scannerPanelGroup');
+    const observerRoot = (scannerPanel && scannerPanel.parentElement) || document.getElementById('middle') || document.body;
+    const observer = new MutationObserver(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(processRows, 300);
+    });
+    observer.observe(observerRoot, {childList: true, subtree: true});
+}
+
+// Called when user clicks on the PTRE button next to an Orion anomaly
+function openPTREOrionPopUp(coords, html, anchor) {
+    consoleDebug("[ORION] Click on anomaly " + coords);
+    closePTREMenu();
+    if (window.ptreOrionCleanup) {
+        window.ptreOrionCleanup();
+    }
+
+    const panel = document.createElement('div');
+    panel.id = 'ptreOrionPopUp';
+    panel.innerHTML = '<table width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Orion Box</div></td><td align="right"><div id="btnCloseOrionPopUp" type="button" class="button btn_blue">CLOSE</div></td></tr></table>'
+        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div><br>' + html;
+    const rect = anchor.getBoundingClientRect();
+    panel.style.top = (window.scrollY + rect.bottom + 5) + 'px';
+    panel.style.left = (window.scrollX + rect.left) + 'px';
+    document.body.appendChild(panel);
+
+    // Keep panel inside the viewport (flip above the anchor if no room below)
+    const margin = 5;
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+    const panelRect = panel.getBoundingClientRect();
+    let left = rect.left;
+    if (left + panelRect.width > viewportWidth - margin) {
+        left = viewportWidth - margin - panelRect.width;
+    }
+    left = Math.max(margin, left);
+    let top = rect.bottom + margin;
+    if (top + panelRect.height > viewportHeight - margin) {
+        const topAbove = rect.top - margin - panelRect.height;
+        top = (topAbove >= margin) ? topAbove : Math.max(margin, viewportHeight - margin - panelRect.height);
+    }
+    panel.style.left = (window.scrollX + left) + 'px';
+    panel.style.top = (window.scrollY + top) + 'px';
+
+    const cleanupOrionBox = () => {
+        panel.remove();
+        document.removeEventListener('click', clickHandler);
+        window.ptreOrionCleanup = null;
+    };
+    const clickHandler = (event) => {
+        if (!panel.contains(event.target) && event.target !== anchor) {
+            cleanupOrionBox();
+        }
+    };
+    document.addEventListener('click', clickHandler);
+    window.ptreOrionCleanup = cleanupOrionBox;
+    document.getElementById('btnCloseOrionPopUp').addEventListener('click', cleanupOrionBox);
+}
+
 // This function adds PTRE send SR button to AGR Spy Table
 function improveAGRSpyTable(mutationList, observer) {
     if (document.getElementById('agoSpyReportOverview')) {
