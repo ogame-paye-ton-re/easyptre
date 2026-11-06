@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EasyPTRE
 // @namespace    https://openuserjs.org/users/GeGe_GM
-// @version      0.19.0
+// @version      0.19.1
 // @description  Plugin to use PTRE's features with AGR / OGL / OGI. Check https://ptre.chez.gg/
 // @author       GeGe_GM
 // @license      MIT
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: ven. 06 nov. 2026 08:24:56 CET
+// Build date: ven. 06 nov. 2026 11:31:53 CET
 // ****************************************
 
 // ****************************************
@@ -992,7 +992,7 @@ function improvePageOrion() {
     const addOrionButtons = () => {
         getOrionLinks().forEach(link => {
             const coords = link.dataset.ptreOrion;
-            if (!coords || !orionInfos[coords] || (link.nextElementSibling && link.nextElementSibling.classList.contains('ptreOrionButton'))) {
+            if (!coords || !orionInfos[coords] || link.dataset.ptreOrionButton) {
                 return;
             }
             const btn = document.createElement('img');
@@ -1021,7 +1021,18 @@ function improvePageOrion() {
                     openPTREOrionPopUp(coords, orionInfos[coords], btn, true);
                 }
             });
-            link.after(btn);
+            // Scanner coords cell is too narrow: use the lithium cost cell of the row instead
+            const row = link.closest('.scannerResultRow');
+            if (row) {
+                const lithiumIcon = row.querySelector('lithium-icon');
+                if (!lithiumIcon) {
+                    return;
+                }
+                lithiumIcon.closest('.cell').appendChild(btn);
+            } else {
+                link.after(btn);
+            }
+            link.dataset.ptreOrionButton = '1';
         });
     };
 
@@ -2326,6 +2337,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.19.1 (nov 2026)</div>- [Fix] Orion: PTRE button moved to the lithium cost cell on scanner page';
     content+= '<div class="ptreSubTitle">0.19.0 (nov 2026)</div>- [Feature] Orion: PTRE button on scanner and missions anomalies, showing players of the system and the military top X within Y systems (settings)';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.18.1 (nov 2026)</div>- [Fix] Lifeform researches not saved anymore from fleet page (OGame changed the fleet API tooltip format)';

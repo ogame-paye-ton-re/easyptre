@@ -445,6 +445,7 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.19.1 (nov 2026)</div>- [Fix] Orion: PTRE button moved to the lithium cost cell on scanner page';
     content+= '<div class="ptreSubTitle">0.19.0 (nov 2026)</div>- [Feature] Orion: PTRE button on scanner and missions anomalies, showing players of the system and the military top X within Y systems (settings)';
     content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.18.1 (nov 2026)</div>- [Fix] Lifeform researches not saved anymore from fleet page (OGame changed the fleet API tooltip format)';

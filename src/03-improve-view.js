@@ -315,7 +315,7 @@ function improvePageOrion() {
     const addOrionButtons = () => {
         getOrionLinks().forEach(link => {
             const coords = link.dataset.ptreOrion;
-            if (!coords || !orionInfos[coords] || (link.nextElementSibling && link.nextElementSibling.classList.contains('ptreOrionButton'))) {
+            if (!coords || !orionInfos[coords] || link.dataset.ptreOrionButton) {
                 return;
             }
             const btn = document.createElement('img');
@@ -344,7 +344,18 @@ function improvePageOrion() {
                     openPTREOrionPopUp(coords, orionInfos[coords], btn, true);
                 }
             });
-            link.after(btn);
+            // Scanner coords cell is too narrow: use the lithium cost cell of the row instead
+            const row = link.closest('.scannerResultRow');
+            if (row) {
+                const lithiumIcon = row.querySelector('lithium-icon');
+                if (!lithiumIcon) {
+                    return;
+                }
+                lithiumIcon.closest('.cell').appendChild(btn);
+            } else {
+                link.after(btn);
+            }
+            link.dataset.ptreOrionButton = '1';
         });
     };
 
