@@ -292,21 +292,30 @@ function improvePageBuddies() {
     displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
 }
 
-// Orion page: add a PTRE button next to each anomaly coords (scanner results)
+// Orion page: add a PTRE button next to each anomaly coords (scanner results and missions tabs)
 function improvePageOrion() {
     console.log("[EasyPTRE] [ORION] Improving Orion Page");
     const orionInfos = {};
     const pendingCoords = new Set();
     let debounceTimer = null;
 
-    const addOrionButtons = () => {
-        document.querySelectorAll('.scannerResultRow[data-ptre-orion]').forEach(row => {
-            const coords = row.dataset.ptreOrion;
-            if (!orionInfos[coords] || row.querySelector('.ptreOrionButton')) {
-                return;
-            }
+    // Anomaly coords links: first galaxy link of each scanner result, and mission target coords
+    const getOrionLinks = () => {
+        const links = [];
+        document.querySelectorAll('.scannerResultRow').forEach(row => {
             const link = row.querySelector('a[href*="component=galaxy"]');
-            if (!link) {
+            if (link) {
+                links.push(link);
+            }
+        });
+        document.querySelectorAll('.anomalyMission a.nodeCoords').forEach(link => links.push(link));
+        return links;
+    };
+
+    const addOrionButtons = () => {
+        getOrionLinks().forEach(link => {
+            const coords = link.dataset.ptreOrion;
+            if (!coords || !orionInfos[coords] || (link.nextElementSibling && link.nextElementSibling.classList.contains('ptreOrionButton'))) {
                 return;
             }
             const btn = document.createElement('img');
@@ -341,20 +350,28 @@ function improvePageOrion() {
 
     const processRows = () => {
         const coordsToFetch = [];
-        document.querySelectorAll('.scannerResultRow:not([data-ptre-orion])').forEach(row => {
-            const link = row.querySelector('a[href*="component=galaxy"]');
-            if (!link) {
+        getOrionLinks().forEach(link => {
+            if (link.dataset.ptreOrion) {
                 return;
             }
             const params = new URL(link.href, location.origin).searchParams;
-            const galaxy = parseInt(params.get('galaxy'));
-            const system = parseInt(params.get('system'));
-            const position = parseInt(params.get('position'));
+            let galaxy = parseInt(params.get('galaxy'));
+            let system = parseInt(params.get('system'));
+            let position = parseInt(params.get('position'));
+            // Missions tab links have no position in href, only in text ("9:144:9")
+            if (!position) {
+                const match = link.textContent.match(/(\d+):(\d+):(\d+)/);
+                if (match) {
+                    galaxy = parseInt(match[1]);
+                    system = parseInt(match[2]);
+                    position = parseInt(match[3]);
+                }
+            }
             if (!galaxy || !system || !position) {
                 return;
             }
             const coords = galaxy + ':' + system + ':' + position;
-            row.dataset.ptreOrion = coords;
+            link.dataset.ptreOrion = coords;
             if (!orionInfos[coords] && !pendingCoords.has(coords)) {
                 pendingCoords.add(coords);
                 coordsToFetch.push({galaxy: galaxy, system: system, position: position});
@@ -373,9 +390,8 @@ function improvePageOrion() {
 
     processRows();
 
-    // Scan button refreshes results without page reload
-    const scannerPanel = document.getElementById('scannerPanelGroup');
-    const observerRoot = (scannerPanel && scannerPanel.parentElement) || document.getElementById('middle') || document.body;
+    // Scan button and tab switches refresh content without page reload
+    const observerRoot = document.getElementById('orion') || document.getElementById('middle') || document.body;
     const observer = new MutationObserver(() => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(processRows, 300);
