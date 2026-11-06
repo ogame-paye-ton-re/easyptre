@@ -194,6 +194,13 @@ function displaySettings() {
     divPTRE += ' />';
     divPTRE += '</td></tr>';
     tdId++;
+    // Orion anomalies: military top X within Y systems
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Orion anomalies - Military top:<br><span class="ptreSmall">Show players of the universe military top X (1-200).</span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREOrionMilitaryTop" type="number" min="1" max="200" style="width:60px;" value="' + GM_getValue(ptreOrionMilitaryTop, ptreOrionMilitaryTopDefault) + '" /></td></tr>';
+    tdId++;
+    divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Orion anomalies - Systems range:<br><span class="ptreSmall">... located within Y systems around the anomaly (0-50).</span></td>';
+    divPTRE += '<td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;"><input id="PTREOrionSystemRange" type="number" min="0" max="50" style="width:60px;" value="' + GM_getValue(ptreOrionSystemRange, ptreOrionSystemRangeDefault) + '" /></td></tr>';
+    tdId++;
     // Beta Mode
     divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'">Enable Beta Mode:'+betaMessage;
     divPTRE += '</td>';
@@ -369,6 +376,11 @@ function savePTRESettings() {
     GM_setValue(ptreAddBuddiesToFriendsAndPhalanx, document.getElementById('PTREAddBuddiesToFriendsAndPhalanx').checked + '');
     // Update Toggle Events on Overview page
     GM_setValue(ptreToogleEventsOverview, document.getElementById('PTREToogleEventOnOverviewPage').checked + '');
+    // Orion settings (invalid input falls back to default)
+    const orionTop = parseInt(document.getElementById('PTREOrionMilitaryTop').value);
+    GM_setValue(ptreOrionMilitaryTop, isNaN(orionTop) ? ptreOrionMilitaryTopDefault : Math.max(1, Math.min(200, orionTop)));
+    const orionRange = parseInt(document.getElementById('PTREOrionSystemRange').value);
+    GM_setValue(ptreOrionSystemRange, isNaN(orionRange) ? ptreOrionSystemRangeDefault : Math.max(0, Math.min(50, orionRange)));
 
     // Manage imcompatible settings
     // This setting overwrites some other settings
@@ -433,6 +445,8 @@ function displayChangelog() {
     ptreCurrentView = displayChangelog;
     setupMainBox('Changelog', 'Changelog');
     var content = '<div class="ptreCategoryTitle">Versions:</div>';
+    content+= '<div class="ptreSubTitle">0.19.0 (nov 2026)</div>- [Feature] Orion: PTRE button on scanner and missions anomalies, showing players of the system and the military top X within Y systems (settings)';
+    content+= '<div><hr></div>';
     content+= '<div class="ptreSubTitle">0.18.1 (nov 2026)</div>- [Fix] Lifeform researches not saved anymore from fleet page (OGame changed the fleet API tooltip format)';
     content+= '<div class="ptreSubTitle">0.18.0 (aug 2026)</div>- [Feature] Integrate Fight Events module from <a href="https://www.expedetector.eu" target="_blank">Expedetector.eu</a>';
     content+= '<div><hr></div>';

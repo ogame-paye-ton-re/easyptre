@@ -430,6 +430,58 @@ function getFightEventsFromXPD() {
     });
 }
 
+// This function fetchs Orion anomalies context infos (Team Key is optional)
+// onDone always receives an object {"g:s:p": html} (empty on failure)
+function getOrionInfos(coordsList, onDone) {
+    const teamKey = GM_getValue(ptreTeamKey, '');
+    var url = urlPTREGetOrionInfos;
+    if (teamKey != '') {
+        url+= '&team_key=' + encodeURIComponent(teamKey);
+    }
+    url+= '&top=' + GM_getValue(ptreOrionMilitaryTop, ptreOrionMilitaryTopDefault) + '&range=' + GM_getValue(ptreOrionSystemRange, ptreOrionSystemRangeDefault);
+    const coordsLabel = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).join(', ');
+    consoleDebug('[ORION] [TO PTRE] Sending ' + coordsList.length + ' coords (Team Key: ' + (teamKey != '' ? 'yes' : 'no') + '): ' + coordsLabel);
+    const requestStart = performance.now();
+    GM_xmlhttpRequest({
+        method: 'POST',
+        url: url,
+        headers: {'Content-Type': 'application/json'},
+        data: JSON.stringify(coordsList),
+        onload: function(response) {
+            consoleDebug('[ORION] [FROM PTRE] HTTP ' + response.status + ' in ' + Math.round(performance.now() - requestStart) + ' ms (' + response.responseText.length + ' bytes)');
+            var reponseDecode;
+            try {
+                reponseDecode = JSON.parse(response.responseText);
+            } catch (e) {
+                consoleDebug('[ORION] [FROM PTRE] Invalid JSON: ' + response.responseText.slice(0, 300));
+                addToLogs('[ORION] Invalid response from PTRE (HTTP ' + response.status + ')');
+                onDone({});
+                return;
+            }
+            if (reponseDecode.code != 1) {
+                consoleDebug('[ORION] [FROM PTRE] Code ' + reponseDecode.code + ': ' + reponseDecode.message + ' | ' + reponseDecode.message_debug);
+                addToLogs('[ORION] ' + reponseDecode.message_debug);
+                onDone({});
+                return;
+            }
+            consoleDebug('[ORION] [FROM PTRE] Code ' + reponseDecode.code + ': ' + reponseDecode.message);
+            const anomalies = {};
+            for (const [coords, html64] of Object.entries(reponseDecode.anomalies || {})) {
+                // Base64 decode as UTF-8 (player names may contain non-ASCII chars)
+                anomalies[coords] = new TextDecoder().decode(Uint8Array.from(atob(html64), c => c.charCodeAt(0)));
+            }
+            const missing = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).filter(c => !anomalies[c]);
+            consoleDebug('[ORION] [FROM PTRE] Received infos for ' + Object.keys(anomalies).length + '/' + coordsList.length + ' coords: ' + Object.keys(anomalies).join(', ') + (missing.length > 0 ? ' | Missing: ' + missing.join(', ') : ''));
+            onDone(anomalies);
+        },
+        onerror: function(response) {
+            consoleDebug('[ORION] [FROM PTRE] Request failed after ' + Math.round(performance.now() - requestStart) + ' ms (status: ' + response.status + ')');
+            addToLogs('[ORION] Unable to reach PTRE');
+            onDone({});
+        }
+    });
+}
+
 // This function sends commun data to Team
 // Like:
 // - Phalanx levels

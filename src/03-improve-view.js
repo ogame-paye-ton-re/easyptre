@@ -292,6 +292,148 @@ function improvePageBuddies() {
     displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
 }
 
+// Orion page: add a PTRE button next to each anomaly coords (scanner results and missions tabs)
+function improvePageOrion() {
+    console.log("[EasyPTRE] [ORION] Improving Orion Page");
+    const orionInfos = {};
+    const pendingCoords = new Set();
+    let debounceTimer = null;
+
+    // Anomaly coords links: first galaxy link of each scanner result, and mission target coords
+    const getOrionLinks = () => {
+        const links = [];
+        document.querySelectorAll('.scannerResultRow').forEach(row => {
+            const link = row.querySelector('a[href*="component=galaxy"]');
+            if (link) {
+                links.push(link);
+            }
+        });
+        document.querySelectorAll('.anomalyMission a.nodeCoords').forEach(link => links.push(link));
+        return links;
+    };
+
+    const addOrionButtons = () => {
+        getOrionLinks().forEach(link => {
+            const coords = link.dataset.ptreOrion;
+            if (!coords || !orionInfos[coords] || (link.nextElementSibling && link.nextElementSibling.classList.contains('ptreOrionButton'))) {
+                return;
+            }
+            const btn = document.createElement('img');
+            btn.className = 'ptreOrionButton ptreIconAnim';
+            btn.title = 'EasyPTRE: anomaly infos';
+            btn.src = imgPTREOK;
+            btn.width = 16;
+            btn.height = 16;
+            // Hover shows a preview, click pins the popup until closed
+            btn.addEventListener('mouseenter', function () {
+                if (!ptreOrionPopUpState || !ptreOrionPopUpState.pinned) {
+                    openPTREOrionPopUp(coords, orionInfos[coords], btn, false);
+                }
+            });
+            btn.addEventListener('mouseleave', function () {
+                if (ptreOrionPopUpState && ptreOrionPopUpState.anchor === btn && !ptreOrionPopUpState.pinned) {
+                    ptreOrionPopUpState.cleanup();
+                }
+            });
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (ptreOrionPopUpState && ptreOrionPopUpState.anchor === btn) {
+                    ptreOrionPopUpState.pinned = true;
+                } else {
+                    openPTREOrionPopUp(coords, orionInfos[coords], btn, true);
+                }
+            });
+            link.after(btn);
+        });
+    };
+
+    const processRows = () => {
+        const coordsToFetch = [];
+        getOrionLinks().forEach(link => {
+            if (link.dataset.ptreOrion) {
+                return;
+            }
+            const params = new URL(link.href, location.origin).searchParams;
+            let galaxy = parseInt(params.get('galaxy'));
+            let system = parseInt(params.get('system'));
+            let position = parseInt(params.get('position'));
+            // Missions tab links have no position in href, only in text ("9:144:9")
+            if (!position) {
+                const match = link.textContent.match(/(\d+):(\d+):(\d+)/);
+                if (match) {
+                    galaxy = parseInt(match[1]);
+                    system = parseInt(match[2]);
+                    position = parseInt(match[3]);
+                }
+            }
+            if (!galaxy || !system || !position) {
+                return;
+            }
+            const coords = galaxy + ':' + system + ':' + position;
+            link.dataset.ptreOrion = coords;
+            if (!orionInfos[coords] && !pendingCoords.has(coords)) {
+                pendingCoords.add(coords);
+                coordsToFetch.push({galaxy: galaxy, system: system, position: position});
+            }
+        });
+        addOrionButtons();
+        if (coordsToFetch.length > 0) {
+            consoleDebug("[ORION] Fetching infos for " + coordsToFetch.length + " anomalies");
+            getOrionInfos(coordsToFetch, function (anomalies) {
+                coordsToFetch.forEach(c => pendingCoords.delete(c.galaxy + ':' + c.system + ':' + c.position));
+                Object.assign(orionInfos, anomalies);
+                addOrionButtons();
+            });
+        }
+    };
+
+    processRows();
+
+    // Scan button and tab switches refresh content without page reload
+    const observerRoot = document.getElementById('orion') || document.getElementById('middle') || document.body;
+    const observer = new MutationObserver(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(processRows, 300);
+    });
+    observer.observe(observerRoot, {childList: true, subtree: true});
+}
+
+// Currently displayed Orion popup: {anchor, pinned, cleanup}
+let ptreOrionPopUpState = null;
+
+// Displays the Orion popup (top right corner), the anchor button is animated to show which anomaly it is about
+function openPTREOrionPopUp(coords, html, anchor, pinned) {
+    consoleDebug("[ORION] " + (pinned ? "Click" : "Hover") + " on anomaly " + coords);
+    closePTREMenu();
+    if (ptreOrionPopUpState) {
+        ptreOrionPopUpState.cleanup();
+    }
+
+    const panel = document.createElement('div');
+    panel.id = 'ptreOrionPopUp';
+    panel.innerHTML = '<table width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Orion Box</div></td><td align="right"><div id="btnCloseOrionPopUp" type="button" class="button btn_blue">CLOSE</div></td></tr></table>'
+        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div>' + html
+        + '<hr><div class="ptreSmall">Hover an anomaly PTRE icon to preview its infos. Click it to pin this pop-up (or replace the pinned one).</div>';
+    document.body.appendChild(panel);
+    anchor.classList.add('ptreIconActive');
+
+    const cleanupOrionBox = () => {
+        panel.remove();
+        anchor.classList.remove('ptreIconActive');
+        document.removeEventListener('click', clickHandler);
+        ptreOrionPopUpState = null;
+    };
+    const clickHandler = (event) => {
+        if (!panel.contains(event.target) && event.target !== anchor) {
+            cleanupOrionBox();
+        }
+    };
+    document.addEventListener('click', clickHandler);
+    document.getElementById('btnCloseOrionPopUp').addEventListener('click', cleanupOrionBox);
+    ptreOrionPopUpState = {anchor: anchor, pinned: pinned, cleanup: cleanupOrionBox};
+}
+
 // This function adds PTRE send SR button to AGR Spy Table
 function improveAGRSpyTable(mutationList, observer) {
     if (document.getElementById('agoSpyReportOverview')) {
