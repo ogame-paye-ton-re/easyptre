@@ -862,6 +862,8 @@ function validatePurgeGalaxyTracking() {
 
     // Action: Purge Galaxy Tracking
     document.getElementById('purgeGalaxyTracking').addEventListener("click", function (event) {
+        // Write pending changes first, so nothing is written after the purge
+        flushGalaxyStorage();
         for(var gala = 1; gala <= 15 ; gala++) {
             GM_deleteValue(ptreGalaxyData+gala);
         }

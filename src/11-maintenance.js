@@ -37,6 +37,8 @@ function cleanCurrentUniverseLogs() {
 // Will make more requests to PTRE when going to newly empty systems, but it's fine
 function runGarbageCollection() {
     console.log("[EasyPTRE] [GC] Running Garbage Collector...");
+    // GC reads galaxy storage: write pending changes first
+    flushGalaxyStorage();
     const currentTime = getIGCurrentTS();
     const currentUnixTS = getCurrentUnixTS();
     const days = ptreGalaxyStorageRetention;
@@ -119,9 +121,17 @@ function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
     document.getElementById('ptreMainContent').innerHTML = content;
 
     document.getElementById('confirmPurgeUniKeys').addEventListener('click', function() {
+        const isCurrentUniverse = (targetCountry === country && targetUniverse === universe);
+        if (isCurrentUniverse) {
+            // Write pending changes first, so nothing is written after the purge
+            flushGalaxyStorage();
+        }
         keysToDelete.forEach(function(k) {
             GM_deleteValue(k);
         });
+        if (isCurrentUniverse) {
+            ptreGalaxyCache = {}; // Clear in-memory cache after purge
+        }
         // Purge logs for this universe
         var logsJSON = GM_getValue(ptreLogsList, '');
         if (logsJSON != '') {

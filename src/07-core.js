@@ -347,8 +347,31 @@ function updateSystemV2(galaxy, system, newSystemData) {
         ptreGalaxyCache[galaxy] = GM_getValue(ptreGalaxyData+galaxy, {});
     }
     ptreGalaxyCache[galaxy][String(system)] = newSystemData;
-    GM_setValue(ptreGalaxyData+galaxy, ptreGalaxyCache[galaxy]);
-    consoleDebug(`[GALAXY] Updated Storage for ${galaxy}:${system}`);
+    consoleDebug(`[GALAXY] Updated cache for ${galaxy}:${system}`);
+    scheduleGalaxyStorageFlush(galaxy);
+}
+
+// Writing an entire galaxy to storage is heavy (up to ~550 KB)
+// so writes are grouped: after an idle delay, and when leaving the page
+function scheduleGalaxyStorageFlush(galaxy) {
+    ptreGalaxyPendingWrites.add(String(galaxy));
+    clearTimeout(ptreGalaxyFlushTimer);
+    ptreGalaxyFlushTimer = setTimeout(flushGalaxyStorage, ptreGalaxyFlushDelayMiliSec);
+}
+
+function flushGalaxyStorage() {
+    clearTimeout(ptreGalaxyFlushTimer);
+    ptreGalaxyFlushTimer = null;
+    if (ptreGalaxyPendingWrites.size === 0) {
+        return;
+    }
+    ptreGalaxyPendingWrites.forEach(function(galaxy) {
+        if (ptreGalaxyCache[galaxy]) {
+            GM_setValue(ptreGalaxyData+galaxy, ptreGalaxyCache[galaxy]);
+        }
+    });
+    consoleDebug('[GALAXY] Storage written for galaxies: ' + Array.from(ptreGalaxyPendingWrites).join(', '));
+    ptreGalaxyPendingWrites.clear();
 }
 
 // Generate an empty system structure (all 15 positions with no player)

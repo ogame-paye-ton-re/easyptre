@@ -139,6 +139,14 @@ function improvePageGalaxy() {
         ptreDisplayGalaPopup = false;
     }
 
+    // Write pending galaxy storage when leaving or hiding the page
+    window.addEventListener('pagehide', flushGalaxyStorage);
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            flushGalaxyStorage();
+        }
+    });
+
     if (ptreStoredTK == '') {
         tkComment = '<span class="ptreError">Missing Team Key</span> - ';
         consoleDebug("[GALAXY] No Team Key found: galaxy features disabled.");

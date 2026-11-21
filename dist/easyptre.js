@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 21 nov. 2026 18:08:10 CET
+// Build date: sam. 21 nov. 2026 18:46:10 CET
 // ****************************************
 
 // ****************************************
@@ -54,6 +54,7 @@ const ptreLogsRetentionDuration = 15*24*60*60;
 const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos
+const ptreGalaxyFlushDelayMiliSec = 2*1000; // Galaxy storage is written after this idle delay
 const ptreHttpTimeoutMiliSec = 15*1000;
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated
@@ -82,6 +83,8 @@ var ptreGalaxyActivityCount = 0;
 var ptreGalaxyEventCount = 0;
 var ptreGalaxyInitMiliTS = 0;
 var ptreGalaxyCache = {};
+var ptreGalaxyPendingWrites = new Set(); // Galaxies updated in cache but not yet written to storage
+var ptreGalaxyFlushTimer = null;
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
 var ptreDisplayGalaPopup = true;
@@ -813,6 +816,14 @@ function improvePageGalaxy() {
     if (galaxyPopupMode == 'false' || minerMode == 'true') {
         ptreDisplayGalaPopup = false;
     }
+
+    // Write pending galaxy storage when leaving or hiding the page
+    window.addEventListener('pagehide', flushGalaxyStorage);
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            flushGalaxyStorage();
+        }
+    });
 
     if (ptreStoredTK == '') {
         tkComment = '<span class="ptreError">Missing Team Key</span> - ';
@@ -2745,6 +2756,8 @@ function validatePurgeGalaxyTracking() {
 
     // Action: Purge Galaxy Tracking
     document.getElementById('purgeGalaxyTracking').addEventListener("click", function (event) {
+        // Write pending changes first, so nothing is written after the purge
+        flushGalaxyStorage();
         for(var gala = 1; gala <= 15 ; gala++) {
             GM_deleteValue(ptreGalaxyData+gala);
         }
@@ -3887,8 +3900,31 @@ function updateSystemV2(galaxy, system, newSystemData) {
         ptreGalaxyCache[galaxy] = GM_getValue(ptreGalaxyData+galaxy, {});
     }
     ptreGalaxyCache[galaxy][String(system)] = newSystemData;
-    GM_setValue(ptreGalaxyData+galaxy, ptreGalaxyCache[galaxy]);
-    consoleDebug(`[GALAXY] Updated Storage for ${galaxy}:${system}`);
+    consoleDebug(`[GALAXY] Updated cache for ${galaxy}:${system}`);
+    scheduleGalaxyStorageFlush(galaxy);
+}
+
+// Writing an entire galaxy to storage is heavy (up to ~550 KB)
+// so writes are grouped: after an idle delay, and when leaving the page
+function scheduleGalaxyStorageFlush(galaxy) {
+    ptreGalaxyPendingWrites.add(String(galaxy));
+    clearTimeout(ptreGalaxyFlushTimer);
+    ptreGalaxyFlushTimer = setTimeout(flushGalaxyStorage, ptreGalaxyFlushDelayMiliSec);
+}
+
+function flushGalaxyStorage() {
+    clearTimeout(ptreGalaxyFlushTimer);
+    ptreGalaxyFlushTimer = null;
+    if (ptreGalaxyPendingWrites.size === 0) {
+        return;
+    }
+    ptreGalaxyPendingWrites.forEach(function(galaxy) {
+        if (ptreGalaxyCache[galaxy]) {
+            GM_setValue(ptreGalaxyData+galaxy, ptreGalaxyCache[galaxy]);
+        }
+    });
+    consoleDebug('[GALAXY] Storage written for galaxies: ' + Array.from(ptreGalaxyPendingWrites).join(', '));
+    ptreGalaxyPendingWrites.clear();
 }
 
 // Generate an empty system structure (all 15 positions with no player)
@@ -4385,6 +4421,8 @@ function cleanCurrentUniverseLogs() {
 // Will make more requests to PTRE when going to newly empty systems, but it's fine
 function runGarbageCollection() {
     console.log("[EasyPTRE] [GC] Running Garbage Collector...");
+    // GC reads galaxy storage: write pending changes first
+    flushGalaxyStorage();
     const currentTime = getIGCurrentTS();
     const currentUnixTS = getCurrentUnixTS();
     const days = ptreGalaxyStorageRetention;
@@ -4467,9 +4505,17 @@ function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
     document.getElementById('ptreMainContent').innerHTML = content;
 
     document.getElementById('confirmPurgeUniKeys').addEventListener('click', function() {
+        const isCurrentUniverse = (targetCountry === country && targetUniverse === universe);
+        if (isCurrentUniverse) {
+            // Write pending changes first, so nothing is written after the purge
+            flushGalaxyStorage();
+        }
         keysToDelete.forEach(function(k) {
             GM_deleteValue(k);
         });
+        if (isCurrentUniverse) {
+            ptreGalaxyCache = {}; // Clear in-memory cache after purge
+        }
         // Purge logs for this universe
         var logsJSON = GM_getValue(ptreLogsList, '');
         if (logsJSON != '') {
