@@ -881,8 +881,7 @@ function displayAllSharedNotes() {
         return;
     }
 
-    fetch(urlPTREIngamePopUp + '&team_key=' + TKey + '&action=getallnotes', { method: 'POST' })
-        .then(function(response) { return response.json(); })
+    ptreRequest(urlPTREIngamePopUp, {params: {team_key: TKey, action: 'getallnotes'}})
         .then(function(reponseDecode) {
             if (!document.getElementById('ptreMainContent')) { return; }
             consoleDebug('[FROM PTRE] ' + reponseDecode.message);
@@ -902,9 +901,8 @@ function displayAllSharedNotes() {
                 addToLogs('[NOTES] ' + reponseDecode.message);
             }
         })
-        .catch(function(e) {
-            updateHtmlById('ptreMainContent', '<span class="ptreError">Request failed</span>');
-            addToLogs('[NOTES] ' + e);
+        .catch(function(error) {
+            updateHtmlById('ptreMainContent', getPTRERequestErrorLabel(error));
         });
 }
 

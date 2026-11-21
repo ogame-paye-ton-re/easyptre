@@ -23,6 +23,7 @@ const ptreLogsRetentionDuration = 15*24*60*60;
 const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos
+const ptreHttpTimeoutMiliSec = 15*1000;
 const ptreBorderStyleHotList = "3px solid green"; // For player with recent Spy Report
 const ptreBorderStyleGalaxyEvent = "3px solid orange"; // For galaxy position recently updated
 const ptreBorderStyleDnpList = "3px solid red"; // For player part of the Do Not Probe list
