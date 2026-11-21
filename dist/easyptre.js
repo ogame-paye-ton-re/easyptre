@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 00:12:39 CET
+// Build date: dim. 22 nov. 2026 00:12:40 CET
 // ****************************************
 
 // ****************************************
@@ -4550,21 +4550,34 @@ function runGarbageCollection() {
 function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
     setupMainBox('Delete keys for ' + targetCountry + '-' + targetUniverse + '?', 'TMKeys');
     const tkKey = 'ptre-' + targetCountry + '-' + targetUniverse + '-TK';
-    const keysToDelete = keys.filter(function(k) { return k !== tkKey; });
+    // By default the Team Key is preserved, the checkbox allows to delete everything
+    const getKeysToDelete = function() {
+        if (document.getElementById('purgeUniKeysWithTK').checked) {
+            return keys.slice();
+        }
+        return keys.filter(function(k) { return k !== tkKey; });
+    };
 
-    var content = '<span class="ptreError">This will delete ' + keysToDelete.length + ' key(s) for universe ' + targetCountry + '-' + targetUniverse + '.</span><br><br>';
-    content += 'The Team Key (TK) will be preserved.<br><br>';
+    var content = '<span id="purgeUniKeysSummary" class="ptreError"></span><br><br>';
+    content += '<label><input type="checkbox" id="purgeUniKeysWithTK"> Also delete the Team Key (TK): every key of this universe will be deleted</label><br><br>';
     content += '<div id="confirmPurgeUniKeys" class="button btn_blue">PURGE, REALLY?</div>';
     content += ' <div id="cancelPurgeUniKeys" class="button btn_blue">CANCEL</div>';
-    content += '<br><br>Keys to delete:<br><ul>';
-    keysToDelete.forEach(function(k) {
-        content += '<li>' + k + '</li>';
-    });
-    content += '</ul>';
+    content += '<br><br>Keys to delete:<br><ul id="purgeUniKeysList"></ul>';
 
     document.getElementById('ptreMainContent').innerHTML = content;
 
+    const refreshPurgeDetails = function() {
+        const keysToDelete = getKeysToDelete();
+        var summary = 'This will delete ' + keysToDelete.length + ' key(s) for universe ' + targetCountry + '-' + targetUniverse + '. ';
+        summary += keysToDelete.includes(tkKey) ? 'The Team Key (TK) will be DELETED.' : 'The Team Key (TK) will be preserved.';
+        document.getElementById('purgeUniKeysSummary').textContent = summary;
+        document.getElementById('purgeUniKeysList').innerHTML = keysToDelete.map(k => '<li>' + k + '</li>').join('');
+    };
+    refreshPurgeDetails();
+    document.getElementById('purgeUniKeysWithTK').addEventListener('change', refreshPurgeDetails);
+
     document.getElementById('confirmPurgeUniKeys').addEventListener('click', function() {
+        const keysToDelete = getKeysToDelete();
         const isCurrentUniverse = (targetCountry === country && targetUniverse === universe);
         if (isCurrentUniverse) {
             // Write pending changes first, so nothing is written after the purge
