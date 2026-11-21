@@ -299,14 +299,18 @@ function updateLastAvailableVersion(force = false) {
             onload:result => {
                 //consoleDebug(result.responseText);
                 if (result.status == 200) {
-                    var tab = result.responseText.split('//');
-                    var availableVersion = tab[2].match(/\d+\.\d+.\d+/);
-                    availableVersion = availableVersion[0];
+                    const versionMatch = result.responseText.match(/@version\s+(\S+)/);
+                    if (!versionMatch) {
+                        displayUpdateVersionMessage('<span class="ptreError">Cant read last version</span>');
+                        consoleDebug('[OPENJS] Cant find @version in meta file');
+                        return;
+                    }
+                    const availableVersion = versionMatch[1];
                     consoleDebug("[OPENJS] Current version: " + GM_info.script.version);
                     consoleDebug("[OPENJS] Last version: " + availableVersion);
                     GM_setValue(ptreLastAvailableVersion, availableVersion);
                     GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
-                    if (availableVersion !== GM_info.script.version) {
+                    if (isNewerVersion(availableVersion, GM_info.script.version)) {
                         displayUpdateVersionMessage('<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>');
                         if (document.getElementById('ptreMenuName')) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';

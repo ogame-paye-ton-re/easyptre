@@ -311,7 +311,7 @@ function displayOverview() {
 
     // Update version message in footer
     var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
-    if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
+    if (lastAvailableVersion != -1 && isNewerVersion(lastAvailableVersion, GM_info.script.version)) {
         displayUpdateVersionMessage('<span class="ptreError">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>');
     }
 
@@ -886,7 +886,7 @@ function displayAllSharedNotes() {
             if (!document.getElementById('ptreMainContent')) { return; }
             consoleDebug('[FROM PTRE] ' + reponseDecode.message);
             if (reponseDecode.code == 1) {
-                var notesHtml = atob(reponseDecode.allnotes);
+                var notesHtml = decodeBase64UTF8(reponseDecode.allnotes);
                 document.getElementById('ptreMainContent').innerHTML = notesHtml;
                 // Add events on buttons
                 document.querySelectorAll('.updatePlayerNote').forEach(function(el) {

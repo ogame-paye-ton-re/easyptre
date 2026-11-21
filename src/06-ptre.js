@@ -209,7 +209,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                         }
                         // Galaxy event
                         if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-                            document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).innerHTML = atob(reponseDecode.event);
+                            document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).innerHTML = decodeBase64UTF8(reponseDecode.event);
                         }
                     }
                 })
@@ -337,7 +337,7 @@ function getPhalanxInfosFromGala() {
 
     ptreRequest(urlPTREGetPhalanxInfos, {params: {team_key: teamKey, galaxy: galaxy, system: system}, body: dataJSON})
         .then(function(reponseDecode) {
-            var message = atob(reponseDecode.message);
+            var message = decodeBase64UTF8(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[F&PHA] ' + reponseDecode.message_debug);
             }
@@ -364,7 +364,7 @@ function getGEEInfosFromGala() {
     }
     ptreRequest(urlPTREGetGEEInfos, {params: {team_key: teamKey, galaxy: galaxy, system: system, position: position}})
         .then(function(reponseDecode) {
-            var message = atob(reponseDecode.message);
+            var message = decodeBase64UTF8(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[GEE] ' + reponseDecode.message_debug);
             }
@@ -386,7 +386,7 @@ function getFightEventsFromXPD() {
     }
     ptreRequest(urlPTREGetXpdEvents, {params: {team_key: teamKey}})
         .then(function(reponseDecode) {
-            var message = atob(reponseDecode.message);
+            var message = decodeBase64UTF8(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[EVENTS] ' + reponseDecode.message_debug);
             }
@@ -420,8 +420,7 @@ function getOrionInfos(coordsList, onDone) {
             consoleDebug('[ORION] [FROM PTRE] Code ' + reponseDecode.code + ': ' + reponseDecode.message);
             const anomalies = {};
             for (const [coords, html64] of Object.entries(reponseDecode.anomalies || {})) {
-                // Base64 decode as UTF-8 (player names may contain non-ASCII chars)
-                anomalies[coords] = new TextDecoder().decode(Uint8Array.from(atob(html64), c => c.charCodeAt(0)));
+                anomalies[coords] = decodeBase64UTF8(html64);
             }
             const missing = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).filter(c => !anomalies[c]);
             consoleDebug('[ORION] [FROM PTRE] Received infos for ' + Object.keys(anomalies).length + '/' + coordsList.length + ' coords: ' + Object.keys(anomalies).join(', ') + (missing.length > 0 ? ' | Missing: ' + missing.join(', ') : ''));

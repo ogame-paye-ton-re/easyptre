@@ -4,35 +4,29 @@
 
 // Displays PTRE responses messages
 // Responses from server
-// Displayed on the rigth-bottom corner
+// Displayed on the rigth-bottom corner, each message is removed after ptreMessageDisplayTime
 function displayPTREPopUpMessage(message) {
-    var previousContent = '';
-    if (document.getElementById('boxPTREMessage') && document.getElementById("ptreMessage")) {
-        // Get previous content and remove box
-        previousContent = document.getElementById("ptreMessage").innerHTML;
-        document.getElementById('boxPTREMessage').remove();
+    const bottom = document.getElementById('bottom');
+    if (!bottom) {
+        return;
     }
-
-    // Recreate box
-    var divPTREMessage = '<div id="boxPTREMessage"><span class="ptreNotificationTitle">PTRE:</span><span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
-    var boxPTREMessage = document.createElement("div");
-    boxPTREMessage.innerHTML = divPTREMessage;
-    boxPTREMessage.id = 'boxPTREMessage';
-
-    if (document.getElementById('bottom')) {
-        document.getElementById('bottom').appendChild(boxPTREMessage);
-        setTimeout(function() {cleanFirstPTREPopUpMessage();}, ptreMessageDisplayTime);
+    let box = document.getElementById('boxPTREMessage');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'boxPTREMessage';
+        box.innerHTML = '<span class="ptreNotificationTitle">PTRE:</span>';
+        bottom.appendChild(box);
     }
-}
-
-// Remove first message in list and remove entire message box if empty
-function cleanFirstPTREPopUpMessage() {
-    if (document.getElementById('fisrtPtreMessage')) {
-        document.getElementById('fisrtPtreMessage').remove();
-        if (document.getElementById("ptreMessage").innerHTML == '') {
-            document.getElementById('boxPTREMessage').remove();
+    const line = document.createElement('div');
+    line.className = 'ptreNotificationLine';
+    line.innerHTML = message;
+    box.appendChild(line);
+    setTimeout(function() {
+        line.remove();
+        if (box.getElementsByClassName('ptreNotificationLine').length === 0) {
+            box.remove();
         }
-    }
+    }, ptreMessageDisplayTime);
 }
 
 // Display message under galaxy view

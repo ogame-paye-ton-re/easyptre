@@ -131,6 +131,24 @@ function getUnixTSLabel(ts) {
     return temp;
 }
 
+// Decode a base64 string containing UTF-8 bytes (atob alone breaks non-ASCII chars)
+function decodeBase64UTF8(base64) {
+    return new TextDecoder().decode(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
+}
+
+// Returns true if version "candidate" is strictly newer than "current" (format: X.Y.Z)
+function isNewerVersion(candidate, current) {
+    const a = String(candidate).split('.').map(n => parseInt(n, 10) || 0);
+    const b = String(current).split('.').map(n => parseInt(n, 10) || 0);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const diff = (a[i] || 0) - (b[i] || 0);
+        if (diff !== 0) {
+            return diff > 0;
+        }
+    }
+    return false;
+}
+
 function updateHtmlById(id, html) {
     const element = document.getElementById(id);
     if (element) {

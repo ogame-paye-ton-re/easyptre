@@ -11,7 +11,7 @@ function improvePageAny() {
     var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
     var updateClass = '';
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
-    var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
+    var configAlertActive = (lastAvailableVersion != -1 && isNewerVersion(lastAvailableVersion, GM_info.script.version)) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
     if (configAlertActive) {
         ptreMenuName = "CLICK ME";
         updateClass = " ptreError";
@@ -511,7 +511,7 @@ function addPTREStuffsToMessagesPage() {
     var TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
         if (document.getElementsByClassName('messagesHolder')[0]) {
-            var maxCounterSpyTsSeen = GM_getValue(ptreMaxCounterSpyTsSeen, 0);
+            var maxCounterSpyTsSeen = Number(GM_getValue(ptreMaxCounterSpyTsSeen, 0));
             var maxCounterSpyTsSeenNow = 0;
             var tabActiPos = [];
             var messages = document.getElementsByClassName('msgWithFilter');
@@ -527,7 +527,7 @@ function addPTREStuffsToMessagesPage() {
                         // This is a Spy Report
                         var spanBtnPTRE = document.createElement("span"); // Create new div
                         spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Send to PTRE"><img id="sendRE-' + apiKeyRE + '" apikey="' + apiKeyRE + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a>';
-                        spanBtnPTRE.id = 'PTREspan';
+                        spanBtnPTRE.className = 'ptreMessageButton';
                         current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE);
                         document.getElementById('sendRE-' + apiKeyRE).addEventListener("click", function (event) {
                             ptreRequest(urlPTREImportSR, {method: 'GET', params: {team_key: TKey, sr_id: apiKeyRE}})
@@ -549,7 +549,7 @@ function addPTREStuffsToMessagesPage() {
                     } else {
                         var planet_acti;
                         var jsonLune;
-                        const message_ts = rawMessageData.dataset.rawTimestamp;
+                        const message_ts = Number(rawMessageData.dataset.rawTimestamp);
                         const spy_message_ts = message_ts * 1000;
                         var alreadySentLabel = "";
 
@@ -593,16 +593,13 @@ function addPTREStuffsToMessagesPage() {
                         // Add button
                         var spanBtnPTRE2 = document.createElement("span"); // Create new div
                         spanBtnPTRE2.innerHTML = '<a class="tooltip" target="ptre" title="Counter Spy' + alreadySentLabel + ' sent to PTRE"><img style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="26" width="26"></a>';
-                        spanBtnPTRE2.id = 'PTREspan';
+                        spanBtnPTRE2.className = 'ptreMessageButton';
                         current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE2);
                     }
                 }
             });
 
             if (tabActiPos.length > 0){
-                // Save New max TS to not re-send same counter spy messages
-                GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
-
                 // Build JSON
                 const jsonSystemObj = {};
                 tabActiPos.forEach(function(jsonPos) {
@@ -612,6 +609,9 @@ function addPTREStuffsToMessagesPage() {
                 // Sent to PTRE
                 ptreRequest(urlPTREPushActivity, {body: jsonSystemObj})
                     .then(function(reponseDecode) {
+                        // PTRE answered: save new max TS to not re-send same counter spy messages
+                        // (on network failure, it is not saved so messages will be pushed again next time)
+                        GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);

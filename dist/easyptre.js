@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 21 nov. 2026 16:48:04 CET
+// Build date: sam. 21 nov. 2026 17:59:25 CET
 // ****************************************
 
 // ****************************************
@@ -686,7 +686,7 @@ function improvePageAny() {
     var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
     var updateClass = '';
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
-    var configAlertActive = (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
+    var configAlertActive = (lastAvailableVersion != -1 && isNewerVersion(lastAvailableVersion, GM_info.script.version)) || ptreStoredTK == '' || !isValidTeamKey(ptreStoredTK);
     if (configAlertActive) {
         ptreMenuName = "CLICK ME";
         updateClass = " ptreError";
@@ -1186,7 +1186,7 @@ function addPTREStuffsToMessagesPage() {
     var TKey = GM_getValue(ptreTeamKey, '');
     if (TKey != '') {
         if (document.getElementsByClassName('messagesHolder')[0]) {
-            var maxCounterSpyTsSeen = GM_getValue(ptreMaxCounterSpyTsSeen, 0);
+            var maxCounterSpyTsSeen = Number(GM_getValue(ptreMaxCounterSpyTsSeen, 0));
             var maxCounterSpyTsSeenNow = 0;
             var tabActiPos = [];
             var messages = document.getElementsByClassName('msgWithFilter');
@@ -1202,7 +1202,7 @@ function addPTREStuffsToMessagesPage() {
                         // This is a Spy Report
                         var spanBtnPTRE = document.createElement("span"); // Create new div
                         spanBtnPTRE.innerHTML = '<a class="tooltip" target="ptre" title="Send to PTRE"><img id="sendRE-' + apiKeyRE + '" apikey="' + apiKeyRE + '" style="cursor:pointer;" class="mouseSwitch" src="' + imgPTRE + '" height="26" width="26"></a>';
-                        spanBtnPTRE.id = 'PTREspan';
+                        spanBtnPTRE.className = 'ptreMessageButton';
                         current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE);
                         document.getElementById('sendRE-' + apiKeyRE).addEventListener("click", function (event) {
                             ptreRequest(urlPTREImportSR, {method: 'GET', params: {team_key: TKey, sr_id: apiKeyRE}})
@@ -1224,7 +1224,7 @@ function addPTREStuffsToMessagesPage() {
                     } else {
                         var planet_acti;
                         var jsonLune;
-                        const message_ts = rawMessageData.dataset.rawTimestamp;
+                        const message_ts = Number(rawMessageData.dataset.rawTimestamp);
                         const spy_message_ts = message_ts * 1000;
                         var alreadySentLabel = "";
 
@@ -1268,16 +1268,13 @@ function addPTREStuffsToMessagesPage() {
                         // Add button
                         var spanBtnPTRE2 = document.createElement("span"); // Create new div
                         spanBtnPTRE2.innerHTML = '<a class="tooltip" target="ptre" title="Counter Spy' + alreadySentLabel + ' sent to PTRE"><img style="cursor:pointer;" class="mouseSwitch" src="' + imgPTREOK + '" height="26" width="26"></a>';
-                        spanBtnPTRE2.id = 'PTREspan';
+                        spanBtnPTRE2.className = 'ptreMessageButton';
                         current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE2);
                     }
                 }
             });
 
             if (tabActiPos.length > 0){
-                // Save New max TS to not re-send same counter spy messages
-                GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
-
                 // Build JSON
                 const jsonSystemObj = {};
                 tabActiPos.forEach(function(jsonPos) {
@@ -1287,6 +1284,9 @@ function addPTREStuffsToMessagesPage() {
                 // Sent to PTRE
                 ptreRequest(urlPTREPushActivity, {body: jsonSystemObj})
                     .then(function(reponseDecode) {
+                        // PTRE answered: save new max TS to not re-send same counter spy messages
+                        // (on network failure, it is not saved so messages will be pushed again next time)
+                        GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);
@@ -2193,7 +2193,7 @@ function displayOverview() {
 
     // Update version message in footer
     var lastAvailableVersion = GM_getValue(ptreLastAvailableVersion, -1);
-    if (lastAvailableVersion != -1 && lastAvailableVersion !== GM_info.script.version) {
+    if (lastAvailableVersion != -1 && isNewerVersion(lastAvailableVersion, GM_info.script.version)) {
         displayUpdateVersionMessage('<span class="ptreError">New version '+ lastAvailableVersion + ' is available. Update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a>.</span>');
     }
 
@@ -2768,7 +2768,7 @@ function displayAllSharedNotes() {
             if (!document.getElementById('ptreMainContent')) { return; }
             consoleDebug('[FROM PTRE] ' + reponseDecode.message);
             if (reponseDecode.code == 1) {
-                var notesHtml = atob(reponseDecode.allnotes);
+                var notesHtml = decodeBase64UTF8(reponseDecode.allnotes);
                 document.getElementById('ptreMainContent').innerHTML = notesHtml;
                 // Add events on buttons
                 document.querySelectorAll('.updatePlayerNote').forEach(function(el) {
@@ -3104,7 +3104,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                         }
                         // Galaxy event
                         if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-                            document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).innerHTML = atob(reponseDecode.event);
+                            document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).innerHTML = decodeBase64UTF8(reponseDecode.event);
                         }
                     }
                 })
@@ -3232,7 +3232,7 @@ function getPhalanxInfosFromGala() {
 
     ptreRequest(urlPTREGetPhalanxInfos, {params: {team_key: teamKey, galaxy: galaxy, system: system}, body: dataJSON})
         .then(function(reponseDecode) {
-            var message = atob(reponseDecode.message);
+            var message = decodeBase64UTF8(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[F&PHA] ' + reponseDecode.message_debug);
             }
@@ -3259,7 +3259,7 @@ function getGEEInfosFromGala() {
     }
     ptreRequest(urlPTREGetGEEInfos, {params: {team_key: teamKey, galaxy: galaxy, system: system, position: position}})
         .then(function(reponseDecode) {
-            var message = atob(reponseDecode.message);
+            var message = decodeBase64UTF8(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[GEE] ' + reponseDecode.message_debug);
             }
@@ -3281,7 +3281,7 @@ function getFightEventsFromXPD() {
     }
     ptreRequest(urlPTREGetXpdEvents, {params: {team_key: teamKey}})
         .then(function(reponseDecode) {
-            var message = atob(reponseDecode.message);
+            var message = decodeBase64UTF8(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[EVENTS] ' + reponseDecode.message_debug);
             }
@@ -3315,8 +3315,7 @@ function getOrionInfos(coordsList, onDone) {
             consoleDebug('[ORION] [FROM PTRE] Code ' + reponseDecode.code + ': ' + reponseDecode.message);
             const anomalies = {};
             for (const [coords, html64] of Object.entries(reponseDecode.anomalies || {})) {
-                // Base64 decode as UTF-8 (player names may contain non-ASCII chars)
-                anomalies[coords] = new TextDecoder().decode(Uint8Array.from(atob(html64), c => c.charCodeAt(0)));
+                anomalies[coords] = decodeBase64UTF8(html64);
             }
             const missing = coordsList.map(c => c.galaxy + ':' + c.system + ':' + c.position).filter(c => !anomalies[c]);
             consoleDebug('[ORION] [FROM PTRE] Received infos for ' + Object.keys(anomalies).length + '/' + coordsList.length + ' coords: ' + Object.keys(anomalies).join(', ') + (missing.length > 0 ? ' | Missing: ' + missing.join(', ') : ''));
@@ -3839,14 +3838,18 @@ function updateLastAvailableVersion(force = false) {
             onload:result => {
                 //consoleDebug(result.responseText);
                 if (result.status == 200) {
-                    var tab = result.responseText.split('//');
-                    var availableVersion = tab[2].match(/\d+\.\d+.\d+/);
-                    availableVersion = availableVersion[0];
+                    const versionMatch = result.responseText.match(/@version\s+(\S+)/);
+                    if (!versionMatch) {
+                        displayUpdateVersionMessage('<span class="ptreError">Cant read last version</span>');
+                        consoleDebug('[OPENJS] Cant find @version in meta file');
+                        return;
+                    }
+                    const availableVersion = versionMatch[1];
                     consoleDebug("[OPENJS] Current version: " + GM_info.script.version);
                     consoleDebug("[OPENJS] Last version: " + availableVersion);
                     GM_setValue(ptreLastAvailableVersion, availableVersion);
                     GM_setValue(ptreLastAvailableVersionRefresh, currentUnixTS);
-                    if (availableVersion !== GM_info.script.version) {
+                    if (isNewerVersion(availableVersion, GM_info.script.version)) {
                         displayUpdateVersionMessage('<span class="ptreError">New version '+ availableVersion + ' is available. You need to update <a href="https://openuserjs.org/scripts/GeGe_GM/EasyPTRE" target="_blank">EasyPTRE</a> version.</span>');
                         if (document.getElementById('ptreMenuName')) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
@@ -4137,6 +4140,24 @@ function getUnixTSLabel(ts) {
     return temp;
 }
 
+// Decode a base64 string containing UTF-8 bytes (atob alone breaks non-ASCII chars)
+function decodeBase64UTF8(base64) {
+    return new TextDecoder().decode(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
+}
+
+// Returns true if version "candidate" is strictly newer than "current" (format: X.Y.Z)
+function isNewerVersion(candidate, current) {
+    const a = String(candidate).split('.').map(n => parseInt(n, 10) || 0);
+    const b = String(current).split('.').map(n => parseInt(n, 10) || 0);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const diff = (a[i] || 0) - (b[i] || 0);
+        if (diff !== 0) {
+            return diff > 0;
+        }
+    }
+    return false;
+}
+
 function updateHtmlById(id, html) {
     const element = document.getElementById(id);
     if (element) {
@@ -4176,35 +4197,29 @@ function convertIGTSToUnixTS(igTS) {
 
 // Displays PTRE responses messages
 // Responses from server
-// Displayed on the rigth-bottom corner
+// Displayed on the rigth-bottom corner, each message is removed after ptreMessageDisplayTime
 function displayPTREPopUpMessage(message) {
-    var previousContent = '';
-    if (document.getElementById('boxPTREMessage') && document.getElementById("ptreMessage")) {
-        // Get previous content and remove box
-        previousContent = document.getElementById("ptreMessage").innerHTML;
-        document.getElementById('boxPTREMessage').remove();
+    const bottom = document.getElementById('bottom');
+    if (!bottom) {
+        return;
     }
-
-    // Recreate box
-    var divPTREMessage = '<div id="boxPTREMessage"><span class="ptreNotificationTitle">PTRE:</span><span id="ptreMessage">' + previousContent + '<span id="fisrtPtreMessage"><br>' + message + '</span></span></div>';
-    var boxPTREMessage = document.createElement("div");
-    boxPTREMessage.innerHTML = divPTREMessage;
-    boxPTREMessage.id = 'boxPTREMessage';
-
-    if (document.getElementById('bottom')) {
-        document.getElementById('bottom').appendChild(boxPTREMessage);
-        setTimeout(function() {cleanFirstPTREPopUpMessage();}, ptreMessageDisplayTime);
+    let box = document.getElementById('boxPTREMessage');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'boxPTREMessage';
+        box.innerHTML = '<span class="ptreNotificationTitle">PTRE:</span>';
+        bottom.appendChild(box);
     }
-}
-
-// Remove first message in list and remove entire message box if empty
-function cleanFirstPTREPopUpMessage() {
-    if (document.getElementById('fisrtPtreMessage')) {
-        document.getElementById('fisrtPtreMessage').remove();
-        if (document.getElementById("ptreMessage").innerHTML == '') {
-            document.getElementById('boxPTREMessage').remove();
+    const line = document.createElement('div');
+    line.className = 'ptreNotificationLine';
+    line.innerHTML = message;
+    box.appendChild(line);
+    setTimeout(function() {
+        line.remove();
+        if (box.getElementsByClassName('ptreNotificationLine').length === 0) {
+            box.remove();
         }
-    }
+    }, ptreMessageDisplayTime);
 }
 
 // Display message under galaxy view
