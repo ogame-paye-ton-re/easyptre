@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 21 nov. 2026 17:59:25 CET
+// Build date: sam. 21 nov. 2026 18:08:10 CET
 // ****************************************
 
 // ****************************************
@@ -765,13 +765,17 @@ function improvePageMessages() {
             setTimeout(addPTREStuffsToMessagesPage, 1000);
             // Update AGR Spy Table
             if (isAGREnabled() && (GM_getValue(ptreImproveAGRSpyTable, 'true') == 'true')) {
-                let spyTableObserver = new MutationObserver(improveAGRSpyTable);
-                var nodeSpyTable = document.getElementById('messagecontainercomponent');
-                spyTableObserver.observe(nodeSpyTable, {
-                    attributes: true,
-                    childList: true, // observer les enfants directs
-                    subtree: true, // et les descendants aussi
-                });
+                var nodeSpyTable = document.getElementById('messagescomponent');
+                if (nodeSpyTable) {
+                    let spyTableObserver = new MutationObserver(improveAGRSpyTable);
+                    spyTableObserver.observe(nodeSpyTable, {
+                        attributes: true,
+                        childList: true, // observer les enfants directs
+                        subtree: true, // et les descendants aussi
+                    });
+                } else {
+                    consoleDebug("[SPY-TABLE] #messagescomponent not found. AGR Spy Table not improved.");
+                }
             }
         }
     }
@@ -1133,15 +1137,12 @@ function improveAGRSpyTable(mutationList, observer) {
                 var nbCol = row.cells.length;
                 if (row.cells[0].tagName == "TD") {
                     var rowCurrent = table.getElementsByTagName("tr")[i];
+                    // AGR row ID format: "m_<messageID>"
                     var messageID = rowCurrent.id.slice(2);
-                    if (document.getElementById("m"+messageID)) {
-                        // Find API Key in page
-                        var apiKeyRE;
-                        var rawMessageData = document.querySelector('div.msg[data-msg-id="' + messageID + '"] .rawMessageData');
-                        if (rawMessageData) {
-                            // Obtenir la valeur de data-raw-hashcode
-                            apiKeyRE = rawMessageData.getAttribute('data-raw-hashcode');
-                        }
+                    // Find API Key in page
+                    var rawMessageData = document.querySelector('div.msg[data-msg-id="' + messageID + '"] .rawMessageData');
+                    if (rawMessageData) {
+                        var apiKeyRE = rawMessageData.getAttribute('data-raw-hashcode');
                         var tdAGRButtons = rowCurrent.getElementsByTagName("td")[nbCol-1];
                         tdAGRButtons.style.width = "110px";
                         // Create PTRE button
@@ -1169,7 +1170,7 @@ function improveAGRSpyTable(mutationList, observer) {
                                 });
                         });
                     } else {
-                        console.log("[EasyPTRE] [SPY-TABLE] Error. Cant find data element: m" + messageID);
+                        console.log("[EasyPTRE] [SPY-TABLE] Error. Cant find spy report data for message " + messageID);
                     }
                 }
             }
