@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 21 nov. 2026 18:46:10 CET
+// Build date: sam. 21 nov. 2026 18:46:12 CET
 // ****************************************
 
 // ****************************************
@@ -1747,25 +1747,13 @@ function toogleTargetPrivateStatus(playerId) {
     return status;
 }
 
-function isTargetPrivate(playerId) {
-    var targetJSON = '';
-    var targetList = [];
-    targetJSON = GM_getValue(ptreAGRPrivatePlayerListJSON , '');
-
-    var found = 0;
-    if (targetJSON != '') {
-        targetList = JSON.parse(targetJSON);
-
-        targetList.forEach(function(PlayerCheck) {
-            if (PlayerCheck.id == playerId) {
-                found = 1;
-            }
-        });
-        if (found == 1) {
-            return true;
-        }
+// Returns a Set of private targets IDs (as strings)
+function getPrivateTargetIds() {
+    const targetJSON = GM_getValue(ptreAGRPrivatePlayerListJSON, '');
+    if (targetJSON == '') {
+        return new Set();
     }
-    return false;
+    return new Set(JSON.parse(targetJSON).map(PlayerCheck => String(PlayerCheck.id)));
 }
 
 function debugListContent() {
@@ -1781,14 +1769,6 @@ function debugListContent() {
     targetList = JSON.parse(targetJSON);
     console.log("[EasyPTRE] [PTRE] list: ");
     console.log(targetList);
-}
-
-// Check is player is in list
-function isPlayerInLists(playerId) {
-    if (isPlayerInTheList(playerId, 'AGR') || isPlayerInTheList(playerId, 'PTRE')) {
-        return true;
-    }
-    return false;
 }
 
 function isPlayerInTheList(playerId, type = 'PTRE') {
@@ -2557,13 +2537,14 @@ function displayAGRTargetsList() {
         if (targetJSON != '') {
             targetList = JSON.parse(targetJSON);
             if (targetList) {
+                const privateTargetIds = getPrivateTargetIds();
                 targetList.forEach(function(PlayerCheck, index) {
                     const i = index + 1;
                     content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+(i%2)+'">'+PlayerCheck.pseudo+'</td>';
                     content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
                     content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
                     var checked = '';
-                    if (isTargetPrivate(PlayerCheck.id)) {
+                    if (privateTargetIds.has(String(PlayerCheck.id))) {
                         checked = ' checked';
                     }
                     content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><input class="sharedTargetStatus" id="'+PlayerCheck.id+'" type="checkbox"' + checked + '></td>';
@@ -3438,9 +3419,9 @@ function syncTargets(mode) {
     }
 
     // Remove private targets from list
-    targetListTemp.forEach(function(item, index, object) {
-        //consoleDebug(item.id + ' ' + item.pseudo);
-        if (isTargetPrivate(item.id)) {
+    const privateTargetIds = getPrivateTargetIds();
+    targetListTemp.forEach(function(item) {
+        if (privateTargetIds.has(String(item.id))) {
             //consoleDebug("Ignoring " + item.pseudo);
             nb_private++;
         } else {
@@ -3453,16 +3434,20 @@ function syncTargets(mode) {
     ptreRequest(urlPTRESyncTargets, {params: {version: GM_info.script.version, team_key: ptreStoredTK}, body: targetList})
         .then(function(reponseDecode) {
             if (reponseDecode.code == 1) {
-                // Reset local list, as we update the entire list
-                GM_setValue(ptrePTREPlayerListJSON, '');
-                var count = 0;
-                var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
-                newTargetList.forEach(function(incomingPlayer) {
-                    if (!isPlayerInLists(incomingPlayer.player_id)) {
-                        addPlayerToList(incomingPlayer.player_id, incomingPlayer.pseudo, 'PTRE');
-                        count++;
+                // Rebuild entire local PTRE list (players already in AGR list are skipped)
+                const agrJSON = GM_getValue(ptreAGRPlayerListJSON, '');
+                const agrIds = new Set(agrJSON != '' ? JSON.parse(agrJSON).map(p => String(p.id)) : []);
+                const addedIds = new Set();
+                const newPTREList = [];
+                (reponseDecode.targets_array || []).forEach(function(incomingPlayer) {
+                    const id = String(incomingPlayer.player_id);
+                    if (!agrIds.has(id) && !addedIds.has(id) && newPTREList.length < ptreTargetListMaxSize) {
+                        addedIds.add(id);
+                        newPTREList.push({id: incomingPlayer.player_id, pseudo: incomingPlayer.pseudo});
                     }
                 });
+                GM_setValue(ptrePTREPlayerListJSON, JSON.stringify(newPTREList));
+                var count = newPTREList.length;
 
                 // Update configuration
                 GM_setValue(ptreLastTargetsSync, currentTime);

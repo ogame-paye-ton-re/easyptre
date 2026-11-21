@@ -529,9 +529,9 @@ function syncTargets(mode) {
     }
 
     // Remove private targets from list
-    targetListTemp.forEach(function(item, index, object) {
-        //consoleDebug(item.id + ' ' + item.pseudo);
-        if (isTargetPrivate(item.id)) {
+    const privateTargetIds = getPrivateTargetIds();
+    targetListTemp.forEach(function(item) {
+        if (privateTargetIds.has(String(item.id))) {
             //consoleDebug("Ignoring " + item.pseudo);
             nb_private++;
         } else {
@@ -544,16 +544,20 @@ function syncTargets(mode) {
     ptreRequest(urlPTRESyncTargets, {params: {version: GM_info.script.version, team_key: ptreStoredTK}, body: targetList})
         .then(function(reponseDecode) {
             if (reponseDecode.code == 1) {
-                // Reset local list, as we update the entire list
-                GM_setValue(ptrePTREPlayerListJSON, '');
-                var count = 0;
-                var newTargetList = JSON.parse(JSON.stringify(reponseDecode.targets_array));
-                newTargetList.forEach(function(incomingPlayer) {
-                    if (!isPlayerInLists(incomingPlayer.player_id)) {
-                        addPlayerToList(incomingPlayer.player_id, incomingPlayer.pseudo, 'PTRE');
-                        count++;
+                // Rebuild entire local PTRE list (players already in AGR list are skipped)
+                const agrJSON = GM_getValue(ptreAGRPlayerListJSON, '');
+                const agrIds = new Set(agrJSON != '' ? JSON.parse(agrJSON).map(p => String(p.id)) : []);
+                const addedIds = new Set();
+                const newPTREList = [];
+                (reponseDecode.targets_array || []).forEach(function(incomingPlayer) {
+                    const id = String(incomingPlayer.player_id);
+                    if (!agrIds.has(id) && !addedIds.has(id) && newPTREList.length < ptreTargetListMaxSize) {
+                        addedIds.add(id);
+                        newPTREList.push({id: incomingPlayer.player_id, pseudo: incomingPlayer.pseudo});
                     }
                 });
+                GM_setValue(ptrePTREPlayerListJSON, JSON.stringify(newPTREList));
+                var count = newPTREList.length;
 
                 // Update configuration
                 GM_setValue(ptreLastTargetsSync, currentTime);

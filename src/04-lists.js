@@ -228,25 +228,13 @@ function toogleTargetPrivateStatus(playerId) {
     return status;
 }
 
-function isTargetPrivate(playerId) {
-    var targetJSON = '';
-    var targetList = [];
-    targetJSON = GM_getValue(ptreAGRPrivatePlayerListJSON , '');
-
-    var found = 0;
-    if (targetJSON != '') {
-        targetList = JSON.parse(targetJSON);
-
-        targetList.forEach(function(PlayerCheck) {
-            if (PlayerCheck.id == playerId) {
-                found = 1;
-            }
-        });
-        if (found == 1) {
-            return true;
-        }
+// Returns a Set of private targets IDs (as strings)
+function getPrivateTargetIds() {
+    const targetJSON = GM_getValue(ptreAGRPrivatePlayerListJSON, '');
+    if (targetJSON == '') {
+        return new Set();
     }
-    return false;
+    return new Set(JSON.parse(targetJSON).map(PlayerCheck => String(PlayerCheck.id)));
 }
 
 function debugListContent() {
@@ -262,14 +250,6 @@ function debugListContent() {
     targetList = JSON.parse(targetJSON);
     console.log("[EasyPTRE] [PTRE] list: ");
     console.log(targetList);
-}
-
-// Check is player is in list
-function isPlayerInLists(playerId) {
-    if (isPlayerInTheList(playerId, 'AGR') || isPlayerInTheList(playerId, 'PTRE')) {
-        return true;
-    }
-    return false;
 }
 
 function isPlayerInTheList(playerId, type = 'PTRE') {

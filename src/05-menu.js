@@ -663,13 +663,14 @@ function displayAGRTargetsList() {
         if (targetJSON != '') {
             targetList = JSON.parse(targetJSON);
             if (targetList) {
+                const privateTargetIds = getPrivateTargetIds();
                 targetList.forEach(function(PlayerCheck, index) {
                     const i = index + 1;
                     content += '<tr id="rawPLayer_'+PlayerCheck.id+'" class="tr_cell_radius"><td class="td_cell_radius_'+(i%2)+'">'+PlayerCheck.pseudo+'</td>';
                     content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><div id="btnGetPlayerInfos'+PlayerCheck.id+'" type="button" class="button btn_blue">FLEET</div></td>';
                     content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><a href="' + buildPTRELinkToPlayer(PlayerCheck.id) + '" target="_blank">Profile</a></td>';
                     var checked = '';
-                    if (isTargetPrivate(PlayerCheck.id)) {
+                    if (privateTargetIds.has(String(PlayerCheck.id))) {
                         checked = ' checked';
                     }
                     content += '<td class="td_cell_radius_'+(i%2)+'" align="center"><input class="sharedTargetStatus" id="'+PlayerCheck.id+'" type="checkbox"' + checked + '></td>';
