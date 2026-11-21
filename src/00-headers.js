@@ -10,7 +10,6 @@
 // @match        https://ptre.chez.gg/*
 // @updateURL    https://openuserjs.org/meta/GeGe_GM/EasyPTRE.meta.js
 // @downloadURL  https://openuserjs.org/install/GeGe_GM/EasyPTRE.user.js
-// @require      https://code.jquery.com/jquery-3.4.1.min.js
 // @icon         https://ptre.chez.gg/img/easyptre/easyptre_icon_mini.png
 // @run-at       document-end
 // @grant        GM_addStyle

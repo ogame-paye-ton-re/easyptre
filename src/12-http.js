@@ -69,6 +69,7 @@ function ptreRequest(url, options = {}) {
                 try {
                     json = JSON.parse(response.responseText);
                 } catch (e) {
+                    consoleDebug('[HTTP] ' + endpoint + ' invalid JSON sample: ' + response.responseText.slice(0, 300));
                     fail('Invalid JSON response (HTTP ' + response.status + ')');
                     return;
                 }

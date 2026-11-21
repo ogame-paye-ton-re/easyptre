@@ -479,20 +479,19 @@ function improveAGRSpyTable(mutationList, observer) {
                         tdAGRButtons.append(PTREbutton);
                         // Add event to button
                         document.getElementById('sendSRFromAGRTable-' + apiKeyRE).addEventListener("click", function (event) {
-                            apiKeyRE = this.getAttribute("apikey");
-                            var urlPTRESpy = urlPTREImportSR + '&team_key=' + TKey + '&sr_id=' + apiKeyRE;
-                            $.ajax({
-                                dataType: "json",
-                                url: urlPTRESpy,
-                                success: function(reponse) {
+                            const srKey = this.getAttribute("apikey");
+                            ptreRequest(urlPTREImportSR, {method: 'GET', params: {team_key: TKey, sr_id: srKey}})
+                                .then(function(reponse) {
                                     if (reponse.code == 1) {
-                                        document.getElementById('sendSRFromAGRTable-'+apiKeyRE).remove();
+                                        document.getElementById('sendSRFromAGRTable-'+srKey).remove();
                                     } else {
                                         addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
-                                }
-                            });
+                                })
+                                .catch(function(error) {
+                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                                });
                         });
                     } else {
                         console.log("[EasyPTRE] [SPY-TABLE] Error. Cant find data element: m" + messageID);
@@ -531,12 +530,9 @@ function addPTREStuffsToMessagesPage() {
                         spanBtnPTRE.id = 'PTREspan';
                         current_message.getElementsByClassName("msg_actions")[0].getElementsByTagName("message-footer-actions")[0].appendChild(spanBtnPTRE);
                         document.getElementById('sendRE-' + apiKeyRE).addEventListener("click", function (event) {
-                            var urlPTRESpy = urlPTREImportSR + '&team_key=' + TKey + '&sr_id=' + apiKeyRE;
-                            $.ajax({
-                                dataType: "json",
-                                url: urlPTRESpy,
-                                success: function(reponse) {
-                                    console.log('[EasyPTRE] [FROM PTRE] ' + reponse);
+                            ptreRequest(urlPTREImportSR, {method: 'GET', params: {team_key: TKey, sr_id: apiKeyRE}})
+                                .then(function(reponse) {
+                                    consoleDebug('[PUSH] [FROM PTRE] ' + reponse.message_verbose);
                                     if (reponse.code == 1) {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREOK;
                                     } else {
@@ -544,8 +540,11 @@ function addPTREStuffsToMessagesPage() {
                                         addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
                                     displayPTREPopUpMessage(reponse.message_verbose);
-                                }
-                            });
+                                })
+                                .catch(function(error) {
+                                    document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
+                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                                });
                         });
                     } else {
                         var planet_acti;
@@ -609,23 +608,19 @@ function addPTREStuffsToMessagesPage() {
                 tabActiPos.forEach(function(jsonPos) {
                     jsonSystemObj[jsonPos.coords+'-'+jsonPos.messageID] = jsonPos;
                 });
-                const jsonSystem = JSON.stringify(jsonSystemObj);
 
                 // Sent to PTRE
-                $.ajax({
-                    url : urlPTREPushActivity,
-                    type : 'POST',
-                    data: jsonSystem,
-                    cache: false,
-                    success : function(reponse){
-                        var reponseDecode = JSON.parse(reponse);
+                ptreRequest(urlPTREPushActivity, {body: jsonSystemObj})
+                    .then(function(reponseDecode) {
                         displayPTREPopUpMessage(reponseDecode.message);
                         if (reponseDecode.code != 1) {
                             displayPTREPopUpMessage(reponseDecode.message);
                             addToLogs('[C-SPY] ' + reponseDecode.message);
                         }
-                    }
-                });
+                    })
+                    .catch(function(error) {
+                        displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                    });
                 console.log('[EasyPTRE] [PUSH] Pushing counter spy messages');
             }
         }
@@ -790,13 +785,8 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                 document.getElementById('btnDNP').addEventListener("click", function (event) {
                     consoleDebug("[DNP] Adding " + playerId + " to DNP list");
                     // Push data to PTRE
-                    $.ajax({
-                        url : urlPTREIngameAction + '&team_key=' + GM_getValue(ptreTeamKey, ''),
-                        type : 'POST',
-                        data: JSON.stringify({"0":{type: "dnp", id: playerId, val: 0, name: playerName}}),
-                        cache: false,
-                        success : function(reponse){
-                            var reponseDecode = JSON.parse(reponse);
+                    ptreRequest(urlPTREIngameAction, {params: {team_key: GM_getValue(ptreTeamKey, '')}, body: {"0": {type: "dnp", id: playerId, val: 0, name: playerName}}})
+                        .then(function(reponseDecode) {
                             displayPTREPopUpMessage(reponseDecode.message);
                             if (reponseDecode.updated > 0) {
                                 // Update button color
@@ -812,8 +802,10 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                             } else {
                                 addToLogs('[DNP] ' + reponseDecode.message);
                             }
-                        }
-                    });
+                        })
+                        .catch(function(error) {
+                            displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                        });
                 });
             }
             // Note button

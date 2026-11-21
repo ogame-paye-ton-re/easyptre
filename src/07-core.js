@@ -75,10 +75,8 @@ function waitForNextGalaxyChangeTrigger() {
     (This function is NOT called when the galaxy page is displayed, only when the galaxy TABLE is)
 */
 function improveGalaxyTable() {
-    var systemElem = $("input#system_input")[0];
-    var galaxyElem = $("input#galaxy_input")[0];
-    var galaxy = galaxyElem.value;
-    var system = systemElem.value;
+    var galaxy = document.getElementById('galaxy_input').value;
+    var system = document.getElementById('system_input').value;
     var newSystemToStore = {};
     var additionnalSSInfos = {};
     var activitiesInfos = {};
@@ -385,15 +383,13 @@ function checkForPTREUpdate() {
         const currentTime = getIGCurrentTS();
         if (currentTime > GM_getValue(ptreLastUpdateCheck, 0) + 60) {// Safety to avoid spamming
             consoleDebug("[LIVE] Checking for Updates...");
-            $.ajax({
-                url : urlcheckForPTREUpdate + '&team_key=' + TKey +
-                '&current_ts=' + GM_getValue(ptreCurrentBackendUpdateTS, 0) +
-                '&cooldown=' + GM_getValue(ptreCheckForUpdateCooldown, 0) +
-                '&galaxy_api_update_timestamp=' + GM_getValue(ptreGalaxyAPIUpdateIGTS, 0),
-                type : 'POST',
-                cache: false,
-                success : function(reponse){
-                    var reponseDecode = JSON.parse(reponse);
+            ptreRequest(urlcheckForPTREUpdate, {params: {
+                team_key: TKey,
+                current_ts: GM_getValue(ptreCurrentBackendUpdateTS, 0),
+                cooldown: GM_getValue(ptreCheckForUpdateCooldown, 0),
+                galaxy_api_update_timestamp: GM_getValue(ptreGalaxyAPIUpdateIGTS, 0)
+            }})
+                .then(function(reponseDecode) {
                     if (reponseDecode.code == 1) {
                         // Update config (we dont change our current TS)
                         updateLiveCheckConfig(reponseDecode.check_for_update_cooldown, -1);
@@ -407,8 +403,10 @@ function checkForPTREUpdate() {
                             consoleDebug("[LIVE] NO Update needed");
                         }
                     }
-                }
-            });
+                })
+                .catch(function() {
+                    // Already logged by ptreRequest, next check will retry
+                });
             GM_setValue(ptreLastUpdateCheck, currentTime);
         }
     }
