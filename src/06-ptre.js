@@ -389,20 +389,17 @@ function getGEEInfosFromGala() {
         document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
         return -1;
     }
-    $.ajax({
-        url : urlPTREGetGEEInfos + '&team_key=' + teamKey + '&galaxy=' + galaxy + '&system=' + system + '&position=' + position,
-        type : 'POST',
-        data: null,
-        cache: false,
-        success : function(reponse){
-            var reponseDecode = JSON.parse(reponse);
+    ptreRequest(urlPTREGetGEEInfos, {params: {team_key: teamKey, galaxy: galaxy, system: system, position: position}})
+        .then(function(reponseDecode) {
             var message = atob(reponseDecode.message);
             if (reponseDecode.code != 1) {
                 addToLogs('[GEE] ' + reponseDecode.message_debug);
             }
-            document.getElementById('ptreMainContent').innerHTML = message;
-        }
-    });
+            updateHtmlById('ptreMainContent', message);
+        })
+        .catch(function(error) {
+            updateHtmlById('ptreMainContent', getPTRERequestErrorLabel(error));
+        });
 }
 
 // This function fetchs last multi-player Fight Events for the current universe (proxied via PTRE to XPD)
