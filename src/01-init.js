@@ -36,7 +36,6 @@ const ptreMissingTKMessage = "NO PTRE TEAM KEY: Add a Team Key via EasyPTRE sett
 
 // Variables
 var ogameVersion = "";
-var isOGameV12 = false;
 var server = -1;
 var country = "";
 var universe = -1;
@@ -68,7 +67,6 @@ if (modeEasyPTRE == "ingame") {
     ptrePageLoadClientMiliTS = Date.now();
     ptrePageLoadUnixTS = Number(document.getElementsByName('ogame-timestamp')[0].content); // Unix Timestamp
     ogameVersion = document.getElementsByName('ogame-version')[0].content;
-    isOGameV12 = /^12\./.test(ogameVersion);
     if (unsafeWindow.timeZoneDiffSeconds !== undefined) {
         ptreTimezoneDiffSec = Number(unsafeWindow.timeZoneDiffSeconds);
     }
