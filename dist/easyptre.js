@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 21 nov. 2026 18:46:13 CET
+// Build date: dim. 22 nov. 2026 00:12:39 CET
 // ****************************************
 
 // ****************************************
@@ -54,6 +54,7 @@ const ptreLogsRetentionDuration = 15*24*60*60;
 const ptreLogsMaxEntries = 1000; // All universes
 const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
+const ptreInactiveUniverseFullPurgeDays = 365; // Other universes: all keys (except TK) are deleted after this inactivity
 const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos
 const ptreGalaxyFlushDelayMiliSec = 2*1000; // Galaxy storage is written after this idle delay
 const ptreHttpTimeoutMiliSec = 15*1000;
@@ -134,7 +135,11 @@ const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Un
 const ptreLogsList = "ptre-Logs";// Unix TS
 
 // GM keys (specific to each universes)
-const ptreLastGarbageCollection = ptrePerUniKeysPrefix + "LastGarbageCollection";// Unix TS
+// Suffixes also used to build keys of OTHER universes (GC cleanup)
+const ptreLastGarbageCollectionKeySuffix = "LastGarbageCollection";
+const ptreInactivitySinceKeySuffix = "InactivitySince";
+const ptreLastGarbageCollection = ptrePerUniKeysPrefix + ptreLastGarbageCollectionKeySuffix;// Unix TS, only written by the universe own GC
+const ptreInactivitySince = ptrePerUniKeysPrefix + ptreInactivitySinceKeySuffix;// Unix TS, written by another universe GC when activity is unknown
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
 const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
@@ -2807,14 +2812,15 @@ function displayTamperMonkeyKeys() {
 
     var content = '<div class="ptreCategoryTitle">Garbage Collection</div>Last run: ' + getUnixTSLabel(GM_getValue(ptreLastGarbageCollection, 0)) + ' (every ' + (ptreGarbageCollectionTimeout/3600) + 'h)<br><br>';
     content += '<div class="ptreCategoryTitle">Tampermonkey Keys per Universe</div>';
-    content += 'All stored keys grouped by universe. The Team Key (TK) is preserved when purging.<br><br>';
+    content += 'All stored keys grouped by universe. The Team Key (TK) is preserved when purging.<br>';
+    content += 'Other universes are automatically cleaned by Garbage Collection: galaxy data after ' + ptreGalaxyStorageRetention + ' days of inactivity, every key (except TK) after ' + ptreInactiveUniverseFullPurgeDays + ' days.<br><br>';
 
     const uniKeys = Object.keys(uniMap).sort();
     if (uniKeys.length === 0) {
         content += '<span class="ptreWarning">No per-universe keys found.</span>';
     } else {
         content += '<table width="100%">';
-        content += '<tr><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Keys</td><td class="td_cell_radius_0" align="center">Action</td></tr>';
+        content += '<tr><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Last activity<br><span class="ptreSmall">(last GC)</span></td><td class="td_cell_radius_0" align="center">Keys</td><td class="td_cell_radius_0" align="center">Action</td></tr>';
         uniKeys.forEach(function(uniKey, index) {
             const entry = uniMap[uniKey];
             const i = (index + 1) % 2;
@@ -2825,6 +2831,15 @@ function displayTamperMonkeyKeys() {
                 + (isCurrent ? ' <span class="ptreError">(current)</span>' : '');
             content += '<tr>';
             content += '<td class="td_cell_radius_' + i + '">' + label + '</td>';
+            const lastGC = Number(GM_getValue('ptre-' + uniKey + '-' + ptreLastGarbageCollectionKeySuffix, 0));
+            const inactivitySince = Number(GM_getValue('ptre-' + uniKey + '-' + ptreInactivitySinceKeySuffix, 0));
+            var activityLabel = 'unknown';
+            if (lastGC > 0) {
+                activityLabel = getUnixTSLabel(lastGC);
+            } else if (inactivitySince > 0) {
+                activityLabel = 'unknown<br><span class="ptreSmall">(tracked since ' + getUnixTSLabel(inactivitySince) + ')</span>';
+            }
+            content += '<td class="td_cell_radius_' + i + '" align="center">' + activityLabel + '</td>';
             content += '<td class="td_cell_radius_' + i + '" align="center">' + entry.keys.length + '</td>';
             content += '<td class="td_cell_radius_' + i + '" align="center"><div id="purgeUniKeys_' + entry.country + '_' + entry.universe + '" class="button btn_blue">PURGE</div></td>';
             content += '</tr>';
@@ -4405,20 +4420,18 @@ function cleanCurrentUniverseLogs() {
 }
 
 // Garbage collection function
-// Cleans logs
-// Check migrated timers
-// Delete old positions
+// Runs at most once a day per played universe (see ptreGarbageCollectionTimeout)
 // In order to avoid storage being too large for nothing
-// Will make more requests to PTRE when going to newly empty systems, but it's fine
 function runGarbageCollection() {
     console.log("[EasyPTRE] [GC] Running Garbage Collector...");
     // GC reads galaxy storage: write pending changes first
     flushGalaxyStorage();
     const currentTime = getIGCurrentTS();
     const currentUnixTS = getCurrentUnixTS();
-    const days = ptreGalaxyStorageRetention;
 
-    // Clean logs
+    // ----------------------------------------
+    // Logs (all universes): remove logs older than retention
+    // ----------------------------------------
     var logsJSON = GM_getValue(ptreLogsList, '');
     if (logsJSON != '') {
         var minTs = currentUnixTS - ptreLogsRetentionDuration;
@@ -4428,8 +4441,10 @@ function runGarbageCollection() {
         logsJSON = JSON.stringify(logsList);
         GM_setValue(ptreLogsList, logsJSON);
     }
-    // End: Clean logs
 
+    // ----------------------------------------
+    // Timestamps (current universe): fix values set in the future
+    // ----------------------------------------
     // Check ptreLastGlobalSync IG TS
     const lastGlobalSyncTemp = GM_getValue(ptreLastGlobalSync, 0);
     if (lastGlobalSyncTemp != 0) {
@@ -4447,9 +4462,12 @@ function runGarbageCollection() {
         }
     }
 
-    // Clean old positions in galaxy storage
+    // ----------------------------------------
+    // Galaxy storage (current universe): delete positions older than retention
+    // Will make more requests to PTRE when going to newly empty systems, but it's fine
+    // ----------------------------------------
     if (GM_getValue(ptreGalaxyStorageVersion, 2) == 2) {
-        const limitTS = currentTime - days*24*60*60;
+        const limitTS = currentTime - ptreGalaxyStorageRetention*24*60*60;
         var removedCount = 0;
         for(var gala = 1; gala <= 15 ; gala++) {
             const galaxyData = GM_getValue(ptreGalaxyData+gala, '');
@@ -4475,6 +4493,57 @@ function runGarbageCollection() {
             addToLogs("[GC] Cleaned " + removedCount + " old positions");
         }
     }
+
+    // ----------------------------------------
+    // Other universes: EasyPTRE never runs on a universe that is not played anymore, so it is cleaned from here
+    // Reference date = its LastGarbageCollection (real activity), or else its InactivitySince (activity unknown)
+    // - no reference date: InactivitySince is created now, nothing is deleted
+    // - inactive >= ptreGalaxyStorageRetention days: galaxy data is deleted (all positions are expired anyway)
+    // - inactive >= ptreInactiveUniverseFullPurgeDays days: every key is deleted, except TK and both dates
+    // Only Unix TS are compared here (IG TS of another universe are not usable)
+    // ----------------------------------------
+    const universes = {};
+    GM_listValues().forEach(function(key) {
+        const match = key.match(/^ptre-([a-z]+)-(\d+)-(.+)$/);
+        if (!match || (match[1] === country && match[2] === String(universe))) {
+            return;
+        }
+        const uniKey = match[1] + '-' + match[2];
+        if (!universes[uniKey]) {
+            universes[uniKey] = {prefix: 'ptre-' + uniKey + '-', keys: []};
+        }
+        universes[uniKey].keys.push(key);
+    });
+    Object.keys(universes).forEach(function(uniKey) {
+        const uni = universes[uniKey];
+        const lastGCKey = uni.prefix + ptreLastGarbageCollectionKeySuffix;
+        const inactivitySinceKey = uni.prefix + ptreInactivitySinceKeySuffix;
+        const referenceTS = Number(GM_getValue(lastGCKey, 0)) || Number(GM_getValue(inactivitySinceKey, 0));
+        if (referenceTS <= 0) {
+            GM_setValue(inactivitySinceKey, currentUnixTS);
+            consoleDebug('[GC] ' + uniKey + ': activity unknown, tracked from now');
+            return;
+        }
+        const inactiveDays = Math.floor((currentUnixTS - referenceTS) / (24*60*60));
+        let keysToDelete = [];
+        let label = '';
+        if (inactiveDays >= ptreInactiveUniverseFullPurgeDays) {
+            keysToDelete = uni.keys.filter(k => k !== uni.prefix + 'TK' && k !== lastGCKey && k !== inactivitySinceKey);
+            label = 'keys (all except TK)';
+        } else if (inactiveDays >= ptreGalaxyStorageRetention) {
+            keysToDelete = uni.keys.filter(k => k.startsWith(uni.prefix + 'GalaxyDataG'));
+            label = 'galaxy keys';
+        }
+        if (keysToDelete.length > 0) {
+            keysToDelete.forEach(k => GM_deleteValue(k));
+            addToLogs('[GC] ' + uniKey + ' inactive for ' + inactiveDays + ' days: removed ' + keysToDelete.length + ' ' + label);
+        }
+    });
+
+    // ----------------------------------------
+    // Current universe activity: real activity date is now known
+    // ----------------------------------------
+    GM_deleteValue(ptreInactivitySince);
     GM_setValue(ptreLastGarbageCollection, currentUnixTS);
 }
 

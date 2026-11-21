@@ -932,14 +932,15 @@ function displayTamperMonkeyKeys() {
 
     var content = '<div class="ptreCategoryTitle">Garbage Collection</div>Last run: ' + getUnixTSLabel(GM_getValue(ptreLastGarbageCollection, 0)) + ' (every ' + (ptreGarbageCollectionTimeout/3600) + 'h)<br><br>';
     content += '<div class="ptreCategoryTitle">Tampermonkey Keys per Universe</div>';
-    content += 'All stored keys grouped by universe. The Team Key (TK) is preserved when purging.<br><br>';
+    content += 'All stored keys grouped by universe. The Team Key (TK) is preserved when purging.<br>';
+    content += 'Other universes are automatically cleaned by Garbage Collection: galaxy data after ' + ptreGalaxyStorageRetention + ' days of inactivity, every key (except TK) after ' + ptreInactiveUniverseFullPurgeDays + ' days.<br><br>';
 
     const uniKeys = Object.keys(uniMap).sort();
     if (uniKeys.length === 0) {
         content += '<span class="ptreWarning">No per-universe keys found.</span>';
     } else {
         content += '<table width="100%">';
-        content += '<tr><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Keys</td><td class="td_cell_radius_0" align="center">Action</td></tr>';
+        content += '<tr><td class="td_cell_radius_0" align="center">Universe</td><td class="td_cell_radius_0" align="center">Last activity<br><span class="ptreSmall">(last GC)</span></td><td class="td_cell_radius_0" align="center">Keys</td><td class="td_cell_radius_0" align="center">Action</td></tr>';
         uniKeys.forEach(function(uniKey, index) {
             const entry = uniMap[uniKey];
             const i = (index + 1) % 2;
@@ -950,6 +951,15 @@ function displayTamperMonkeyKeys() {
                 + (isCurrent ? ' <span class="ptreError">(current)</span>' : '');
             content += '<tr>';
             content += '<td class="td_cell_radius_' + i + '">' + label + '</td>';
+            const lastGC = Number(GM_getValue('ptre-' + uniKey + '-' + ptreLastGarbageCollectionKeySuffix, 0));
+            const inactivitySince = Number(GM_getValue('ptre-' + uniKey + '-' + ptreInactivitySinceKeySuffix, 0));
+            var activityLabel = 'unknown';
+            if (lastGC > 0) {
+                activityLabel = getUnixTSLabel(lastGC);
+            } else if (inactivitySince > 0) {
+                activityLabel = 'unknown<br><span class="ptreSmall">(tracked since ' + getUnixTSLabel(inactivitySince) + ')</span>';
+            }
+            content += '<td class="td_cell_radius_' + i + '" align="center">' + activityLabel + '</td>';
             content += '<td class="td_cell_radius_' + i + '" align="center">' + entry.keys.length + '</td>';
             content += '<td class="td_cell_radius_' + i + '" align="center"><div id="purgeUniKeys_' + entry.country + '_' + entry.universe + '" class="button btn_blue">PURGE</div></td>';
             content += '</tr>';

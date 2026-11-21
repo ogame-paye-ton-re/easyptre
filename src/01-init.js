@@ -23,6 +23,7 @@ const ptreLogsRetentionDuration = 15*24*60*60;
 const ptreLogsMaxEntries = 1000; // All universes
 const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
+const ptreInactiveUniverseFullPurgeDays = 365; // Other universes: all keys (except TK) are deleted after this inactivity
 const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos
 const ptreGalaxyFlushDelayMiliSec = 2*1000; // Galaxy storage is written after this idle delay
 const ptreHttpTimeoutMiliSec = 15*1000;
@@ -103,7 +104,11 @@ const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Un
 const ptreLogsList = "ptre-Logs";// Unix TS
 
 // GM keys (specific to each universes)
-const ptreLastGarbageCollection = ptrePerUniKeysPrefix + "LastGarbageCollection";// Unix TS
+// Suffixes also used to build keys of OTHER universes (GC cleanup)
+const ptreLastGarbageCollectionKeySuffix = "LastGarbageCollection";
+const ptreInactivitySinceKeySuffix = "InactivitySince";
+const ptreLastGarbageCollection = ptrePerUniKeysPrefix + ptreLastGarbageCollectionKeySuffix;// Unix TS, only written by the universe own GC
+const ptreInactivitySince = ptrePerUniKeysPrefix + ptreInactivitySinceKeySuffix;// Unix TS, written by another universe GC when activity is unknown
 const ptreTeamKey = ptrePerUniKeysPrefix + "TK";
 const ptreTeamName = ptrePerUniKeysPrefix + "TeamName";
 const ptreImproveAGRSpyTable = ptrePerUniKeysPrefix + "ImproveAGRSpyTable";
