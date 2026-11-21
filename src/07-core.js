@@ -451,7 +451,8 @@ function runAutoCheckForPTREUpdate() {
     // If Auto-Check is enabled
     if (cooldown > 0) {
         // Should we check?
-        if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
+        // No check while tab is hidden (next check within 10 sec when tab is displayed again)
+        if (!document.hidden && currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
             consoleDebug("[LIVE] Need to Check For Updates");
             checkForPTREUpdate();
         }

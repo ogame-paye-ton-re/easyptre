@@ -12,6 +12,10 @@ function addToLogs(message) {
     }
     var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
     logsList.push(newLog);
+    // Keep only the most recent logs
+    if (logsList.length > ptreLogsMaxEntries) {
+        logsList.splice(0, logsList.length - ptreLogsMaxEntries);
+    }
 
     logsJSON = JSON.stringify(logsList);
     GM_setValue(ptreLogsList, logsJSON);

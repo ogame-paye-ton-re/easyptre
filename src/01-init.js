@@ -20,6 +20,7 @@ const ptreDataSharingDelay = 200;
 const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const ptreLogsRetentionDuration = 15*24*60*60;
+const ptreLogsMaxEntries = 1000; // All universes
 const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos

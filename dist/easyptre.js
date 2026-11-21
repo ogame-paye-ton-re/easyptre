@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: sam. 21 nov. 2026 18:46:12 CET
+// Build date: sam. 21 nov. 2026 18:46:13 CET
 // ****************************************
 
 // ****************************************
@@ -51,6 +51,7 @@ const ptreDataSharingDelay = 200;
 const ptreImprovePageDelay = 200;
 const ptreTargetListMaxSize = 300;
 const ptreLogsRetentionDuration = 15*24*60*60;
+const ptreLogsMaxEntries = 1000; // All universes
 const ptreGlobalPTRESyncTimeout = 8*60*60;
 const ptreGarbageCollectionTimeout = 24*60*60;
 const ptreGalaxyStorageRetention = 7; // nb of days we keep planets infos
@@ -3989,7 +3990,8 @@ function runAutoCheckForPTREUpdate() {
     // If Auto-Check is enabled
     if (cooldown > 0) {
         // Should we check?
-        if (currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
+        // No check while tab is hidden (next check within 10 sec when tab is displayed again)
+        if (!document.hidden && currentTime > (Math.floor(Number(GM_getValue(ptreLastUpdateCheck, 0)) + cooldown))) {
             consoleDebug("[LIVE] Need to Check For Updates");
             checkForPTREUpdate();
         }
@@ -4381,6 +4383,10 @@ function addToLogs(message) {
     }
     var newLog = {ts: currentUnixTS, uni: country + "-" + universe, log: message};
     logsList.push(newLog);
+    // Keep only the most recent logs
+    if (logsList.length > ptreLogsMaxEntries) {
+        logsList.splice(0, logsList.length - ptreLogsMaxEntries);
+    }
 
     logsJSON = JSON.stringify(logsList);
     GM_setValue(ptreLogsList, logsJSON);
