@@ -265,7 +265,7 @@ function improvePageFleet() {
     consoleDebug("[FLEET] Techs JSON length: " + techJSON.length + " (sample: " + techJSON.slice(0, 120) + ")");
     GM_setValue(ptreTechnosJSON, techJSON);
     var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
-    displayPTREPopUpMessage(tempMessage);
+    displayPTREPopUpMessage(tempMessage, 'success');
     // Update last check TS (IG for cooldown, Unix companion for cross-context display on PTRE website)
     GM_setValue(ptreLastTechnosRefresh, currentTime);
     GM_setValue(ptreLastTechnosRefreshUnix, getCurrentUnixTS());
@@ -301,7 +301,7 @@ function improvePageBuddies() {
     const dataJSON = JSON.stringify(playerIds);
     GM_setValue(ptreBuddiesList, dataJSON);
     GM_setValue(ptreBuddiesListLastRefresh, currentTime);
-    displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
+    displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)', 'success');
 }
 
 // Orion page: add a PTRE button next to each anomaly coords (scanner results and missions tabs)
@@ -496,10 +496,10 @@ function improveAGRSpyTable(mutationList, observer) {
                                     } else {
                                         addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
-                                    displayPTREPopUpMessage(reponse.message_verbose);
+                                    displayPTREPopUpMessage(reponse.message_verbose, reponse.code == 1 ? 'success' : 'error');
                                 })
                                 .catch(function(error) {
-                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                                 });
                         });
                     } else {
@@ -508,7 +508,7 @@ function improveAGRSpyTable(mutationList, observer) {
                 }
             }
         } else {
-            displayPTREPopUpMessage(ptreMissingTKMessage);
+            displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
         }
     }
 }
@@ -548,11 +548,11 @@ function addPTREStuffsToMessagesPage() {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
                                         addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
-                                    displayPTREPopUpMessage(reponse.message_verbose);
+                                    displayPTREPopUpMessage(reponse.message_verbose, reponse.code == 1 ? 'success' : 'error');
                                 })
                                 .catch(function(error) {
                                     document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
-                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                                 });
                         });
                     } else {
@@ -621,14 +621,13 @@ function addPTREStuffsToMessagesPage() {
                         // PTRE answered: save new max TS to not re-send same counter spy messages
                         // (on network failure, it is not saved so messages will be pushed again next time)
                         GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
-                        displayPTREPopUpMessage(reponseDecode.message);
+                        displayPTREPopUpMessage(reponseDecode.message, reponseDecode.code == 1 ? 'success' : 'error');
                         if (reponseDecode.code != 1) {
-                            displayPTREPopUpMessage(reponseDecode.message);
                             addToLogs('[C-SPY] ' + reponseDecode.message);
                         }
                     })
                     .catch(function(error) {
-                        displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                        displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                     });
                 console.log('[EasyPTRE] [PUSH] Pushing counter spy messages');
             }
@@ -796,7 +795,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                     // Push data to PTRE
                     ptreRequest(urlPTREIngameAction, {params: {team_key: GM_getValue(ptreTeamKey, '')}, body: {"0": {type: "dnp", id: playerId, val: 0, name: playerName}}})
                         .then(function(reponseDecode) {
-                            displayPTREPopUpMessage(reponseDecode.message);
+                            displayPTREPopUpMessage(reponseDecode.message, reponseDecode.updated > 0 ? 'success' : 'warning');
                             if (reponseDecode.updated > 0) {
                                 // Update button color
                                 button.style.border = ptreBorderStyleDnpList;
@@ -813,7 +812,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                             }
                         })
                         .catch(function(error) {
-                            displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                            displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                         });
                 });
             }

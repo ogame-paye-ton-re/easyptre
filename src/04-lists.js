@@ -83,7 +83,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
 
     if (needToSave) {
         GM_setValue(ptreDataToSync, JSON.stringify(dataList));
-        displayPTREPopUpMessage("Phalanx updated");
+        displayPTREPopUpMessage("Phalanx updated", 'success');
         consoleDebug("[PHALANX] 1 phalanx updated");
         if (syncToPTRE === true) {
             setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
@@ -348,7 +348,7 @@ function updateLocalAGRList() {
         });
     }
     if (count > 0) {
-        displayPTREPopUpMessage(count + ' targets added to AGR list');
+        displayPTREPopUpMessage(count + ' targets added to AGR list', 'success');
         console.log("[EasyPTRE] [LIST] [AGR] " + count + " targets added to AGR list");
     }
 }

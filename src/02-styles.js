@@ -398,15 +398,74 @@ ul.ptreList {
 #ptreMainFooterMsg:has(#ptreUpdateVersionMessage:empty) {
     display: none;
 }
-#boxPTREMessage {
+#ptreToasts {
     position: fixed;
     bottom: 30px;
     right: 10px;
-    z-index: 10000;
-    padding:10px;
-    border: solid black 2px;
+    z-index: 11001;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    pointer-events: none;
+}
+.ptreToast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 220px;
+    max-width: 380px;
+    padding: 8px 10px;
+    font-size: 9pt;
     background-color: var(--ptre-bg);
+    border: 1px solid var(--ptre-border-dark);
+    border-left: 4px solid var(--ptre-title);
     border-radius: var(--ptre-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    animation: ptreToastIn 0.2s ease-out;
+    transition: opacity 0.2s, transform 0.2s;
+}
+.ptreToast.ptreToastOut {
+    opacity: 0;
+    transform: translateX(20px);
+}
+@keyframes ptreToastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+.ptreToastIcon {
+    font-weight: bold;
+    color: var(--ptre-title);
+}
+.ptreToastBody {
+    flex: 1;
+    word-break: break-word;
+}
+.ptreToastClose {
+    cursor: pointer;
+    opacity: 0.6;
+}
+.ptreToastClose:hover {
+    opacity: 1;
+}
+.ptreToast-success {
+    border-left-color: var(--ptre-success);
+}
+.ptreToast-success .ptreToastIcon {
+    color: var(--ptre-success);
+}
+.ptreToast-warning {
+    border-left-color: var(--ptre-warning);
+}
+.ptreToast-warning .ptreToastIcon {
+    color: var(--ptre-warning);
+}
+.ptreToast-error {
+    border-left-color: var(--ptre-error);
+}
+.ptreToast-error .ptreToastIcon {
+    color: var(--ptre-error);
 }
 #btnSaveOptPTRE {
     cursor:pointer;

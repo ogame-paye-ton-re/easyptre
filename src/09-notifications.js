@@ -2,31 +2,52 @@
 // NOTIFICATIONS FUNCTIONS
 // ****************************************
 
-// Displays PTRE responses messages
-// Responses from server
-// Displayed on the rigth-bottom corner, each message is removed after ptreMessageDisplayTime
-function displayPTREPopUpMessage(message) {
-    const bottom = document.getElementById('bottom');
-    if (!bottom) {
-        return;
+// Displays a notification (toast) on the bottom-right corner
+// type: 'info' (default) | 'success' | 'warning' | 'error'
+// Each toast is removed after a delay (paused while hovered), or with its close button
+function displayPTREPopUpMessage(message, type = 'info') {
+    const icons = {info: '&#8505;', success: '&#10004;', warning: '&#9888;', error: '&#10006;'};
+    if (!icons[type]) {
+        type = 'info';
     }
-    let box = document.getElementById('boxPTREMessage');
-    if (!box) {
-        box = document.createElement('div');
-        box.id = 'boxPTREMessage';
-        box.innerHTML = '<span class="ptreNotificationTitle">PTRE:</span>';
-        bottom.appendChild(box);
+    let container = document.getElementById('ptreToasts');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'ptreToasts';
+        document.body.appendChild(container);
     }
-    const line = document.createElement('div');
-    line.className = 'ptreNotificationLine';
-    line.innerHTML = message;
-    box.appendChild(line);
-    setTimeout(function() {
-        line.remove();
-        if (box.getElementsByClassName('ptreNotificationLine').length === 0) {
-            box.remove();
-        }
-    }, ptreMessageDisplayTime);
+    // Too many toasts: remove the oldest ones
+    while (container.children.length >= ptreMaxToasts) {
+        container.firstElementChild.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'ptreToast ptreToast-' + type;
+    toast.innerHTML = '<span class="ptreToastIcon">' + icons[type] + '</span>'
+        + '<div class="ptreToastBody"><span class="ptreNotificationTitle">PTRE: </span>' + message + '</div>'
+        + '<span class="ptreToastClose" title="Close">&#10005;</span>';
+    container.appendChild(toast);
+
+    let timer = null;
+    const removeToast = function() {
+        clearTimeout(timer);
+        toast.classList.add('ptreToastOut');
+        setTimeout(function() {
+            toast.remove();
+            if (container.children.length === 0) {
+                container.remove();
+            }
+        }, 200);
+    };
+    const startTimer = function() {
+        timer = setTimeout(removeToast, (type === 'error' || type === 'warning') ? ptreErrorMessageDisplayTime : ptreMessageDisplayTime);
+    };
+    toast.addEventListener('mouseenter', function() {
+        clearTimeout(timer);
+    });
+    toast.addEventListener('mouseleave', startTimer);
+    toast.querySelector('.ptreToastClose').addEventListener('click', removeToast);
+    startTimer();
 }
 
 // Display message under galaxy view

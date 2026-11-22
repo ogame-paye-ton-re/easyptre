@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 09:21:52 CET
+// Build date: dim. 22 nov. 2026 09:28:04 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -46,6 +46,8 @@ if (/ptre.chez.gg/.test(location.href)) {
 
 // Settings
 const ptreMessageDisplayTime = 5*1000;
+const ptreErrorMessageDisplayTime = 8*1000; // Errors and warnings stay longer
+const ptreMaxToasts = 5;
 const ptreMenuImageDisplayTime = 3*1000;
 const ptrePushDelayMiliSec = 500;
 const ptreVersionCheckTimeout = 6*60*60;
@@ -768,15 +770,74 @@ ul.ptreList {
 #ptreMainFooterMsg:has(#ptreUpdateVersionMessage:empty) {
     display: none;
 }
-#boxPTREMessage {
+#ptreToasts {
     position: fixed;
     bottom: 30px;
     right: 10px;
-    z-index: 10000;
-    padding:10px;
-    border: solid black 2px;
+    z-index: 11001;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    pointer-events: none;
+}
+.ptreToast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 220px;
+    max-width: 380px;
+    padding: 8px 10px;
+    font-size: 9pt;
     background-color: var(--ptre-bg);
+    border: 1px solid var(--ptre-border-dark);
+    border-left: 4px solid var(--ptre-title);
     border-radius: var(--ptre-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    animation: ptreToastIn 0.2s ease-out;
+    transition: opacity 0.2s, transform 0.2s;
+}
+.ptreToast.ptreToastOut {
+    opacity: 0;
+    transform: translateX(20px);
+}
+@keyframes ptreToastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+.ptreToastIcon {
+    font-weight: bold;
+    color: var(--ptre-title);
+}
+.ptreToastBody {
+    flex: 1;
+    word-break: break-word;
+}
+.ptreToastClose {
+    cursor: pointer;
+    opacity: 0.6;
+}
+.ptreToastClose:hover {
+    opacity: 1;
+}
+.ptreToast-success {
+    border-left-color: var(--ptre-success);
+}
+.ptreToast-success .ptreToastIcon {
+    color: var(--ptre-success);
+}
+.ptreToast-warning {
+    border-left-color: var(--ptre-warning);
+}
+.ptreToast-warning .ptreToastIcon {
+    color: var(--ptre-warning);
+}
+.ptreToast-error {
+    border-left-color: var(--ptre-error);
+}
+.ptreToast-error .ptreToastIcon {
+    color: var(--ptre-error);
 }
 #btnSaveOptPTRE {
     cursor:pointer;
@@ -1134,7 +1195,7 @@ function improvePageFleet() {
     consoleDebug("[FLEET] Techs JSON length: " + techJSON.length + " (sample: " + techJSON.slice(0, 120) + ")");
     GM_setValue(ptreTechnosJSON, techJSON);
     var tempMessage = 'Saving Lifeforms researches: <a href="https://ptre.chez.gg/?page=lifeforms_researchs" target="_blank">Display on PTRE</a>';
-    displayPTREPopUpMessage(tempMessage);
+    displayPTREPopUpMessage(tempMessage, 'success');
     // Update last check TS (IG for cooldown, Unix companion for cross-context display on PTRE website)
     GM_setValue(ptreLastTechnosRefresh, currentTime);
     GM_setValue(ptreLastTechnosRefreshUnix, getCurrentUnixTS());
@@ -1170,7 +1231,7 @@ function improvePageBuddies() {
     const dataJSON = JSON.stringify(playerIds);
     GM_setValue(ptreBuddiesList, dataJSON);
     GM_setValue(ptreBuddiesListLastRefresh, currentTime);
-    displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)');
+    displayPTREPopUpMessage('Saving buddies list (for Friends & Phalanx)', 'success');
 }
 
 // Orion page: add a PTRE button next to each anomaly coords (scanner results and missions tabs)
@@ -1365,10 +1426,10 @@ function improveAGRSpyTable(mutationList, observer) {
                                     } else {
                                         addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
-                                    displayPTREPopUpMessage(reponse.message_verbose);
+                                    displayPTREPopUpMessage(reponse.message_verbose, reponse.code == 1 ? 'success' : 'error');
                                 })
                                 .catch(function(error) {
-                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                                 });
                         });
                     } else {
@@ -1377,7 +1438,7 @@ function improveAGRSpyTable(mutationList, observer) {
                 }
             }
         } else {
-            displayPTREPopUpMessage(ptreMissingTKMessage);
+            displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
         }
     }
 }
@@ -1417,11 +1478,11 @@ function addPTREStuffsToMessagesPage() {
                                         document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
                                         addToLogs('[PUSH] ' + reponse.message_verbose);
                                     }
-                                    displayPTREPopUpMessage(reponse.message_verbose);
+                                    displayPTREPopUpMessage(reponse.message_verbose, reponse.code == 1 ? 'success' : 'error');
                                 })
                                 .catch(function(error) {
                                     document.getElementById('sendRE-'+apiKeyRE).src = imgPTREKO;
-                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                                    displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                                 });
                         });
                     } else {
@@ -1490,14 +1551,13 @@ function addPTREStuffsToMessagesPage() {
                         // PTRE answered: save new max TS to not re-send same counter spy messages
                         // (on network failure, it is not saved so messages will be pushed again next time)
                         GM_setValue(ptreMaxCounterSpyTsSeen, maxCounterSpyTsSeenNow);
-                        displayPTREPopUpMessage(reponseDecode.message);
+                        displayPTREPopUpMessage(reponseDecode.message, reponseDecode.code == 1 ? 'success' : 'error');
                         if (reponseDecode.code != 1) {
-                            displayPTREPopUpMessage(reponseDecode.message);
                             addToLogs('[C-SPY] ' + reponseDecode.message);
                         }
                     })
                     .catch(function(error) {
-                        displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                        displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                     });
                 console.log('[EasyPTRE] [PUSH] Pushing counter spy messages');
             }
@@ -1665,7 +1725,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                     // Push data to PTRE
                     ptreRequest(urlPTREIngameAction, {params: {team_key: GM_getValue(ptreTeamKey, '')}, body: {"0": {type: "dnp", id: playerId, val: 0, name: playerName}}})
                         .then(function(reponseDecode) {
-                            displayPTREPopUpMessage(reponseDecode.message);
+                            displayPTREPopUpMessage(reponseDecode.message, reponseDecode.updated > 0 ? 'success' : 'warning');
                             if (reponseDecode.updated > 0) {
                                 // Update button color
                                 button.style.border = ptreBorderStyleDnpList;
@@ -1682,7 +1742,7 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
                             }
                         })
                         .catch(function(error) {
-                            displayPTREPopUpMessage(getPTRERequestErrorLabel(error));
+                            displayPTREPopUpMessage(getPTRERequestErrorLabel(error), 'error');
                         });
                 });
             }
@@ -1793,7 +1853,7 @@ function refreshPhalanxStorage(moonIdNew, coordsNew, phalanxLevelNew, syncToPTRE
 
     if (needToSave) {
         GM_setValue(ptreDataToSync, JSON.stringify(dataList));
-        displayPTREPopUpMessage("Phalanx updated");
+        displayPTREPopUpMessage("Phalanx updated", 'success');
         consoleDebug("[PHALANX] 1 phalanx updated");
         if (syncToPTRE === true) {
             setTimeout(syncDataWithPTRE, ptreDataSharingDelay);
@@ -2058,7 +2118,7 @@ function updateLocalAGRList() {
         });
     }
     if (count > 0) {
-        displayPTREPopUpMessage(count + ' targets added to AGR list');
+        displayPTREPopUpMessage(count + ' targets added to AGR list', 'success');
         console.log("[EasyPTRE] [LIST] [AGR] " + count + " targets added to AGR list");
     }
 }
@@ -3152,7 +3212,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                 } else {
                     // Something went wrong
                     displayGalaxyMiniMessage(reponseDecode.message);
-                    displayPTREPopUpMessage(reponseDecode.message);
+                    displayPTREPopUpMessage(reponseDecode.message, 'error');
                     addToLogs('[GALA PUSH] ' + reponseDecode.message);
                 }
             })
@@ -3178,7 +3238,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
                 updateHtmlById('ptreGalaxyActivityCount', ptreGalaxyActivityCount);
             } else {
-                displayPTREPopUpMessage(reponseDecode.message);
+                displayPTREPopUpMessage(reponseDecode.message, 'error');
                 addToLogs('[ACTI PUSH] ' + reponseDecode.message);
             }
         })
@@ -3194,7 +3254,7 @@ function getPlayerInfos(playerID, pseudo) {
     const TKey = GM_getValue(ptreTeamKey, '');
     setupMainBox("Player " + pseudo, null);
     if (TKey == '') {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
+        displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
         updateHtmlById('ptreMainContent', ptreMessageBlock('error', ptreMissingTKMessage));
         return;
     }
@@ -3332,7 +3392,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                 updateHtmlById("ptreGalaxyPlayerRanksPopUp", getPTRERequestErrorLabel(error));
             });
     } else {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
+        displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
     }
 }
 
@@ -3549,7 +3609,7 @@ function syncTargets(mode) {
     var nb_private = 0;
 
     if (ptreStoredTK == '') {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
+        displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
         return -1;
     }
 
@@ -4002,7 +4062,7 @@ function updateLastAvailableVersion(force = false) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
                             document.getElementById('ptreMenuName').classList.add('ptreError');
                         }
-                        displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
+                        displayPTREPopUpMessage("New EasyPTRE version available. Please update it.", 'warning');
                         consoleDebug('[OPENJS] Version ' + availableVersion + ' is available');
                     } else {
                         displayUpdateVersionMessage('<span class="ptreSuccess">EasyPTRE is up to date</span>');
@@ -4366,31 +4426,52 @@ function convertIGTSToUnixTS(igTS) {
 // NOTIFICATIONS FUNCTIONS
 // ****************************************
 
-// Displays PTRE responses messages
-// Responses from server
-// Displayed on the rigth-bottom corner, each message is removed after ptreMessageDisplayTime
-function displayPTREPopUpMessage(message) {
-    const bottom = document.getElementById('bottom');
-    if (!bottom) {
-        return;
+// Displays a notification (toast) on the bottom-right corner
+// type: 'info' (default) | 'success' | 'warning' | 'error'
+// Each toast is removed after a delay (paused while hovered), or with its close button
+function displayPTREPopUpMessage(message, type = 'info') {
+    const icons = {info: '&#8505;', success: '&#10004;', warning: '&#9888;', error: '&#10006;'};
+    if (!icons[type]) {
+        type = 'info';
     }
-    let box = document.getElementById('boxPTREMessage');
-    if (!box) {
-        box = document.createElement('div');
-        box.id = 'boxPTREMessage';
-        box.innerHTML = '<span class="ptreNotificationTitle">PTRE:</span>';
-        bottom.appendChild(box);
+    let container = document.getElementById('ptreToasts');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'ptreToasts';
+        document.body.appendChild(container);
     }
-    const line = document.createElement('div');
-    line.className = 'ptreNotificationLine';
-    line.innerHTML = message;
-    box.appendChild(line);
-    setTimeout(function() {
-        line.remove();
-        if (box.getElementsByClassName('ptreNotificationLine').length === 0) {
-            box.remove();
-        }
-    }, ptreMessageDisplayTime);
+    // Too many toasts: remove the oldest ones
+    while (container.children.length >= ptreMaxToasts) {
+        container.firstElementChild.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'ptreToast ptreToast-' + type;
+    toast.innerHTML = '<span class="ptreToastIcon">' + icons[type] + '</span>'
+        + '<div class="ptreToastBody"><span class="ptreNotificationTitle">PTRE: </span>' + message + '</div>'
+        + '<span class="ptreToastClose" title="Close">&#10005;</span>';
+    container.appendChild(toast);
+
+    let timer = null;
+    const removeToast = function() {
+        clearTimeout(timer);
+        toast.classList.add('ptreToastOut');
+        setTimeout(function() {
+            toast.remove();
+            if (container.children.length === 0) {
+                container.remove();
+            }
+        }, 200);
+    };
+    const startTimer = function() {
+        timer = setTimeout(removeToast, (type === 'error' || type === 'warning') ? ptreErrorMessageDisplayTime : ptreMessageDisplayTime);
+    };
+    toast.addEventListener('mouseenter', function() {
+        clearTimeout(timer);
+    });
+    toast.addEventListener('mouseleave', startTimer);
+    toast.querySelector('.ptreToastClose').addEventListener('click', removeToast);
+    startTimer();
 }
 
 // Display message under galaxy view

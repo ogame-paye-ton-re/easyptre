@@ -111,7 +111,7 @@ function processGalaxyUpdates(galaxy, system, newSystemInfos, additionnalSSInfos
                 } else {
                     // Something went wrong
                     displayGalaxyMiniMessage(reponseDecode.message);
-                    displayPTREPopUpMessage(reponseDecode.message);
+                    displayPTREPopUpMessage(reponseDecode.message, 'error');
                     addToLogs('[GALA PUSH] ' + reponseDecode.message);
                 }
             })
@@ -137,7 +137,7 @@ function processPlayerActivities(galaxy, system, activityTab) {
                 ptreGalaxyActivityCount = ptreGalaxyActivityCount + reponseDecode.activity_count;
                 updateHtmlById('ptreGalaxyActivityCount', ptreGalaxyActivityCount);
             } else {
-                displayPTREPopUpMessage(reponseDecode.message);
+                displayPTREPopUpMessage(reponseDecode.message, 'error');
                 addToLogs('[ACTI PUSH] ' + reponseDecode.message);
             }
         })
@@ -153,7 +153,7 @@ function getPlayerInfos(playerID, pseudo) {
     const TKey = GM_getValue(ptreTeamKey, '');
     setupMainBox("Player " + pseudo, null);
     if (TKey == '') {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
+        displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
         updateHtmlById('ptreMainContent', ptreMessageBlock('error', ptreMissingTKMessage));
         return;
     }
@@ -291,7 +291,7 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
                 updateHtmlById("ptreGalaxyPlayerRanksPopUp", getPTRERequestErrorLabel(error));
             });
     } else {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
+        displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
     }
 }
 
@@ -508,7 +508,7 @@ function syncTargets(mode) {
     var nb_private = 0;
 
     if (ptreStoredTK == '') {
-        displayPTREPopUpMessage(ptreMissingTKMessage);
+        displayPTREPopUpMessage(ptreMissingTKMessage, 'error');
         return -1;
     }
 

@@ -316,7 +316,7 @@ function updateLastAvailableVersion(force = false) {
                             document.getElementById('ptreMenuName').innerHTML = 'CLICK ME';
                             document.getElementById('ptreMenuName').classList.add('ptreError');
                         }
-                        displayPTREPopUpMessage("New EasyPTRE version available. Please update it.");
+                        displayPTREPopUpMessage("New EasyPTRE version available. Please update it.", 'warning');
                         consoleDebug('[OPENJS] Version ' + availableVersion + ' is available');
                     } else {
                         displayUpdateVersionMessage('<span class="ptreSuccess">EasyPTRE is up to date</span>');

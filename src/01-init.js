@@ -12,6 +12,8 @@ if (/ptre.chez.gg/.test(location.href)) {
 
 // Settings
 const ptreMessageDisplayTime = 5*1000;
+const ptreErrorMessageDisplayTime = 8*1000; // Errors and warnings stay longer
+const ptreMaxToasts = 5;
 const ptreMenuImageDisplayTime = 3*1000;
 const ptrePushDelayMiliSec = 500;
 const ptreVersionCheckTimeout = 6*60*60;
