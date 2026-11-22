@@ -172,11 +172,10 @@ function validatePurgeTamperMonkeyKeys(targetCountry, targetUniverse, keys) {
         return keys.filter(function(k) { return k !== tkKey; });
     };
 
-    var content = '<span id="purgeUniKeysSummary" class="ptreError"></span><br><br>';
+    var content = ptreMessageBlock('error', '<span id="purgeUniKeysSummary"></span>');
     content += '<label><input type="checkbox" id="purgeUniKeysWithTK"> Also delete the Team Key (TK): every key of this universe will be deleted</label><br><br>';
-    content += '<div id="confirmPurgeUniKeys" class="button btn_blue">PURGE, REALLY?</div>';
-    content += ' <div id="cancelPurgeUniKeys" class="button btn_blue">CANCEL</div>';
-    content += '<br><br>Keys to delete:<br><ul id="purgeUniKeysList"></ul>';
+    content += '<div class="ptreSectionActions">' + ptreButton('confirmPurgeUniKeys', 'PURGE, REALLY?') + ptreButton('cancelPurgeUniKeys', 'CANCEL') + '</div>';
+    content += ptreSection('Keys to delete', '<ul id="purgeUniKeysList" class="ptreList"></ul>');
 
     document.getElementById('ptreMainContent').innerHTML = content;
 

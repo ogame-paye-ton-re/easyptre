@@ -199,6 +199,32 @@ GM_addStyle(`
 .ptreButton {
     cursor: pointer;
 }
+.ptreList {
+    margin: 4px 0 4px 20px;
+    padding: 0;
+}
+ol.ptreList {
+    list-style: decimal;
+}
+ul.ptreList {
+    list-style: disc;
+}
+.ptreColumns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    text-align: center;
+}
+.ptreColumn .ptreTable {
+    margin-bottom: 6px;
+}
+.ptreColumn .ptreSubTitle {
+    margin: 0 0 6px 0;
+}
+.ptreMonospace {
+    font-family: monospace;
+    white-space: pre;
+}
 .ptreLoading {
     text-align: center;
     padding: 20px;

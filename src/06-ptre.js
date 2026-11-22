@@ -151,35 +151,32 @@ function processPlayerActivities(galaxy, system, activityTab) {
 // And sends results to Info Box
 function getPlayerInfos(playerID, pseudo) {
     const TKey = GM_getValue(ptreTeamKey, '');
-    if (TKey != '') {
-        setupMainBox("Player " + pseudo, null);
-        var content = '';
-        ptreRequest(urlPTREGetPlayerInfos, {method: 'GET', params: {team_key: TKey, player_id: playerID, pseudo: pseudo, noacti: 'yes'}})
-            .then(function(reponse) {
-                if (reponse.code == 1) {
-                    var tdId = 0;
-                    content += '<table border="1" width="100%">';
-                    content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '" colspan="3" align="center">Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a></td></tr>';
-                    tdId++;
-                    reponse.fleet_json.forEach(function(item) {
-                        const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
-                        content += '<tr class="tr_cell_radius"><td class="td_cell_radius_' + (tdId%2) + '">' + shipName + '</td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptre_ship ptre_ship_' + item.ship_type + '"></span></td><td class="td_cell_radius_' + (tdId%2) + '" align="center"><span class="ptreBold">' + setNumber(item.count) + '</span></td></tr>';
-                        tdId++;
-                    });
-                    content += '</table>';
-                } else {
-                    content += '<span class="ptreError">' + reponse.message + '</span>';
-                    addToLogs('[PLAYER INFOS] ' + reponse.message);
-                }
-                updateHtmlById('ptreMainContent', content);
-            })
-            .catch(function(error) {
-                updateHtmlById('ptreMainContent', getPTRERequestErrorLabel(error));
-            });
-    } else {
+    setupMainBox("Player " + pseudo, null);
+    if (TKey == '') {
         displayPTREPopUpMessage(ptreMissingTKMessage);
-        document.getElementById('ptreMainContent').innerHTML = ptreMissingTKMessage;
+        updateHtmlById('ptreMainContent', ptreMessageBlock('error', ptreMissingTKMessage));
+        return;
     }
+    ptreRequest(urlPTREGetPlayerInfos, {method: 'GET', params: {team_key: TKey, player_id: playerID, pseudo: pseudo, noacti: 'yes'}})
+        .then(function(reponse) {
+            var content = '';
+            if (reponse.code == 1) {
+                const rows = reponse.fleet_json.map(function(item) {
+                    const shipName = ptreShipNames[item.ship_type] || 'Ship ' + item.ship_type;
+                    return [shipName, {html: '<span class="ptre_ship ptre_ship_' + item.ship_type + '"></span>', align: 'center'}, {html: '<span class="ptreBold">' + setNumber(item.count) + '</span>', align: 'right'}];
+                });
+                content = ptreSection('Best known fleet',
+                    'Player: ' + pseudo + ' | Fleet points: <b>' + setNumber(reponse.top_sr_fleet_points) + '</b> | <a href="' + buildPTRELinkToPlayer(playerID) + '" target="_blank">PTRE Profile</a> | <a href="' + reponse.top_sr_link + '" target="_blank">Best Spy Report</a><br><br>'
+                    + ptreTable(rows, {header: ['Ship', '', 'Count'], empty: '-'}));
+            } else {
+                content = ptreMessageBlock('error', reponse.message);
+                addToLogs('[PLAYER INFOS] ' + reponse.message);
+            }
+            updateHtmlById('ptreMainContent', content);
+        })
+        .catch(function(error) {
+            updateHtmlById('ptreMainContent', ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
+        });
 }
 
 function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
@@ -312,11 +309,11 @@ function getPhalanxInfosFromGala() {
     var warning = '';
     ptreCurrentView = getPhalanxInfosFromGala;
     setupMainBox('Friends & Phalanx', 'FriendsPhalanx');
-    document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + " ...";
+    document.getElementById('ptreMainContent').innerHTML = ptreLoading("Loading info for " + galaxy + ":" + system + "...");
     const teamKey = GM_getValue(ptreTeamKey, '');
 
     if (teamKey == '') {
-        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
+        document.getElementById('ptreMainContent').innerHTML = ptreMessageBlock('error', ptreMissingTKMessage);
         return -1;
     }
 
@@ -326,13 +323,13 @@ function getPhalanxInfosFromGala() {
         dataJSON = GM_getValue(ptreBuddiesList, '');
         if (dataJSON != '') {
             if ((currentTime - GM_getValue(ptreBuddiesListLastRefresh, 0)) > 7*24*60*60) {
-                warning = '<span class="ptreWarning">Buddies list might be outdated: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to update your friends list</a><br><br>';
+                warning = ptreMessageBlock('warning', '<span class="ptreWarning">Buddies list might be outdated: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to update your friends list</a>');
             }
         } else {
-            warning = '<span class="ptreWarning">Buddies list is empty: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to add your friends to this view</a><br><br>';
+            warning = ptreMessageBlock('warning', '<span class="ptreWarning">Buddies list is empty: </span> <a href="/game/index.php?page=ingame&component=buddies">Visit buddies page to add your friends to this view</a>');
         }
     } else {
-        warning = '<span class="ptreWarning">Buddies list is not managed: you may enable it in EasyPTRE settings</span><br><br>';
+        warning = ptreMessageBlock('warning', '<span class="ptreWarning">Buddies list is not managed: you may enable it in EasyPTRE settings</span>');
     }
 
     ptreRequest(urlPTREGetPhalanxInfos, {params: {team_key: teamKey, galaxy: galaxy, system: system}, body: dataJSON})
@@ -344,7 +341,7 @@ function getPhalanxInfosFromGala() {
             updateHtmlById('ptreMainContent', warning + message);
         })
         .catch(function(error) {
-            updateHtmlById('ptreMainContent', warning + getPTRERequestErrorLabel(error));
+            updateHtmlById('ptreMainContent', warning + ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
         });
 }
 
@@ -356,10 +353,10 @@ function getGEEInfosFromGala() {
     var position = splitted[2];
     ptreCurrentView = getGEEInfosFromGala;
     setupMainBox('Galaxy Events Explorer', 'GalaxyEvents');
-    document.getElementById('ptreMainContent').innerHTML = "Loading info for " + galaxy + ":" + system + ":" + position + " ...";
+    document.getElementById('ptreMainContent').innerHTML = ptreLoading("Loading info for " + galaxy + ":" + system + ":" + position + "...");
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
-        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
+        document.getElementById('ptreMainContent').innerHTML = ptreMessageBlock('error', ptreMissingTKMessage);
         return -1;
     }
     ptreRequest(urlPTREGetGEEInfos, {params: {team_key: teamKey, galaxy: galaxy, system: system, position: position}})
@@ -371,7 +368,7 @@ function getGEEInfosFromGala() {
             updateHtmlById('ptreMainContent', message);
         })
         .catch(function(error) {
-            updateHtmlById('ptreMainContent', getPTRERequestErrorLabel(error));
+            updateHtmlById('ptreMainContent', ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
         });
 }
 
@@ -381,7 +378,7 @@ function getFightEventsFromXPD() {
     setupMainBox('Fight Events', 'FightEvents');
     const teamKey = GM_getValue(ptreTeamKey, '');
     if (teamKey == '') {
-        document.getElementById('ptreMainContent').innerHTML = '<span class="ptreError">' + ptreMissingTKMessage + '</span>';
+        document.getElementById('ptreMainContent').innerHTML = ptreMessageBlock('error', ptreMissingTKMessage);
         return -1;
     }
     ptreRequest(urlPTREGetXpdEvents, {params: {team_key: teamKey}})
@@ -393,7 +390,7 @@ function getFightEventsFromXPD() {
             updateHtmlById('ptreMainContent', message);
         })
         .catch(function(error) {
-            updateHtmlById('ptreMainContent', getPTRERequestErrorLabel(error));
+            updateHtmlById('ptreMainContent', ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
         });
 }
 
