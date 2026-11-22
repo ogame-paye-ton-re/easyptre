@@ -37,6 +37,7 @@ cat \
     10-web.js \
     11-maintenance.js \
     12-http.js \
+    13-ui.js \
 >> $OUTPUT
 
 node --check "$OUTPUT" || { echo "ERROR: Syntax check failed in $OUTPUT"; exit 1; }
