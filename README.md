@@ -47,6 +47,12 @@ You may check [PTRE website](https://ptre.chez.gg/) or [OGame Origin post](https
 Full compatibility table:
 ![enter image description here](https://ptre.chez.gg/img/ptre_tool_compatibility.png)
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md). It is also displayed ingame (EasyPTRE menu > Changelog), generated at build time.
+
+To prepare the next release notes, `node scripts/changelog-draft.js` prints a draft of the `[Unreleased]` section from the commits since the last release.
+
 ## Contribution
 
 If interested, you may contribute to EasyPTRE. You can also contact me here: [PTRE Discord server](https://discord.gg/WsJGC9G).

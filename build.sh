@@ -20,6 +20,10 @@ echo "// ****************************************" >> $OUTPUT
 echo "// Build date: $(date)" >> $OUTPUT
 echo "// ****************************************" >> $OUTPUT
 echo "" >> $OUTPUT
+
+echo "Generating ingame changelog from CHANGELOG.md..."
+node ../scripts/changelog-to-html.js ../CHANGELOG.md >> $OUTPUT || { echo "ERROR: Changelog generation failed"; exit 1; }
+
 cat \
     01-init.js \
     02-styles.js \
@@ -34,4 +38,6 @@ cat \
     11-maintenance.js \
     12-http.js \
 >> $OUTPUT
+
+node --check "$OUTPUT" || { echo "ERROR: Syntax check failed in $OUTPUT"; exit 1; }
 echo "Build successful: $OUTPUT"
