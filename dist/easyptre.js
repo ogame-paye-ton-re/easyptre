@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 10:34:19 CET
+// Build date: dim. 22 nov. 2026 10:57:26 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -539,6 +539,14 @@ GM_addStyle(`
 }
 .ptreTable tbody tr:nth-child(even) td {
     background-color: var(--ptre-cell);
+}
+.ptreTable tbody tr.ptreRowHighlight td {
+    background-color: var(--ptre-cell-highlight);
+}
+.ptreNoteTextarea {
+    width: 100%;
+    min-height: 60px;
+    box-sizing: border-box;
 }
 .ptreAlign-left {
     text-align: left;

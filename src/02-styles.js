@@ -168,6 +168,14 @@ GM_addStyle(`
 .ptreTable tbody tr:nth-child(even) td {
     background-color: var(--ptre-cell);
 }
+.ptreTable tbody tr.ptreRowHighlight td {
+    background-color: var(--ptre-cell-highlight);
+}
+.ptreNoteTextarea {
+    width: 100%;
+    min-height: 60px;
+    box-sizing: border-box;
+}
 .ptreAlign-left {
     text-align: left;
 }
