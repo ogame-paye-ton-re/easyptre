@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This file is also displayed ingame (EasyPTRE menu > Changelog): it is converted at build time by `scripts/changelog-to-html.js`.
 
+## [Unreleased]
+
+### Changed
+- Redesigned EasyPTRE panel: cleaner layout, adapts to small screens, can be moved (drag the title, double-click to reset) and minimized, closes with Escape
+- New notifications: colored by type (success, warning, error), can be closed, stay displayed while hovered
+
 ## [0.20.0] - 2026-11-22
 
 ### Added
