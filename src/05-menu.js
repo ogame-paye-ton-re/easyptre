@@ -140,7 +140,7 @@ function displaySettings() {
     } else {
         divPTRE += '<br><span class="ptreSmall">Team Name: </span><span class="ptreSmall ptreSuccess">'+GM_getValue(ptreTeamName, '???')+'</span>';
     }
-    divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input onclick="document.getElementById(\'ptreTK\').type = \'text\'" style="width:160px;" type="password" id="ptreTK" value="'+ ptreStoredTK +'"></div></td></tr>';
+    divPTRE += '</div></td><td class="td_cell_radius_'+(tdId%2)+'" align="center"><div><input style="width:160px;" type="password" id="ptreTK"></div></td></tr>';
     tdId++;
     // Separator
     divPTRE += '<tr class="tr_cell_radius"><td class="td_cell_radius_'+(tdId%2)+'" style="text-align: center;" colspan="2"><hr></td></tr>';
@@ -234,6 +234,13 @@ function displaySettings() {
     divPTRE += '</table>';
 
     document.getElementById('ptreMainContent').innerHTML = divPTRE;
+
+    // Team Key field: value set as text (not as HTML), displayed in clear on click
+    const tkInput = document.getElementById('ptreTK');
+    tkInput.value = ptreStoredTK;
+    tkInput.addEventListener('click', function() {
+        tkInput.type = 'text';
+    });
 
     // Action: Save
     document.getElementById('btnSaveOptPTRE').addEventListener("click", function (event) {
