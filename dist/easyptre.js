@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 08:31:55 CET
+// Build date: dim. 22 nov. 2026 08:31:56 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -297,7 +297,7 @@ if (modeEasyPTRE == "ptre") {
             console.log("[EasyPTRE] [LF] PTRE Lifeforms page detected: "+country+"-"+universe);
             const json = GM_getValue(ptreTechnosJSON, '');
             if (json != '') {
-                tab = parsePlayerResearchs(json, "tab");
+                const tab = parsePlayerResearchs(json, "tab");
                 const lastRefreshUnix = GM_getValue(ptreLastTechnosRefreshUnix, 0);
                 const lastRefreshLabel = '<div>Last EasyPTRE update: ' + getUnixTSLabel(lastRefreshUnix) + '</div>';
                 document.getElementById("tech_from_easyptre").innerHTML = lastRefreshLabel + tab;
