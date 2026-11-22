@@ -12,6 +12,7 @@ This file is also displayed ingame (EasyPTRE menu > Changelog): it is converted 
 ### Changed
 - Redesigned EasyPTRE panel: cleaner layout, adapts to small screens, can be moved (drag the title, double-click to reset), closes with Escape
 - New notifications: colored by type (success, warning, error), can be closed, stay displayed while hovered
+- Galaxy toolbar, galaxy pop-up and Orion pop-up redesigned with the same look
 
 ## [0.20.0] - 2026-11-22
 
