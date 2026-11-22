@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 11:11:38 CET
+// Build date: dim. 22 nov. 2026 11:35:00 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -842,16 +842,58 @@ ul.ptreList {
     cursor:pointer;
 }
 #ptreGalaxyToolBar {
-    background-color: var(--ptre-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 6px 10px;
     font-weight: revert;
-    padding: 5px;
+    background-color: var(--ptre-bg);
+    border: 1px solid var(--ptre-border-dark);
+    border-radius: var(--ptre-radius);
 }
-#ptreGalaxyMessageBoxContent {
-    padding-left: 10px;
-    padding-top: 3px;
-    text-align: left;
-    display: block;
-    line-height: 1.3em;
+.ptreToolbarRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.ptreToolbarTitle {
+    color: var(--ptre-title);
+    font-weight: bold;
+}
+.ptreToolbarStats {
+    margin-left: auto;
+}
+.ptreToolbarLegend {
+    gap: 14px;
+}
+.ptreToolbarLegend .ptreSubTitle {
+    margin: 0;
+}
+.ptreLegendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.ptreLegendIcon {
+    width: 10px;
+    height: 10px;
+    border: 3px solid transparent;
+}
+.ptreLegend-hot {
+    border-color: green;
+}
+.ptreLegend-event {
+    border-color: orange;
+}
+.ptreLegend-dnp {
+    border-color: red;
+}
+.ptreToolbarFooter {
+    padding-top: 4px;
+    border-top: 1px solid var(--ptre-border);
+    color: #848484;
 }
 #ptreGalaxyPopUp {
     min-width: 250px;
@@ -1046,22 +1088,21 @@ function improvePageGalaxy() {
     const galaxyPopupMode = GM_getValue(ptreEnableGalaxyPopup, 'true');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
-    let tkComment = "";
-    let toolComment = "Detected tool: ";
+    const detectedTools = [];
 
     // Update status once for the gala browsing session
     if (isAGREnabled()) {
-        toolComment+= "AGR ";
+        detectedTools.push("AGR");
     }
     if (isOGLEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment+= "OGL ";
+        detectedTools.push("OGL");
     }
     if (isOGIEnabled()) {
         ptreSendGalaEvents = false;
         ptrePushActivities = false;
-        toolComment+= "OGI ";
+        detectedTools.push("OGI");
     }
     // Enable Galaxy Pop-up for the entire galaxy browsing session
     if (galaxyPopupMode == 'false' || minerMode == 'true') {
@@ -1076,46 +1117,43 @@ function improvePageGalaxy() {
         }
     });
 
-    if (ptreStoredTK == '') {
-        tkComment = '<span class="ptreError">Missing Team Key</span> - ';
-        consoleDebug("[GALAXY] No Team Key found: galaxy features disabled.");
-    } else {
-        // Prepare galaxy check and update
-        waitForGalaxyToBeLoaded();
-    }
-
     if (minerMode == 'false') {
         // Add PTRE Toolbar (not if miner mode)
-        //TODO:   a udatder quand la fct AGR passe
-        var tempContent = '<table width="100%"><tr>';
-        tempContent+= '<td><div class="ptreBoxTitle">EasyPTRE<br>TOOLBAR</div></td>';
-        tempContent+= '<td><div id="ptreGalaxyPhalanxButton" type="button" class="button btn_blue">&#128101; FRIENDS&PHALANX</div> <div id="ptreGalaxyGEEButton" type="button" class="button btn_blue">&#128225; GALAXY EVENTS</div> <div id="ptreGalaxyFightEventsButton" type="button" class="button btn_blue">&#9876; FIGHT EVENTS</div></td>';
-        tempContent+= '<td align="right">Activities: <span id="ptreGalaxyActivityCount" class="ptreSuccess">';
-        if (ptrePushActivities === true) {
-            tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
-        } else {
-            tempContent+= '<a class="tooltip ptreWarning" title="Sent by OGL/OGI">no</a>';
+        // Counters (ptreGalaxyActivityCount, ptreGalaxyEventCount, ptreTrackedPlayerCount) are updated while browsing the galaxy
+        const pushStatus = (id, sentByEasyPTRE) => sentByEasyPTRE
+            ? '<span id="' + id + '" class="ptreSuccess" title="Sent by EasyPTRE">yes</span>'
+            : '<span id="' + id + '" class="ptreWarning" title="Sent by OGL/OGI">no</span>';
+        const legendItem = (className, label) => '<span class="ptreLegendItem"><img class="ptreLegendIcon ' + className + '" src="' + imgPTREOK + '">' + label + '</span>';
+
+        var tempContent = '';
+        if (ptreStoredTK == '') {
+            tempContent += ptreMessageBlock('error', ptreMissingTKMessage);
         }
-        tempContent+= '</span> | Galaxy Events: <span id="ptreGalaxyEventCount" class="ptreSuccess">';
-        if (ptreSendGalaEvents === true) {
-            tempContent+= '<a class="tooltip ptreSuccess" title="Sent by EasyPTRE">yes</a>';
-        } else {
-            tempContent+= '<a class="tooltip ptreWarning" title="Sent by OGL/OGI">no</a>';
+        tempContent += '<div class="ptreToolbarRow">';
+        tempContent += '<span class="ptreToolbarTitle">EasyPTRE</span>';
+        tempContent += '<span class="ptreSectionActions">'
+            + ptreButton('ptreGalaxyPhalanxButton', '&#128101; FRIENDS & PHALANX')
+            + ptreButton('ptreGalaxyGEEButton', '&#128225; GALAXY EVENTS')
+            + ptreButton('ptreGalaxyFightEventsButton', '&#9876; FIGHT EVENTS') + '</span>';
+        // Without Team Key, nothing is sent and there is no pop-up: no stats nor legend
+        if (ptreStoredTK != '') {
+            tempContent += '<span class="ptreToolbarStats">Activities: ' + pushStatus('ptreGalaxyActivityCount', ptrePushActivities === true)
+                + ' | Galaxy Events: ' + pushStatus('ptreGalaxyEventCount', ptreSendGalaEvents === true);
+            if (ptrePushActivities === true) {
+                tempContent += ' | Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+            }
+            tempContent += '</span>';
         }
-        tempContent+= '</span></td></tr>';
-        tempContent+= '<tr>';
-        tempContent+= '<td align="center" colspan="3" style="vertical-align: middle;"><span class="ptreCategoryTitle">Pop-up Legend: </span><img style="border: 3px solid green; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Hot target - ';
-        tempContent+= '<img style="border: 3px solid orange; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Galaxy Event - ';
-        tempContent+= '<img style="border: 3px solid red; vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Do Not Probe - ';
-        tempContent+= '<img style="vertical-align: middle;" src="' + imgPTREOK + '" height="10px" width="10px"></a> : Nothing</td>';
-        tempContent+= '</tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><div id="ptreGalaxyMessageBoxContent"></div></td></tr>';
-        tempContent+= '<tr><td valign="top" colspan="3"><hr></td></tr><tr><td colspan="3"><div class="ptreSmall">' + tkComment + 'Galaxy Popup: ' + galaxyPopupMode + ' - BetaMode: ' + betaMode + ' - MinerMode: ' + minerMode + ' - ' + toolComment;
-        if (ptrePushActivities === true) {
-            tempContent+= ' - Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+        tempContent += '</div>';
+        if (ptreStoredTK != '' && ptreDisplayGalaPopup === true) {
+            tempContent += '<div class="ptreToolbarRow ptreToolbarLegend"><span class="ptreSubTitle">Pop-up legend:</span>'
+                + legendItem('ptreLegend-hot', 'Hot target')
+                + legendItem('ptreLegend-event', 'Galaxy Event')
+                + legendItem('ptreLegend-dnp', 'Do Not Probe')
+                + legendItem('', 'Nothing') + '</div>';
         }
-        tempContent+= '</div></td></tr></table>';
+        tempContent += '<div class="ptreToolbarFooter ptreSmall">Galaxy Popup: ' + galaxyPopupMode + ' | Beta Mode: ' + betaMode + ' | Miner Mode: ' + minerMode
+            + ' | Detected tools: ' + (detectedTools.length > 0 ? detectedTools.join(', ') : 'none') + '</div>';
 
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
@@ -1141,6 +1179,14 @@ function improvePageGalaxy() {
                 getFightEventsFromXPD();
             });
         }
+    }
+
+    // Toolbar is created first: its counters are updated while processing the galaxy
+    if (ptreStoredTK == '') {
+        consoleDebug("[GALAXY] No Team Key found: galaxy features disabled.");
+    } else {
+        // Prepare galaxy check and update
+        waitForGalaxyToBeLoaded();
     }
 }
 

@@ -470,16 +470,58 @@ ul.ptreList {
     cursor:pointer;
 }
 #ptreGalaxyToolBar {
-    background-color: var(--ptre-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 6px 10px;
     font-weight: revert;
-    padding: 5px;
+    background-color: var(--ptre-bg);
+    border: 1px solid var(--ptre-border-dark);
+    border-radius: var(--ptre-radius);
 }
-#ptreGalaxyMessageBoxContent {
-    padding-left: 10px;
-    padding-top: 3px;
-    text-align: left;
-    display: block;
-    line-height: 1.3em;
+.ptreToolbarRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.ptreToolbarTitle {
+    color: var(--ptre-title);
+    font-weight: bold;
+}
+.ptreToolbarStats {
+    margin-left: auto;
+}
+.ptreToolbarLegend {
+    gap: 14px;
+}
+.ptreToolbarLegend .ptreSubTitle {
+    margin: 0;
+}
+.ptreLegendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.ptreLegendIcon {
+    width: 10px;
+    height: 10px;
+    border: 3px solid transparent;
+}
+.ptreLegend-hot {
+    border-color: green;
+}
+.ptreLegend-event {
+    border-color: orange;
+}
+.ptreLegend-dnp {
+    border-color: red;
+}
+.ptreToolbarFooter {
+    padding-top: 4px;
+    border-top: 1px solid var(--ptre-border);
+    color: #848484;
 }
 #ptreGalaxyPopUp {
     min-width: 250px;
