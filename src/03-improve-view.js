@@ -681,64 +681,30 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
         }
 
         // Create panel
+        const posKey = galaxy + ':' + system + ':' + pos;
+        var body = ptreSection('Informations', '<div id="ptreGalaxyActionsContent">[' + posKey + '] - <b>' + playerName + '</b> - <a href="' + buildPTRELinkToPlayer(playerId) + '" target="_blank">PTRE Profile</a> - <a href="' + buildPTRELinkToAdvancedActivityTable(playerId) + '" target="_blank">Activity Table</a>'
+            + (targetComment != '' ? '<br><br>' + targetComment : '') + '</div>');
+        body += ptreSection('New Galaxy Events', '<div id="ptreGalaxyPosEvent-' + posKey + '"></div>');
+        if (playerId > 0) {
+            body += ptreSection('Actions', '<div class="ptreSectionActions">'
+                + ptreButton('btnGetPlayerInfos2' + playerId, 'FLEET')
+                + ptreButton('btnManageList', 'ADD TO LIST')
+                + ptreButton('synctTargetsWithPTREViaGalaxy', 'SYNC TARGETS')
+                + ptreButton('btnDNP', dnpButtonLabel) + '</div>');
+            body += ptreSection('Shared notes (shared with PTRE Team)',
+                '<div id="ptreGalaxyPlayerNoteStatus-' + playerId + '" class="ptreSmall"></div>'
+                + '<textarea name="note" class="ptreNoteTextarea" id="ptreGalaxyPlayerNote-' + playerId + '" rows="4"></textarea>',
+                ptreButton('savePlayerNote', 'SAVE NOTE'));
+            body += ptreSection('Points and Ranks, last days', '<div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-' + playerId + '" class="ptreSmall">Highscores will be loaded after a 2 secs delay...</div></div>');
+        } else {
+            body += ptreSection('Deep space', 'Nothing here...');
+        }
         const panel = document.createElement('div');
         panel.id = 'ptreGalaxyPopUp';
-        panel.innerHTML = `
-            <table border="1" width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Galaxy Box</div></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr></table>
-            <table border="1" width="100%">
-            <tr>
-                <td>
-                    <hr>
-                    <div id="ptreGalaxyActionsContent">
-                        <div class="ptreCategoryTitle">Informations</div>
-                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a> - <a href="` + buildPTRELinkToAdvancedActivityTable(playerId) + `" target="_blank">Activity Table</a><br><br>
-                        ` + targetComment + `
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">New Galaxy Events</div>
-                    <div id="ptreGalaxyPosEvent-` + galaxy + `:` + system + `:` + pos + `"></div><br>
-                </td>
-            </tr>`;
-        if (playerId > 0) {
-            panel.innerHTML+= `
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Actions</div>
-                    <div id="btnGetPlayerInfos2`+playerId+`" type="button" class="button btn_blue">FLEET</div> <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Shared notes (shared with PTRE Team)</div>
-                    <div id="ptreGalaxyPlayerNoteStatus-` + playerId + `"></div><br>
-                    <textarea name="note" id="ptreGalaxyPlayerNote-` + playerId + `" rows="5" cols="50"></textarea><br>
-                    <div id="savePlayerNote" type="button" class="button btn_blue">SAVE NOTE</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Points and Ranks, last days</div>
-                    <div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-` + playerId + `">Highscores will be loaded after a 2 secs delay...</div></div>
-                </td>
-            </tr>`;
-        } else {
-            panel.innerHTML+= `
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Deep space</div>
-                    Nothing here...
-                </td>
-            </tr>`;
-        }
-        panel.innerHTML+= `</table>`;
+        panel.className = 'ptrePopup';
+        panel.innerHTML = '<div class="ptrePopupHeader"><span class="ptrePopupTitle">EasyPTRE Galaxy Box</span>'
+            + '<div id="btnCloseGalaxyActions" class="button btn_blue ptreHeaderBtn" title="Close">&#10005; Close</div></div>'
+            + '<div class="ptrePopupBody">' + body + '</div>';
 
         // Position panel next to button
         const planetList = document.getElementById('planetList');
@@ -746,6 +712,11 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
         panel.style.top = (window.scrollY + rect.top) + 'px';
         panel.style.left = (window.scrollX + rect.left) + 'px';
         document.body.appendChild(panel);
+        // Keep the pop-up inside the window
+        const overflow = panel.getBoundingClientRect().right - (window.innerWidth - 10);
+        if (overflow > 0) {
+            panel.style.left = Math.max(window.scrollX + 10, window.scrollX + rect.left - overflow) + 'px';
+        }
 
         // Close if we click outside the Div
         const cleanupGalaxyBox = () => {

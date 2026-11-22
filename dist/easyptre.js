@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 11:35:00 CET
+// Build date: dim. 22 nov. 2026 11:44:38 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -895,14 +895,37 @@ ul.ptreList {
     border-top: 1px solid var(--ptre-border);
     color: #848484;
 }
-#ptreGalaxyPopUp {
-    min-width: 250px;
-    position: absolute;
-    border: solid black 2px;
-    border-radius: var(--ptre-radius);
+/* ---------- Pop-ups (galaxy, Orion) ---------- */
+.ptrePopup {
+    font-size: 10pt;
     background-color: var(--ptre-bg);
+    border: 2px solid var(--ptre-border-dark);
+    border-radius: var(--ptre-radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+.ptrePopupHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--ptre-border);
+    background-color: var(--ptre-bg-dark);
+}
+.ptrePopupTitle {
+    color: var(--ptre-title);
+    font-weight: bold;
+    font-size: 11pt;
+}
+.ptrePopupBody {
+    padding: 8px 10px;
+}
+#ptreGalaxyPopUp {
+    position: absolute;
     z-index: 10000;
-    padding: 5px;
+    width: 420px;
+    max-width: calc(100vw - 20px);
 }
 #ptreOrionPopUp {
     position: fixed;
@@ -1652,64 +1675,30 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
         }
 
         // Create panel
+        const posKey = galaxy + ':' + system + ':' + pos;
+        var body = ptreSection('Informations', '<div id="ptreGalaxyActionsContent">[' + posKey + '] - <b>' + playerName + '</b> - <a href="' + buildPTRELinkToPlayer(playerId) + '" target="_blank">PTRE Profile</a> - <a href="' + buildPTRELinkToAdvancedActivityTable(playerId) + '" target="_blank">Activity Table</a>'
+            + (targetComment != '' ? '<br><br>' + targetComment : '') + '</div>');
+        body += ptreSection('New Galaxy Events', '<div id="ptreGalaxyPosEvent-' + posKey + '"></div>');
+        if (playerId > 0) {
+            body += ptreSection('Actions', '<div class="ptreSectionActions">'
+                + ptreButton('btnGetPlayerInfos2' + playerId, 'FLEET')
+                + ptreButton('btnManageList', 'ADD TO LIST')
+                + ptreButton('synctTargetsWithPTREViaGalaxy', 'SYNC TARGETS')
+                + ptreButton('btnDNP', dnpButtonLabel) + '</div>');
+            body += ptreSection('Shared notes (shared with PTRE Team)',
+                '<div id="ptreGalaxyPlayerNoteStatus-' + playerId + '" class="ptreSmall"></div>'
+                + '<textarea name="note" class="ptreNoteTextarea" id="ptreGalaxyPlayerNote-' + playerId + '" rows="4"></textarea>',
+                ptreButton('savePlayerNote', 'SAVE NOTE'));
+            body += ptreSection('Points and Ranks, last days', '<div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-' + playerId + '" class="ptreSmall">Highscores will be loaded after a 2 secs delay...</div></div>');
+        } else {
+            body += ptreSection('Deep space', 'Nothing here...');
+        }
         const panel = document.createElement('div');
         panel.id = 'ptreGalaxyPopUp';
-        panel.innerHTML = `
-            <table border="1" width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Galaxy Box</div></td><td align="right"><div id="btnCloseGalaxyActions" type="button" class="button btn_blue">CLOSE</div></td></tr></table>
-            <table border="1" width="100%">
-            <tr>
-                <td>
-                    <hr>
-                    <div id="ptreGalaxyActionsContent">
-                        <div class="ptreCategoryTitle">Informations</div>
-                        [` + galaxy + `:` + system + `:` + pos + `] - <b>` + playerName + `</b> - <a href="` + buildPTRELinkToPlayer(playerId) + `" target="_blank">PTRE Profile</a> - <a href="` + buildPTRELinkToAdvancedActivityTable(playerId) + `" target="_blank">Activity Table</a><br><br>
-                        ` + targetComment + `
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">New Galaxy Events</div>
-                    <div id="ptreGalaxyPosEvent-` + galaxy + `:` + system + `:` + pos + `"></div><br>
-                </td>
-            </tr>`;
-        if (playerId > 0) {
-            panel.innerHTML+= `
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Actions</div>
-                    <div id="btnGetPlayerInfos2`+playerId+`" type="button" class="button btn_blue">FLEET</div> <div id="btnManageList" type="button" class="button btn_blue">ADD TO LIST</div> <div id="synctTargetsWithPTREViaGalaxy" class="button btn_blue">SYNC TARGETS</div> <div id="btnDNP" type="button" class="button btn_blue">` + dnpButtonLabel + `</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Shared notes (shared with PTRE Team)</div>
-                    <div id="ptreGalaxyPlayerNoteStatus-` + playerId + `"></div><br>
-                    <textarea name="note" id="ptreGalaxyPlayerNote-` + playerId + `" rows="5" cols="50"></textarea><br>
-                    <div id="savePlayerNote" type="button" class="button btn_blue">SAVE NOTE</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Points and Ranks, last days</div>
-                    <div id="ptreGalaxyPlayerRanksPopUp"><div id="ptreGalaxyPlayerRanksPlaceholder-` + playerId + `">Highscores will be loaded after a 2 secs delay...</div></div>
-                </td>
-            </tr>`;
-        } else {
-            panel.innerHTML+= `
-            <tr>
-                <td>
-                    <hr>
-                    <div class="ptreCategoryTitle">Deep space</div>
-                    Nothing here...
-                </td>
-            </tr>`;
-        }
-        panel.innerHTML+= `</table>`;
+        panel.className = 'ptrePopup';
+        panel.innerHTML = '<div class="ptrePopupHeader"><span class="ptrePopupTitle">EasyPTRE Galaxy Box</span>'
+            + '<div id="btnCloseGalaxyActions" class="button btn_blue ptreHeaderBtn" title="Close">&#10005; Close</div></div>'
+            + '<div class="ptrePopupBody">' + body + '</div>';
 
         // Position panel next to button
         const planetList = document.getElementById('planetList');
@@ -1717,6 +1706,11 @@ function openPTREGalaxyActions(galaxy, system, pos, playerId, playerName) {
         panel.style.top = (window.scrollY + rect.top) + 'px';
         panel.style.left = (window.scrollX + rect.left) + 'px';
         document.body.appendChild(panel);
+        // Keep the pop-up inside the window
+        const overflow = panel.getBoundingClientRect().right - (window.innerWidth - 10);
+        if (overflow > 0) {
+            panel.style.left = Math.max(window.scrollX + 10, window.scrollX + rect.left - overflow) + 'px';
+        }
 
         // Close if we click outside the Div
         const cleanupGalaxyBox = () => {
@@ -3331,12 +3325,8 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
         // Check if Galaxy Box is still waiting the infos
         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId) || document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
             consoleDebug("[POP-UP] Getting Player notes");
-            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
-            }
-            if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-                document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).value = "Loading events...";
-            }
+            updateHtmlById("ptreGalaxyPlayerNoteStatus-" + playerId, "Loading note...");
+            updateHtmlById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos, ptreLoading("Loading events..."));
             ptreRequest(urlPTREIngamePopUp, {params: {team_key: TKey, action: 'get', player_id: playerId, galaxy: galaxy, system: system, pos: pos}})
                 .then(function (reponseDecode) {
                     consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
@@ -3358,7 +3348,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 })
                 .catch(function (error) {
                     updateHtmlById("ptreGalaxyPlayerNoteStatus-" + playerId, getPTRERequestErrorLabel(error));
-                    updateHtmlById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos, getPTRERequestErrorLabel(error));
+                    updateHtmlById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos, ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
                 });
         }
     }
@@ -3394,47 +3384,37 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             consoleDebug("[POP-UP] Rank update canceled");
             return;
         }
-        updateHtmlById("ptreGalaxyPlayerRanksPopUp", "Loading ranks...");
+        updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreLoading("Loading ranks..."));
         ptreRequest(urlPTREGetRanks, {params: {team_key: TKey, player_id: playerId}})
             .then(function(reponseDecode) {
                 consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
-                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
-                        var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
-                        reponseDecode.ranks_array.forEach(function(rank, i) {
-                            const previousRank = reponseDecode.ranks_array[i + 1];
-                            var classR = "";
-                            var diff = "-";
-                            if (previousRank) {
-                                if (Number(rank.total_score) < Number(previousRank.total_score)) {
-                                    classR = "ptreError";
-                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                                } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
-                                    classR = "ptreSuccess";
-                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                                    diff = "+" + diff;
-                                }
+                    const rows = reponseDecode.ranks_array.map(function(rank, i) {
+                        const previousRank = reponseDecode.ranks_array[i + 1];
+                        var classR = "";
+                        var diff = "-";
+                        if (previousRank) {
+                            if (Number(rank.total_score) < Number(previousRank.total_score)) {
+                                classR = "ptreError";
+                                diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                            } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
+                                classR = "ptreSuccess";
+                                diff = "+" + setNumber(Number(rank.total_score) - Number(previousRank.total_score));
                             }
-                            var when = "";
-                            if (i == 0) {
-                                when = "at midnight";
-                            } else {
-                                when = i + " days ago";
-                            }
-                            content+= '<tr><td class="td_cell_radius_1" align="center">' + when + '</td><td class="td_cell_radius_1" align="center">' + setNumber(rank.total_score) + ' pts</td><td class="td_cell_radius_1" align="center"><span class="' + classR + '">' + diff + '</span></td><td class="td_cell_radius_1" align="center">#' + rank.total_rank + '</td></tr>';
-                        });
-                        content+= '</table>';
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
-                    }
+                        }
+                        const when = (i == 0) ? "at midnight" : i + " days ago";
+                        return [{html: when, align: 'center'}, {html: setNumber(rank.total_score) + ' pts', align: 'right'},
+                            {html: '<span class="' + classR + '">' + diff + '</span>', align: 'right'}, {html: '#' + rank.total_rank, align: 'center'}];
+                    });
+                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreTable(rows, {header: ['Date', 'Points', 'Points diff', 'Global rank'], empty: '-'}));
                 } else {
-                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", reponseDecode.message);
+                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreMessageBlock('error', reponseDecode.message));
                     addToLogs('[RANKS] ' + reponseDecode.message);
                 }
             })
             .catch(function(error) {
-                updateHtmlById("ptreGalaxyPlayerRanksPopUp", getPTRERequestErrorLabel(error));
+                updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
             });
     } else {
         displayPTREPopUpMessage(ptreMissingTKMessage, 'error');

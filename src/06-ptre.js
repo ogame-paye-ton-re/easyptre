@@ -185,12 +185,8 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
         // Check if Galaxy Box is still waiting the infos
         if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId) || document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
             consoleDebug("[POP-UP] Getting Player notes");
-            if (document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId)) {
-                document.getElementById("ptreGalaxyPlayerNoteStatus-" + playerId).innerHTML = "Loading note...";
-            }
-            if (document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos)) {
-                document.getElementById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos).value = "Loading events...";
-            }
+            updateHtmlById("ptreGalaxyPlayerNoteStatus-" + playerId, "Loading note...");
+            updateHtmlById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos, ptreLoading("Loading events..."));
             ptreRequest(urlPTREIngamePopUp, {params: {team_key: TKey, action: 'get', player_id: playerId, galaxy: galaxy, system: system, pos: pos}})
                 .then(function (reponseDecode) {
                     consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
@@ -212,7 +208,7 @@ function updateGalaxyBoxWithEventsAndPlayerNote(playerId, galaxy, system, pos) {
                 })
                 .catch(function (error) {
                     updateHtmlById("ptreGalaxyPlayerNoteStatus-" + playerId, getPTRERequestErrorLabel(error));
-                    updateHtmlById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos, getPTRERequestErrorLabel(error));
+                    updateHtmlById("ptreGalaxyPosEvent-" + galaxy + ":" + system + ":" + pos, ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
                 });
         }
     }
@@ -248,47 +244,37 @@ function updateGalaxyBoxWithPlayerRanks(playerId) {
             consoleDebug("[POP-UP] Rank update canceled");
             return;
         }
-        updateHtmlById("ptreGalaxyPlayerRanksPopUp", "Loading ranks...");
+        updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreLoading("Loading ranks..."));
         ptreRequest(urlPTREGetRanks, {params: {team_key: TKey, player_id: playerId}})
             .then(function(reponseDecode) {
                 consoleDebug("[POP-UP] [FROM PTRE] " + reponseDecode.message);
                 displayGalaxyMiniMessage(reponseDecode.message);
                 if (reponseDecode.code == 1) {
-                    if (document.getElementById("ptreGalaxyPlayerRanksPopUp")) {
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = "Processing ranks...";
-                        var content = '<table><tr><td class="td_cell_radius_0" align="center">Date</td><td class="td_cell_radius_0" align="center">Points</td><td class="td_cell_radius_0" align="center">Points diff</td><td class="td_cell_radius_0" align="center">Global rank</td></tr>';
-                        reponseDecode.ranks_array.forEach(function(rank, i) {
-                            const previousRank = reponseDecode.ranks_array[i + 1];
-                            var classR = "";
-                            var diff = "-";
-                            if (previousRank) {
-                                if (Number(rank.total_score) < Number(previousRank.total_score)) {
-                                    classR = "ptreError";
-                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                                } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
-                                    classR = "ptreSuccess";
-                                    diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
-                                    diff = "+" + diff;
-                                }
+                    const rows = reponseDecode.ranks_array.map(function(rank, i) {
+                        const previousRank = reponseDecode.ranks_array[i + 1];
+                        var classR = "";
+                        var diff = "-";
+                        if (previousRank) {
+                            if (Number(rank.total_score) < Number(previousRank.total_score)) {
+                                classR = "ptreError";
+                                diff = setNumber(Number(rank.total_score) - Number(previousRank.total_score));
+                            } else if (Number(rank.total_score) > Number(previousRank.total_score)) {
+                                classR = "ptreSuccess";
+                                diff = "+" + setNumber(Number(rank.total_score) - Number(previousRank.total_score));
                             }
-                            var when = "";
-                            if (i == 0) {
-                                when = "at midnight";
-                            } else {
-                                when = i + " days ago";
-                            }
-                            content+= '<tr><td class="td_cell_radius_1" align="center">' + when + '</td><td class="td_cell_radius_1" align="center">' + setNumber(rank.total_score) + ' pts</td><td class="td_cell_radius_1" align="center"><span class="' + classR + '">' + diff + '</span></td><td class="td_cell_radius_1" align="center">#' + rank.total_rank + '</td></tr>';
-                        });
-                        content+= '</table>';
-                        document.getElementById("ptreGalaxyPlayerRanksPopUp").innerHTML = content;
-                    }
+                        }
+                        const when = (i == 0) ? "at midnight" : i + " days ago";
+                        return [{html: when, align: 'center'}, {html: setNumber(rank.total_score) + ' pts', align: 'right'},
+                            {html: '<span class="' + classR + '">' + diff + '</span>', align: 'right'}, {html: '#' + rank.total_rank, align: 'center'}];
+                    });
+                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreTable(rows, {header: ['Date', 'Points', 'Points diff', 'Global rank'], empty: '-'}));
                 } else {
-                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", reponseDecode.message);
+                    updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreMessageBlock('error', reponseDecode.message));
                     addToLogs('[RANKS] ' + reponseDecode.message);
                 }
             })
             .catch(function(error) {
-                updateHtmlById("ptreGalaxyPlayerRanksPopUp", getPTRERequestErrorLabel(error));
+                updateHtmlById("ptreGalaxyPlayerRanksPopUp", ptreMessageBlock('error', getPTRERequestErrorLabel(error)));
             });
     } else {
         displayPTREPopUpMessage(ptreMissingTKMessage, 'error');

@@ -523,14 +523,37 @@ ul.ptreList {
     border-top: 1px solid var(--ptre-border);
     color: #848484;
 }
-#ptreGalaxyPopUp {
-    min-width: 250px;
-    position: absolute;
-    border: solid black 2px;
-    border-radius: var(--ptre-radius);
+/* ---------- Pop-ups (galaxy, Orion) ---------- */
+.ptrePopup {
+    font-size: 10pt;
     background-color: var(--ptre-bg);
+    border: 2px solid var(--ptre-border-dark);
+    border-radius: var(--ptre-radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+.ptrePopupHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--ptre-border);
+    background-color: var(--ptre-bg-dark);
+}
+.ptrePopupTitle {
+    color: var(--ptre-title);
+    font-weight: bold;
+    font-size: 11pt;
+}
+.ptrePopupBody {
+    padding: 8px 10px;
+}
+#ptreGalaxyPopUp {
+    position: absolute;
     z-index: 10000;
-    padding: 5px;
+    width: 420px;
+    max-width: calc(100vw - 20px);
 }
 #ptreOrionPopUp {
     position: fixed;
