@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 10:57:26 CET
+// Build date: dim. 22 nov. 2026 11:11:38 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -2261,13 +2261,19 @@ function setupMainPanelDrag(wrapper) {
         const offsetX = event.clientX - rect.left;
         const offsetY = event.clientY - rect.top;
         wrapper.classList.add('ptreDragging');
+        let moved = false;
         const onMove = function(moveEvent) {
+            moved = true;
             applyMainPanelPosition({left: moveEvent.clientX - offsetX, top: moveEvent.clientY - offsetY});
         };
         const onUp = function() {
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onUp);
             wrapper.classList.remove('ptreDragging');
+            // A simple click (no move) must not save the default position as 0,0
+            if (!moved) {
+                return;
+            }
             GM_setValue(ptreMainPanelPosition, {left: parseInt(wrapper.style.left, 10) || 0, top: parseInt(wrapper.style.top, 10) || 0});
         };
         document.addEventListener('mousemove', onMove);
