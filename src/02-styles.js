@@ -240,13 +240,19 @@ GM_addStyle(`
     top: 30px;
     right: 10px;
     z-index: 11000;
+    width: min(750px, calc(100vw - 20px));
     font-size: 10pt;
 }
 #ptreMainBox {
-    width: 750px;
+    display: flex;
+    flex-direction: column;
+    /* Keep room for the OGame fixed footer bar (#siteFooter) */
+    max-height: min(820px, calc(100vh - 60px));
     background-color: var(--ptre-bg);
-    border: 2px solid black;
+    border: 2px solid var(--ptre-border-dark);
     border-radius: var(--ptre-radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
 }
 #ptreMainHeader {
     display: flex;
@@ -254,22 +260,33 @@ GM_addStyle(`
     padding: 5px 10px;
     border-bottom: 1px solid var(--ptre-border);
     background-color: var(--ptre-bg-dark);
-    border-radius: var(--ptre-radius);
 }
 #ptreMainHeaderTop {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
+    cursor: move;
+    user-select: none;
 }
 #ptreMainTitle {
     color: var(--ptre-title);
     font-weight: bold;
     font-size: 11pt;
-    text-decoration: underline;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 #ptreMainHeaderButtons {
     display: flex;
     gap: 4px;
+    flex-shrink: 0;
+    cursor: default;
+}
+.ptreHeaderBtn {
+    cursor: pointer;
+    padding: 4px 8px;
+    min-width: 0;
 }
 #messageDivInPanel {
     min-height: 0;
@@ -277,23 +294,28 @@ GM_addStyle(`
     font-size: 9pt;
     text-align: center;
 }
+#messageDivInPanel:empty {
+    display: none;
+}
 #ptreMainBody {
     display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 #ptreMainContent {
     flex: 1;
     padding: 10px;
     overflow-y: auto;
-    max-height: 600px;
     min-width: 0;
 }
 #ptreMainNav {
-    width: 100px;
+    width: 110px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
     padding: 8px 6px;
+    overflow-y: auto;
     border-left: 1px solid var(--ptre-border);
     background-color: var(--ptre-bg-dark);
 }
@@ -302,9 +324,35 @@ GM_addStyle(`
     text-align: center;
     cursor: pointer;
     padding: 4px 2px;
+    min-width: 0;
 }
 .ptreNavBtn.ptreNavActive {
     outline: 2px solid var(--ptre-accent);
+}
+.ptreNavSeparator {
+    border-top: 1px solid var(--ptre-border);
+    margin: 4px 0;
+}
+#ptreMainWrapper.ptreMinimized #ptreMainBody,
+#ptreMainWrapper.ptreMinimized #ptreMainFooter,
+#ptreMainWrapper.ptreMinimized #ptreMainFooterMsg,
+#ptreMainWrapper.ptreMinimized #messageDivInPanel {
+    display: none;
+}
+#ptreMainWrapper.ptreMinimized #ptreMainHeader {
+    border-bottom: none;
+}
+#ptreMainWrapper.ptreDragging {
+    opacity: 0.85;
+}
+/* Narrow windows: icons only in navigation and header buttons */
+@media (max-width: 900px) {
+    #ptreMainNav {
+        width: 36px;
+    }
+    .ptreNavLabel, .ptreHeaderBtnLabel {
+        display: none;
+    }
 }
 #ptreMainFooter {
     display: flex;
@@ -320,8 +368,9 @@ GM_addStyle(`
     background-color: var(--ptre-bg-dark);
     font-size: 9pt;
     text-align: center;
-    min-height: 16px;
-    border-radius: var(--ptre-radius);
+}
+#ptreMainFooterMsg:has(#ptreUpdateVersionMessage:empty) {
+    display: none;
 }
 #boxPTREMessage {
     position: fixed;

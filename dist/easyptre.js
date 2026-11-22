@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 09:07:43 CET
+// Build date: dim. 22 nov. 2026 09:12:22 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -136,6 +136,7 @@ const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not 
 const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Unix TS
 const ptreLogsList = "ptre-Logs";// Unix TS
+const ptreMainPanelPosition = "ptre-MainPanelPosition";// {left, top} in px, set when the panel is dragged
 
 // GM keys (specific to each universes)
 // Suffixes also used to build keys of OTHER universes (GC cleanup)
@@ -609,13 +610,19 @@ GM_addStyle(`
     top: 30px;
     right: 10px;
     z-index: 11000;
+    width: min(750px, calc(100vw - 20px));
     font-size: 10pt;
 }
 #ptreMainBox {
-    width: 750px;
+    display: flex;
+    flex-direction: column;
+    /* Keep room for the OGame fixed footer bar (#siteFooter) */
+    max-height: min(820px, calc(100vh - 60px));
     background-color: var(--ptre-bg);
-    border: 2px solid black;
+    border: 2px solid var(--ptre-border-dark);
     border-radius: var(--ptre-radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
 }
 #ptreMainHeader {
     display: flex;
@@ -623,22 +630,33 @@ GM_addStyle(`
     padding: 5px 10px;
     border-bottom: 1px solid var(--ptre-border);
     background-color: var(--ptre-bg-dark);
-    border-radius: var(--ptre-radius);
 }
 #ptreMainHeaderTop {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
+    cursor: move;
+    user-select: none;
 }
 #ptreMainTitle {
     color: var(--ptre-title);
     font-weight: bold;
     font-size: 11pt;
-    text-decoration: underline;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 #ptreMainHeaderButtons {
     display: flex;
     gap: 4px;
+    flex-shrink: 0;
+    cursor: default;
+}
+.ptreHeaderBtn {
+    cursor: pointer;
+    padding: 4px 8px;
+    min-width: 0;
 }
 #messageDivInPanel {
     min-height: 0;
@@ -646,23 +664,28 @@ GM_addStyle(`
     font-size: 9pt;
     text-align: center;
 }
+#messageDivInPanel:empty {
+    display: none;
+}
 #ptreMainBody {
     display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 #ptreMainContent {
     flex: 1;
     padding: 10px;
     overflow-y: auto;
-    max-height: 600px;
     min-width: 0;
 }
 #ptreMainNav {
-    width: 100px;
+    width: 110px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
     padding: 8px 6px;
+    overflow-y: auto;
     border-left: 1px solid var(--ptre-border);
     background-color: var(--ptre-bg-dark);
 }
@@ -671,9 +694,35 @@ GM_addStyle(`
     text-align: center;
     cursor: pointer;
     padding: 4px 2px;
+    min-width: 0;
 }
 .ptreNavBtn.ptreNavActive {
     outline: 2px solid var(--ptre-accent);
+}
+.ptreNavSeparator {
+    border-top: 1px solid var(--ptre-border);
+    margin: 4px 0;
+}
+#ptreMainWrapper.ptreMinimized #ptreMainBody,
+#ptreMainWrapper.ptreMinimized #ptreMainFooter,
+#ptreMainWrapper.ptreMinimized #ptreMainFooterMsg,
+#ptreMainWrapper.ptreMinimized #messageDivInPanel {
+    display: none;
+}
+#ptreMainWrapper.ptreMinimized #ptreMainHeader {
+    border-bottom: none;
+}
+#ptreMainWrapper.ptreDragging {
+    opacity: 0.85;
+}
+/* Narrow windows: icons only in navigation and header buttons */
+@media (max-width: 900px) {
+    #ptreMainNav {
+        width: 36px;
+    }
+    .ptreNavLabel, .ptreHeaderBtnLabel {
+        display: none;
+    }
 }
 #ptreMainFooter {
     display: flex;
@@ -689,8 +738,9 @@ GM_addStyle(`
     background-color: var(--ptre-bg-dark);
     font-size: 9pt;
     text-align: center;
-    min-height: 16px;
-    border-radius: var(--ptre-radius);
+}
+#ptreMainFooterMsg:has(#ptreUpdateVersionMessage:empty) {
+    display: none;
 }
 #boxPTREMessage {
     position: fixed;
@@ -1991,23 +2041,54 @@ function updateLocalAGRList() {
 // MENUS
 // ****************************************
 
+// Main panel navigation: [navKey, icon, label, function] (null = separator)
+function getMainPanelNavItems() {
+    const items = [
+        ['Overview', '&#127760;', 'Overview', displayOverview],
+        ['Settings', '&#9881;', 'Settings', displaySettings],
+        null,
+        ['GalaxyEvents', '&#128225;', 'Galaxy Events', getGEEInfosFromGala],
+        ['FightEvents', '&#9876;', 'Fight Events', getFightEventsFromXPD],
+        ['FriendsPhalanx', '&#128101;', 'Friends & Phalanx', getPhalanxInfosFromGala],
+        ['Data', '&#9733;', 'Shared Data', displaySharedData],
+        ['PTRETargets', '&#9992;', 'PTRE Targets', displayPTRETargetsList],
+    ];
+    if (isAGREnabled()) {
+        items.push(['AGRTargets', '&#9992;', 'AGR Targets', displayAGRTargetsList]);
+    }
+    items.push(
+        ['SharedNotes', '&#128221;', 'Shared Notes', displayAllSharedNotes],
+        null,
+        ['Help', '&#10067;', 'Help', displayHelp],
+        ['Logs', '&#128220;', 'Logs', displayLogs],
+        ['ToolsCompatibility', '&#129513;', 'Tools Compat', displayToolsCompatibility],
+        ['Changelog', '&#128221;', 'Changelog', displayChangelog],
+        null,
+        ['Galaxy', '&#128506;', 'Galaxy', displayGalaxyTracking],
+        ['Updates', '&#128640;', 'Updates', displayUpdateBox],
+        ['TMKeys', '&#128273;', 'TM Keys', displayTamperMonkeyKeys]
+    );
+    return items;
+}
+
 // Creates the unified main box on first call, then only updates title and active nav.
-// navKey: 'Settings' | 'Data' | 'Galaxy' | 'Changelog' | 'Help' | 'Logs' | null
+// navKey: see getMainPanelNavItems() (or null)
 function setupMainBox(title, navKey) {
     if (!document.getElementById('ptreMainWrapper')) {
         var defaultMessageDivInPanel = "";
         if (!isValidTeamKey(GM_getValue(ptreTeamKey, ''))) {
             defaultMessageDivInPanel = ptreMissingTKMessage;
         }
-        const agrEnabled = isAGREnabled();
+        const navItems = getMainPanelNavItems();
 
         var html = '<div id="ptreMainBox">';
         html += '<div id="ptreMainHeader">';
-        html += '<div id="ptreMainHeaderTop">';
+        html += '<div id="ptreMainHeaderTop" title="Drag to move, double-click to reset position">';
         html += '<span id="ptreMainTitle"></span>';
         html += '<div id="ptreMainHeaderButtons">';
-        html += ' <div id="ptreMainRefresh" type="button" class="button btn_blue ptreNavBtn">&#8635; Refresh View</div>';
-        html += ' <div id="ptreMainClose" type="button" class="button btn_blue ptreNavBtn">&#10005; Close</div>';
+        html += '<div id="ptreMainRefresh" class="button btn_blue ptreHeaderBtn" title="Refresh view">&#8635;<span class="ptreHeaderBtnLabel"> Refresh View</span></div>';
+        html += '<div id="ptreMainMinimize" class="button btn_blue ptreHeaderBtn" title="Minimize / Expand">&#9472;</div>';
+        html += '<div id="ptreMainClose" class="button btn_blue ptreHeaderBtn" title="Close (Escape)">&#10005;<span class="ptreHeaderBtnLabel"> Close</span></div>';
         html += '</div>';
         html += '</div>';
         html += '<div id="messageDivInPanel" class="ptreWarning">' + defaultMessageDivInPanel + '</div>';
@@ -2015,27 +2096,13 @@ function setupMainBox(title, navKey) {
         html += '<div id="ptreMainBody">';
         html += '<div id="ptreMainContent"></div>';
         html += '<div id="ptreMainNav">';
-        html += '<div id="ptreNavOverview" class="button btn_blue ptreNavBtn">&#127760; Overview</div>';
-        html += '<div id="ptreNavSettings" class="button btn_blue ptreNavBtn">&#9881; Settings</div>';
-        html += '<div><hr></div>';
-        html += '<div id="ptreNavGalaxyEvents" class="button btn_blue ptreNavBtn">&#128225; Galaxy Events</div>';
-        html += '<div id="ptreNavFightEvents" class="button btn_blue ptreNavBtn">&#9876; Fight Events</div>';
-        html += '<div id="ptreNavFriendsPhalanx" class="button btn_blue ptreNavBtn">&#128101; Friends & Phalanx</div>';
-        html += '<div id="ptreNavData" class="button btn_blue ptreNavBtn">&#9733; Shared Data</div>';
-        html += '<div id="ptreNavPTRETargets" class="button btn_blue ptreNavBtn">&#9992; PTRE Targets</div>';
-        if (agrEnabled) {
-            html += '<div id="ptreNavAGRTargets" class="button btn_blue ptreNavBtn">&#9992; AGR Targets</div>';
-        }
-        html += '<div id="ptreNavSharedNotes" class="button btn_blue ptreNavBtn">&#128221; Shared Notes</div>';
-        html += '<div><hr></div>';
-        html += '<div id="ptreNavHelp" class="button btn_blue ptreNavBtn">&#10067; Help</div>';
-        html += '<div id="ptreNavLogs" class="button btn_blue ptreNavBtn">&#128220; Logs</div>';
-        html += '<div id="ptreNavToolsCompatibility" class="button btn_blue ptreNavBtn">&#129513; Tools Compat</div>';
-        html += '<div id="ptreNavChangelog" class="button btn_blue ptreNavBtn">&#128221; Changelog</div>';
-        html += '<div><hr></div>';
-        html += '<div id="ptreNavGalaxy" class="button btn_blue ptreNavBtn">&#128506; Galaxy</div>';
-        html += '<div id="ptreNavUpdates" class="button btn_blue ptreNavBtn">&#128640; Updates</div>';
-        html += '<div id="ptreNavTMKeys" class="button btn_blue ptreNavBtn">&#128273; TM Keys</div>';
+        navItems.forEach(function(item) {
+            if (item === null) {
+                html += '<div class="ptreNavSeparator"></div>';
+            } else {
+                html += '<div id="ptreNav' + item[0] + '" class="button btn_blue ptreNavBtn" title="' + item[2] + '"><span class="ptreNavIcon">' + item[1] + '</span><span class="ptreNavLabel"> ' + item[2] + '</span></div>';
+            }
+        });
         html += '</div></div>';
         html += '<div id="ptreMainFooter">';
         html += '<div id="ptreMainFooterLeft"><a href="https://ptre.chez.gg/" target="_blank">PTRE website</a>&nbsp;|&nbsp;<a href="https://discord.gg/WsJGC9G" target="_blank">Discord</a>&nbsp;|&nbsp;<a href="https://ko-fi.com/ptreforogame" target="_blank">Donate</a></div>';
@@ -2047,8 +2114,15 @@ function setupMainBox(title, navKey) {
         wrapper.id = 'ptreMainWrapper';
         wrapper.innerHTML = html;
         document.body.appendChild(wrapper);
+        applyMainPanelPosition(GM_getValue(ptreMainPanelPosition, null));
+        setupMainPanelDrag(wrapper);
+        document.addEventListener('keydown', onMainPanelKeyDown);
+
         document.getElementById('ptreMainClose').addEventListener('click', function() {
             closePTREMenu();
+        });
+        document.getElementById('ptreMainMinimize').addEventListener('click', function() {
+            wrapper.classList.toggle('ptreMinimized');
         });
         document.getElementById('ptreMainRefresh').addEventListener('click', function() {
             if (ptreCurrentView) {
@@ -2058,25 +2132,14 @@ function setupMainBox(title, navKey) {
                 }, 100);
             }
         });
-        document.getElementById('ptreNavSettings').addEventListener('click', function() { displaySettings(); });
-        document.getElementById('ptreNavGalaxyEvents').addEventListener('click', function() { getGEEInfosFromGala(); });
-        document.getElementById('ptreNavFightEvents').addEventListener('click', function() { getFightEventsFromXPD(); });
-        document.getElementById('ptreNavOverview').addEventListener('click', function() { displayOverview(); });
-        document.getElementById('ptreNavData').addEventListener('click', function() { displaySharedData(); });
-        document.getElementById('ptreNavGalaxy').addEventListener('click', function() { displayGalaxyTracking(); });
-        if (agrEnabled) {
-            document.getElementById('ptreNavAGRTargets').addEventListener('click', function() { displayAGRTargetsList(); });
-        }
-        document.getElementById('ptreNavFriendsPhalanx').addEventListener('click', function() { getPhalanxInfosFromGala(); });
-        document.getElementById('ptreNavPTRETargets').addEventListener('click', function() { displayPTRETargetsList(); });
-        document.getElementById('ptreNavChangelog').addEventListener('click', function() { displayChangelog(); });
-        document.getElementById('ptreNavHelp').addEventListener('click', function() { displayHelp(); });
-        document.getElementById('ptreNavLogs').addEventListener('click', function() { displayLogs(); });
-        document.getElementById('ptreNavUpdates').addEventListener('click', function() { displayUpdateBox(''); });
-        document.getElementById('ptreNavToolsCompatibility').addEventListener('click', function() { displayToolsCompatibility(); });
-        document.getElementById('ptreNavSharedNotes').addEventListener('click', function() { displayAllSharedNotes(); });
-        document.getElementById('ptreNavTMKeys').addEventListener('click', function() { displayTamperMonkeyKeys(); });
+        navItems.forEach(function(item) {
+            if (item !== null) {
+                document.getElementById('ptreNav' + item[0]).addEventListener('click', function() { item[3](); });
+            }
+        });
     }
+    // Displaying a view always expands the panel
+    document.getElementById('ptreMainWrapper').classList.remove('ptreMinimized');
     document.getElementById('ptreMainTitle').textContent = title;
     var badge = document.getElementById('ptreTopRightMenuButton');
     if (badge) { badge.style.display = 'none'; }
@@ -2085,7 +2148,67 @@ function setupMainBox(title, navKey) {
         var activeBtn = document.getElementById('ptreNav' + navKey);
         if (activeBtn) { activeBtn.classList.add('ptreNavActive'); }
     }
-    document.getElementById('ptreMainContent').innerHTML = '<br><center><span class="ptreWarning">LOADING...</span></center><br>';
+    document.getElementById('ptreMainContent').innerHTML = ptreLoading();
+}
+
+// Moves the main panel to a saved position (kept inside the window), or to the default top right position
+function applyMainPanelPosition(position) {
+    const wrapper = document.getElementById('ptreMainWrapper');
+    if (!wrapper) {
+        return;
+    }
+    if (!position) {
+        wrapper.style.left = '';
+        wrapper.style.top = '';
+        wrapper.style.right = '';
+        return;
+    }
+    const maxLeft = Math.max(0, window.innerWidth - wrapper.offsetWidth);
+    const maxTop = Math.max(0, window.innerHeight - 40);
+    wrapper.style.left = Math.min(Math.max(0, position.left), maxLeft) + 'px';
+    wrapper.style.top = Math.min(Math.max(0, position.top), maxTop) + 'px';
+    wrapper.style.right = 'auto';
+}
+
+// Drag the main panel by its header (position is saved for every universe)
+function setupMainPanelDrag(wrapper) {
+    const handle = document.getElementById('ptreMainHeaderTop');
+    handle.addEventListener('mousedown', function(event) {
+        if (event.button !== 0 || event.target.closest('#ptreMainHeaderButtons')) {
+            return;
+        }
+        event.preventDefault();
+        const rect = wrapper.getBoundingClientRect();
+        const offsetX = event.clientX - rect.left;
+        const offsetY = event.clientY - rect.top;
+        wrapper.classList.add('ptreDragging');
+        const onMove = function(moveEvent) {
+            applyMainPanelPosition({left: moveEvent.clientX - offsetX, top: moveEvent.clientY - offsetY});
+        };
+        const onUp = function() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            wrapper.classList.remove('ptreDragging');
+            GM_setValue(ptreMainPanelPosition, {left: parseInt(wrapper.style.left, 10) || 0, top: parseInt(wrapper.style.top, 10) || 0});
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+    handle.addEventListener('dblclick', function(event) {
+        if (event.target.closest('#ptreMainHeaderButtons')) {
+            return;
+        }
+        GM_deleteValue(ptreMainPanelPosition);
+        applyMainPanelPosition(null);
+    });
+}
+
+// Escape closes the main panel (except while typing in a field)
+function onMainPanelKeyDown(event) {
+    if (event.key !== 'Escape' || event.target.closest('input, textarea, select')) {
+        return;
+    }
+    closePTREMenu();
 }
 
 // Displays PTRE settings
@@ -2975,6 +3098,7 @@ function closePTREMenu() {
     if (menu) {
         menu.remove();
     }
+    document.removeEventListener('keydown', onMainPanelKeyDown);
     var badge = document.getElementById('ptreTopRightMenuButton');
     if (badge) {
         badge.style.display = '';

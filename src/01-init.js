@@ -102,6 +102,7 @@ const ptrePerUniKeysPrefix = "ptre-" + country + "-" + universe + "-";// Do not 
 const ptreLastAvailableVersion = "ptre-LastAvailableVersion";
 const ptreLastAvailableVersionRefresh = "ptre-LastAvailableVersionRefresh";// Unix TS
 const ptreLogsList = "ptre-Logs";// Unix TS
+const ptreMainPanelPosition = "ptre-MainPanelPosition";// {left, top} in px, set when the panel is dragged
 
 // GM keys (specific to each universes)
 // Suffixes also used to build keys of OTHER universes (GC cleanup)
