@@ -10,7 +10,7 @@ This file is also displayed ingame (EasyPTRE menu > Changelog): it is converted 
 ## [Unreleased]
 
 ### Changed
-- Redesigned EasyPTRE panel: cleaner layout, adapts to small screens, can be moved (drag the title, double-click to reset) and minimized, closes with Escape
+- Redesigned EasyPTRE panel: cleaner layout, adapts to small screens, can be moved (drag the title, double-click to reset), closes with Escape
 - New notifications: colored by type (success, warning, error), can be closed, stay displayed while hovered
 
 ## [0.20.0] - 2026-11-22

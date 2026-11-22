@@ -359,15 +359,6 @@ ul.ptreList {
     border-top: 1px solid var(--ptre-border);
     margin: 4px 0;
 }
-#ptreMainWrapper.ptreMinimized #ptreMainBody,
-#ptreMainWrapper.ptreMinimized #ptreMainFooter,
-#ptreMainWrapper.ptreMinimized #ptreMainFooterMsg,
-#ptreMainWrapper.ptreMinimized #messageDivInPanel {
-    display: none;
-}
-#ptreMainWrapper.ptreMinimized #ptreMainHeader {
-    border-bottom: none;
-}
 #ptreMainWrapper.ptreDragging {
     opacity: 0.85;
 }

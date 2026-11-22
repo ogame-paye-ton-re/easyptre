@@ -48,7 +48,6 @@ function setupMainBox(title, navKey) {
         html += '<span id="ptreMainTitle"></span>';
         html += '<div id="ptreMainHeaderButtons">';
         html += '<div id="ptreMainRefresh" class="button btn_blue ptreHeaderBtn" title="Refresh view">&#8635;<span class="ptreHeaderBtnLabel"> Refresh View</span></div>';
-        html += '<div id="ptreMainMinimize" class="button btn_blue ptreHeaderBtn" title="Minimize / Expand">&#9472;</div>';
         html += '<div id="ptreMainClose" class="button btn_blue ptreHeaderBtn" title="Close (Escape)">&#10005;<span class="ptreHeaderBtnLabel"> Close</span></div>';
         html += '</div>';
         html += '</div>';
@@ -82,9 +81,6 @@ function setupMainBox(title, navKey) {
         document.getElementById('ptreMainClose').addEventListener('click', function() {
             closePTREMenu();
         });
-        document.getElementById('ptreMainMinimize').addEventListener('click', function() {
-            wrapper.classList.toggle('ptreMinimized');
-        });
         document.getElementById('ptreMainRefresh').addEventListener('click', function() {
             if (ptreCurrentView) {
                 document.getElementById('ptreMainContent').innerHTML = '';
@@ -99,8 +95,6 @@ function setupMainBox(title, navKey) {
             }
         });
     }
-    // Displaying a view always expands the panel
-    document.getElementById('ptreMainWrapper').classList.remove('ptreMinimized');
     document.getElementById('ptreMainTitle').textContent = title;
     var badge = document.getElementById('ptreTopRightMenuButton');
     if (badge) { badge.style.display = 'none'; }
