@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: dim. 22 nov. 2026 11:44:38 CET
+// Build date: dim. 22 nov. 2026 11:48:36 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -410,12 +410,6 @@ GM_addStyle(`
 .ptreSmall {
     font-size: 8pt;
     font-weight: normal;
-}
-.ptreBoxTitle {
-    color: var(--ptre-title);
-    font-weight: bold;
-    text-decoration: underline;
-    margin: 5px;
 }
 .ptreCategoryTitle {
     color: var(--ptre-title);
@@ -931,15 +925,20 @@ ul.ptreList {
     position: fixed;
     top: 30px;
     right: 10px;
-    min-width: 350px;
-    max-width: 600px;
-    max-height: calc(100vh - 60px);
-    overflow-y: auto;
-    border: solid black 2px;
-    border-radius: var(--ptre-radius);
-    background-color: var(--ptre-bg);
     z-index: 11000;
-    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    min-width: 350px;
+    max-width: min(600px, calc(100vw - 20px));
+    max-height: calc(100vh - 60px);
+}
+#ptreOrionPopUp .ptrePopupBody {
+    overflow-y: auto;
+}
+.ptrePopupFooter {
+    padding: 4px 10px;
+    border-top: 1px solid var(--ptre-border);
+    background-color: var(--ptre-bg-dark);
 }
 .ptreOrionButton {
     vertical-align: middle;
@@ -1433,9 +1432,12 @@ function openPTREOrionPopUp(coords, html, anchor, pinned) {
 
     const panel = document.createElement('div');
     panel.id = 'ptreOrionPopUp';
-    panel.innerHTML = '<table width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Orion Box</div></td><td align="right"><div id="btnCloseOrionPopUp" type="button" class="button btn_blue">CLOSE</div></td></tr></table>'
-        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div>' + html
-        + '<hr><div class="ptreSmall">Hover an anomaly PTRE icon to preview its infos. Click it to pin this pop-up (or replace the pinned one).</div>';
+    panel.className = 'ptrePopup';
+    // Anomaly content is HTML from PTRE, displayed as-is
+    panel.innerHTML = '<div class="ptrePopupHeader"><span class="ptrePopupTitle">EasyPTRE Orion Box</span>'
+        + '<div id="btnCloseOrionPopUp" class="button btn_blue ptreHeaderBtn" title="Close">&#10005; Close</div></div>'
+        + '<div class="ptrePopupBody">' + ptreSection('Anomaly [' + coords + ']', html) + '</div>'
+        + '<div class="ptrePopupFooter ptreSmall">Hover an anomaly PTRE icon to preview its infos. Click it to pin this pop-up (or replace the pinned one).</div>';
     document.body.appendChild(panel);
     anchor.classList.add('ptreIconActive');
 

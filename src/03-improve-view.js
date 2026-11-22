@@ -439,9 +439,12 @@ function openPTREOrionPopUp(coords, html, anchor, pinned) {
 
     const panel = document.createElement('div');
     panel.id = 'ptreOrionPopUp';
-    panel.innerHTML = '<table width="100%"><tr><td><div class="ptreBoxTitle">EasyPTRE Orion Box</div></td><td align="right"><div id="btnCloseOrionPopUp" type="button" class="button btn_blue">CLOSE</div></td></tr></table>'
-        + '<hr><div class="ptreCategoryTitle">Anomaly [' + coords + ']</div>' + html
-        + '<hr><div class="ptreSmall">Hover an anomaly PTRE icon to preview its infos. Click it to pin this pop-up (or replace the pinned one).</div>';
+    panel.className = 'ptrePopup';
+    // Anomaly content is HTML from PTRE, displayed as-is
+    panel.innerHTML = '<div class="ptrePopupHeader"><span class="ptrePopupTitle">EasyPTRE Orion Box</span>'
+        + '<div id="btnCloseOrionPopUp" class="button btn_blue ptreHeaderBtn" title="Close">&#10005; Close</div></div>'
+        + '<div class="ptrePopupBody">' + ptreSection('Anomaly [' + coords + ']', html) + '</div>'
+        + '<div class="ptrePopupFooter ptreSmall">Hover an anomaly PTRE icon to preview its infos. Click it to pin this pop-up (or replace the pinned one).</div>';
     document.body.appendChild(panel);
     anchor.classList.add('ptreIconActive');
 

@@ -39,12 +39,6 @@ GM_addStyle(`
     font-size: 8pt;
     font-weight: normal;
 }
-.ptreBoxTitle {
-    color: var(--ptre-title);
-    font-weight: bold;
-    text-decoration: underline;
-    margin: 5px;
-}
 .ptreCategoryTitle {
     color: var(--ptre-title);
     font-weight: bold;
@@ -559,15 +553,20 @@ ul.ptreList {
     position: fixed;
     top: 30px;
     right: 10px;
-    min-width: 350px;
-    max-width: 600px;
-    max-height: calc(100vh - 60px);
-    overflow-y: auto;
-    border: solid black 2px;
-    border-radius: var(--ptre-radius);
-    background-color: var(--ptre-bg);
     z-index: 11000;
-    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    min-width: 350px;
+    max-width: min(600px, calc(100vw - 20px));
+    max-height: calc(100vh - 60px);
+}
+#ptreOrionPopUp .ptrePopupBody {
+    overflow-y: auto;
+}
+.ptrePopupFooter {
+    padding: 4px 10px;
+    border-top: 1px solid var(--ptre-border);
+    background-color: var(--ptre-bg-dark);
 }
 .ptreOrionButton {
     vertical-align: middle;
