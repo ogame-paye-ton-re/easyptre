@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This file is also displayed ingame (EasyPTRE menu > Changelog): it is converted at build time by `scripts/changelog-to-html.js`.
 
-## [Unreleased]
+## [0.20.0] - 2026-11-22
 
 ### Added
 - Inactive universes are automatically cleaned: galaxy data after 7 days of inactivity, every key (except Team Key) after 1 year
