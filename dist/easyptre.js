@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: lun. 23 nov. 2026 08:29:54 CET
+// Build date: lun. 23 nov. 2026 08:29:55 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -482,7 +482,9 @@ GM_addStyle(`
 .ptre_ship_219 {
     background-position: -420px 0;
 }
-.button {
+/* EasyPTRE buttons only (OGame / other tools buttons are not affected), :where() keeps a low specificity */
+:where(#ptreMainWrapper, .ptrePopup, #ptreGalaxyToolBar, #ptreTopRightMenuButton) .button,
+:where(.ptreButton) {
     padding: 0px;
 }
 /* ---------- UI helpers (13-ui.js) ---------- */

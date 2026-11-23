@@ -110,7 +110,9 @@ GM_addStyle(`
 .ptre_ship_219 {
     background-position: -420px 0;
 }
-.button {
+/* EasyPTRE buttons only (OGame / other tools buttons are not affected), :where() keeps a low specificity */
+:where(#ptreMainWrapper, .ptrePopup, #ptreGalaxyToolBar, #ptreTopRightMenuButton) .button,
+:where(.ptreButton) {
     padding: 0px;
 }
 /* ---------- UI helpers (13-ui.js) ---------- */
