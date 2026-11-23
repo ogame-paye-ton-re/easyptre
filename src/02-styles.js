@@ -52,30 +52,6 @@ GM_addStyle(`
     color: var(--ptre-title);
     font-weight: bold;
 }
-.td_cell {
-    padding: 3px;
-}
-.tr_cell_radius {
-    background-color: transparent;
-}
-.td_cell_radius_0 {
-    background-color: var(--ptre-cell);
-    padding: 3px;
-    border-radius: var(--ptre-radius-small);
-    border: 1px solid black;
-}
-.td_cell_radius_1 {
-    background-color: var(--ptre-cell-alt);
-    padding: 3px;
-    border-radius: var(--ptre-radius-small);
-    border: 1px solid black;
-}
-.td_cell_radius_2 {
-    background-color: var(--ptre-cell-highlight);
-    padding: 3px;
-    border-radius: var(--ptre-radius-small);
-    border: 1px solid black;
-}
 .ptre_ship {
     background-image: url('https://gf3.geo.gfsrv.net/cdn84/3b19b4263662f5a383524052047f4f.png');
     background-repeat: no-repeat;
@@ -133,9 +109,6 @@ GM_addStyle(`
 }
 .ptre_ship_219 {
     background-position: -420px 0;
-}
-.td_ship {
-    padding: 3px;
 }
 .button {
     padding: 0px;
