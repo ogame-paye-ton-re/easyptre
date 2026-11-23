@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This file is also displayed ingame (EasyPTRE menu > Changelog): it is converted at build time by `scripts/changelog-to-html.js`.
 
+## [0.21.1] - 2026-11-23
+
+### Changed
+- EasyPTRE no longer changes the look of OGame buttons outside its own elements
+
+### Removed
+- Old styles no longer used by PTRE pages
+
 ## [0.21.0] - 2026-11-22
 
 ### Changed
