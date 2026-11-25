@@ -23,10 +23,25 @@ function isOGLEnabled() {
 }
 
 function isOGIEnabled() {
-    if (document.getElementsByClassName('ogl-harvestOptions').length != 0) {
+    // data-ogi-callback-event-token is set on <html> as soon as OGI starts (.ogl-harvestOptions comes much later)
+    if (document.documentElement.dataset.ogiCallbackEventToken || document.getElementsByClassName('ogl-harvestOptions').length != 0) {
         return true;
     }
     return false;
+}
+
+function getDetectedTools() {
+    const detectedTools = [];
+    if (isAGREnabled()) {
+        detectedTools.push("AGR");
+    }
+    if (isOGLEnabled()) {
+        detectedTools.push("OGL");
+    }
+    if (isOGIEnabled()) {
+        detectedTools.push("OGI");
+    }
+    return detectedTools;
 }
 
 // Detects if OGL is enabled

@@ -117,22 +117,8 @@ function improvePageGalaxy() {
     const galaxyPopupMode = GM_getValue(ptreEnableGalaxyPopup, 'true');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
-    const detectedTools = [];
+    const detectedTools = getDetectedTools();
 
-    // Update status once for the gala browsing session
-    if (isAGREnabled()) {
-        detectedTools.push("AGR");
-    }
-    if (isOGLEnabled()) {
-        ptreSendGalaEvents = false;
-        ptrePushActivities = false;
-        detectedTools.push("OGL");
-    }
-    if (isOGIEnabled()) {
-        ptreSendGalaEvents = false;
-        ptrePushActivities = false;
-        detectedTools.push("OGI");
-    }
     // Enable Galaxy Pop-up for the entire galaxy browsing session
     if (galaxyPopupMode == 'false' || minerMode == 'true') {
         ptreDisplayGalaPopup = false;
@@ -169,7 +155,7 @@ function improvePageGalaxy() {
             tempContent += '<span class="ptreToolbarStats">Activities: ' + pushStatus('ptreGalaxyActivityCount', ptrePushActivities === true)
                 + ' | Galaxy Events: ' + pushStatus('ptreGalaxyEventCount', ptreSendGalaEvents === true);
             if (ptrePushActivities === true) {
-                tempContent += ' | Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+                tempContent += '<span id="ptreTrackedPlayerBlock"> | Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span></span>';
             }
             tempContent += '</span>';
         }
@@ -182,7 +168,7 @@ function improvePageGalaxy() {
                 + legendItem('', 'Nothing') + '</div>';
         }
         tempContent += '<div class="ptreToolbarFooter ptreSmall">Galaxy Popup: ' + galaxyPopupMode + ' | Beta Mode: ' + betaMode + ' | Miner Mode: ' + minerMode
-            + ' | Detected tools: ' + (detectedTools.length > 0 ? detectedTools.join(', ') : 'none') + '</div>';
+            + ' | Detected tools: <span id="ptreDetectedTools">' + (detectedTools.length > 0 ? detectedTools.join(', ') : 'none') + '</span></div>';
 
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
@@ -217,6 +203,23 @@ function improvePageGalaxy() {
         // Prepare galaxy check and update
         waitForGalaxyToBeLoaded();
     }
+}
+
+// OGL / OGI detected: leave them the pushes and refresh the galaxy toolbar
+function leaveGalaxyPushesToOGLorOGI() {
+    consoleDebug("[GALAXY] OGL/OGI detected: leaving activities and galaxy events pushes to it");
+    ptrePushActivities = false;
+    ptreSendGalaEvents = false;
+    ['ptreGalaxyActivityCount', 'ptreGalaxyEventCount'].forEach(function (id) {
+        const elem = document.getElementById(id);
+        if (elem) {
+            elem.className = 'ptreWarning';
+            elem.title = 'Sent by OGL/OGI';
+            elem.textContent = 'no';
+        }
+    });
+    document.getElementById('ptreTrackedPlayerBlock')?.remove();
+    updateHtmlById('ptreDetectedTools', getDetectedTools().join(', '));
 }
 
 // Save lifeforms researchs

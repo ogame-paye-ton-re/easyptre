@@ -90,6 +90,17 @@ function improveGalaxyTable() {
     consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
     cleanGalaxyMiniMessage();
 
+    // Checked on each system (not once on galaxy page load) as OGI may finish loading after EasyPTRE
+    // AGR, OGL and OGI can't be used together: with AGR, EasyPTRE always manages the pushes
+    if (ptreCheckOGLorOGI === true) {
+        if (isAGREnabled()) {
+            ptreCheckOGLorOGI = false;
+        } else if (isOGLorOGIEnabled()) {
+            ptreCheckOGLorOGI = false;
+            leaveGalaxyPushesToOGLorOGI();
+        }
+    }
+
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
     // Get players to highlight
     var highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});

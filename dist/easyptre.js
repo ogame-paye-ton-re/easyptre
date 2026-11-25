@@ -26,7 +26,7 @@
 // ==/UserScript==
 
 // ****************************************
-// Build date: lun. 23 nov. 2026 09:01:11 CET
+// Build date: mer. 25 nov. 2026 20:46:00 CET
 // ****************************************
 
 // Generated from CHANGELOG.md by scripts/changelog-to-html.js
@@ -94,6 +94,7 @@ var ptreGalaxyPendingWrites = new Set(); // Galaxies updated in cache but not ye
 var ptreGalaxyFlushTimer = null;
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
+var ptreCheckOGLorOGI = true; // Galaxy: OGL / OGI detection, until a tool (AGR / OGL / OGI) is found
 var ptreDisplayGalaPopup = true;
 var ptreEnableConsoleDebugValue = false;
 
@@ -1085,22 +1086,8 @@ function improvePageGalaxy() {
     const galaxyPopupMode = GM_getValue(ptreEnableGalaxyPopup, 'true');
     const betaMode = GM_getValue(ptreEnableBetaMode, 'false');
     const ptreStoredTK = GM_getValue(ptreTeamKey, '');
-    const detectedTools = [];
+    const detectedTools = getDetectedTools();
 
-    // Update status once for the gala browsing session
-    if (isAGREnabled()) {
-        detectedTools.push("AGR");
-    }
-    if (isOGLEnabled()) {
-        ptreSendGalaEvents = false;
-        ptrePushActivities = false;
-        detectedTools.push("OGL");
-    }
-    if (isOGIEnabled()) {
-        ptreSendGalaEvents = false;
-        ptrePushActivities = false;
-        detectedTools.push("OGI");
-    }
     // Enable Galaxy Pop-up for the entire galaxy browsing session
     if (galaxyPopupMode == 'false' || minerMode == 'true') {
         ptreDisplayGalaPopup = false;
@@ -1137,7 +1124,7 @@ function improvePageGalaxy() {
             tempContent += '<span class="ptreToolbarStats">Activities: ' + pushStatus('ptreGalaxyActivityCount', ptrePushActivities === true)
                 + ' | Galaxy Events: ' + pushStatus('ptreGalaxyEventCount', ptreSendGalaEvents === true);
             if (ptrePushActivities === true) {
-                tempContent += ' | Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span>';
+                tempContent += '<span id="ptreTrackedPlayerBlock"> | Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span></span>';
             }
             tempContent += '</span>';
         }
@@ -1150,7 +1137,7 @@ function improvePageGalaxy() {
                 + legendItem('', 'Nothing') + '</div>';
         }
         tempContent += '<div class="ptreToolbarFooter ptreSmall">Galaxy Popup: ' + galaxyPopupMode + ' | Beta Mode: ' + betaMode + ' | Miner Mode: ' + minerMode
-            + ' | Detected tools: ' + (detectedTools.length > 0 ? detectedTools.join(', ') : 'none') + '</div>';
+            + ' | Detected tools: <span id="ptreDetectedTools">' + (detectedTools.length > 0 ? detectedTools.join(', ') : 'none') + '</span></div>';
 
         var tempDiv = document.createElement("div");
         tempDiv.innerHTML = tempContent;
@@ -1185,6 +1172,23 @@ function improvePageGalaxy() {
         // Prepare galaxy check and update
         waitForGalaxyToBeLoaded();
     }
+}
+
+// OGL / OGI detected: leave them the pushes and refresh the galaxy toolbar
+function leaveGalaxyPushesToOGLorOGI() {
+    consoleDebug("[GALAXY] OGL/OGI detected: leaving activities and galaxy events pushes to it");
+    ptrePushActivities = false;
+    ptreSendGalaEvents = false;
+    ['ptreGalaxyActivityCount', 'ptreGalaxyEventCount'].forEach(function (id) {
+        const elem = document.getElementById(id);
+        if (elem) {
+            elem.className = 'ptreWarning';
+            elem.title = 'Sent by OGL/OGI';
+            elem.textContent = 'no';
+        }
+    });
+    document.getElementById('ptreTrackedPlayerBlock')?.remove();
+    updateHtmlById('ptreDetectedTools', getDetectedTools().join(', '));
 }
 
 // Save lifeforms researchs
@@ -3838,6 +3842,17 @@ function improveGalaxyTable() {
     consoleDebug("[GALAXY] Improving Galaxy Table " + galaxy + ":" + system);
     cleanGalaxyMiniMessage();
 
+    // Checked on each system (not once on galaxy page load) as OGI may finish loading after EasyPTRE
+    // AGR, OGL and OGI can't be used together: with AGR, EasyPTRE always manages the pushes
+    if (ptreCheckOGLorOGI === true) {
+        if (isAGREnabled()) {
+            ptreCheckOGLorOGI = false;
+        } else if (isOGLorOGIEnabled()) {
+            ptreCheckOGLorOGI = false;
+            leaveGalaxyPushesToOGLorOGI();
+        }
+    }
+
     var ptreStoredTK = GM_getValue(ptreTeamKey, '');
     // Get players to highlight
     var highlightedPlayersList = GM_getValue(ptreHighlightedPlayers, {});
@@ -4265,10 +4280,25 @@ function isOGLEnabled() {
 }
 
 function isOGIEnabled() {
-    if (document.getElementsByClassName('ogl-harvestOptions').length != 0) {
+    // data-ogi-callback-event-token is set on <html> as soon as OGI starts (.ogl-harvestOptions comes much later)
+    if (document.documentElement.dataset.ogiCallbackEventToken || document.getElementsByClassName('ogl-harvestOptions').length != 0) {
         return true;
     }
     return false;
+}
+
+function getDetectedTools() {
+    const detectedTools = [];
+    if (isAGREnabled()) {
+        detectedTools.push("AGR");
+    }
+    if (isOGLEnabled()) {
+        detectedTools.push("OGL");
+    }
+    if (isOGIEnabled()) {
+        detectedTools.push("OGI");
+    }
+    return detectedTools;
 }
 
 // Detects if OGL is enabled

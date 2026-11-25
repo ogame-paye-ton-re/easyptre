@@ -60,6 +60,7 @@ var ptreGalaxyPendingWrites = new Set(); // Galaxies updated in cache but not ye
 var ptreGalaxyFlushTimer = null;
 var ptrePushActivities = true;
 var ptreSendGalaEvents = true;
+var ptreCheckOGLorOGI = true; // Galaxy: OGL / OGI detection, until a tool (AGR / OGL / OGI) is found
 var ptreDisplayGalaPopup = true;
 var ptreEnableConsoleDebugValue = false;
 
