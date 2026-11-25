@@ -150,22 +150,26 @@ function improvePageGalaxy() {
             + ptreButton('ptreGalaxyPhalanxButton', '&#128101; FRIENDS & PHALANX')
             + ptreButton('ptreGalaxyGEEButton', '&#128225; GALAXY EVENTS')
             + ptreButton('ptreGalaxyFightEventsButton', '&#9876; FIGHT EVENTS') + '</span>';
+        tempContent += '</div>';
         // Without Team Key, nothing is sent and there is no pop-up: no stats nor legend
         if (ptreStoredTK != '') {
-            tempContent += '<span class="ptreToolbarStats">Activities: ' + pushStatus('ptreGalaxyActivityCount', ptrePushActivities === true)
+            tempContent += '<div class="ptreToolbarRow">';
+            tempContent += '<span>Activities: ' + pushStatus('ptreGalaxyActivityCount', ptrePushActivities === true)
                 + ' | Galaxy Events: ' + pushStatus('ptreGalaxyEventCount', ptreSendGalaEvents === true);
             if (ptrePushActivities === true) {
                 tempContent += '<span id="ptreTrackedPlayerBlock"> | Targets: <span id="ptreTrackedPlayerCount" class="ptreSuccess">?</span></span>';
             }
             tempContent += '</span>';
-        }
-        tempContent += '</div>';
-        if (ptreStoredTK != '' && ptreDisplayGalaPopup === true) {
-            tempContent += '<div class="ptreToolbarRow ptreToolbarLegend"><span class="ptreSubTitle">Pop-up legend:</span>'
-                + legendItem('ptreLegend-hot', 'Hot target')
-                + legendItem('ptreLegend-event', 'Galaxy Event')
-                + legendItem('ptreLegend-dnp', 'Do Not Probe')
-                + legendItem('', 'Nothing') + '</div>';
+            if (ptreDisplayGalaPopup === true) {
+                // Displayed on hover (desktop) or click (mobile)
+                tempContent += '<span id="ptreLegendToggle" class="ptreLegendToggle"><span class="ptreToolbarTitle">&#9432; Pop-up legend</span>'
+                    + '<span class="ptreLegendPopup">'
+                    + legendItem('ptreLegend-hot', 'Hot target')
+                    + legendItem('ptreLegend-event', 'Galaxy Event')
+                    + legendItem('ptreLegend-dnp', 'Do Not Probe')
+                    + legendItem('', 'Nothing') + '</span></span>';
+            }
+            tempContent += '</div>';
         }
         tempContent += '<div class="ptreToolbarFooter ptreSmall">Galaxy Popup: ' + galaxyPopupMode + ' | Beta Mode: ' + betaMode + ' | Miner Mode: ' + minerMode
             + ' | Detected tools: <span id="ptreDetectedTools">' + (detectedTools.length > 0 ? detectedTools.join(', ') : 'none') + '</span></div>';
@@ -192,6 +196,11 @@ function improvePageGalaxy() {
         if (document.getElementById('ptreGalaxyFightEventsButton')) {
             document.getElementById('ptreGalaxyFightEventsButton').addEventListener("click", function (event) {
                 getFightEventsFromXPD();
+            });
+        }
+        if (document.getElementById('ptreLegendToggle')) {
+            document.getElementById('ptreLegendToggle').addEventListener("click", function (event) {
+                this.classList.toggle('ptreOpen');
             });
         }
     }

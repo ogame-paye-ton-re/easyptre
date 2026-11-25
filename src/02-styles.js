@@ -459,14 +459,28 @@ ul.ptreList {
     color: var(--ptre-title);
     font-weight: bold;
 }
-.ptreToolbarStats {
+.ptreLegendToggle {
+    position: relative;
     margin-left: auto;
+    cursor: pointer;
 }
-.ptreToolbarLegend {
-    gap: 14px;
+.ptreLegendPopup {
+    display: none;
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 4px);
+    z-index: 1000;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    background-color: var(--ptre-bg);
+    border: 1px solid var(--ptre-border-dark);
+    border-radius: var(--ptre-radius);
 }
-.ptreToolbarLegend .ptreSubTitle {
-    margin: 0;
+.ptreLegendToggle:hover .ptreLegendPopup,
+.ptreLegendToggle.ptreOpen .ptreLegendPopup {
+    display: flex;
 }
 .ptreLegendItem {
     display: inline-flex;
